@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { makeStyles } from '@mui/styles';
 import { Box, Chip } from '@mui/material';
 import categoryApi from 'api/categoryApi';
+import styled from '@emotion/styled';
 
-const useStyles = makeStyles(() => ({
-    root: {
-        display: 'flex',
-        flexFlow: 'row wrap',
-        alignItems: 'center',
-        listStyleType: 'none',
-        '& > li' :{
-            margin : '5px 5px'
-        }
-    },
-}));
+const RootBox = styled(Box)`
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  list-style-type: none;
+  
+  & > li {
+    margin: 5px 5px;
+  }
+`;
 
 FilterViewer.propTypes = {
     filters : PropTypes.object,
@@ -23,9 +22,8 @@ FilterViewer.propTypes = {
 };
 
 function FilterViewer({filters = {},onChange = null}) {
-    const classes = useStyles();
 
-    const [dataCategory, setDataCategory] = useState(null);  // Khởi tạo với null thay vì []
+    const [dataCategory, setDataCategory] = useState(null);
 
     useEffect(() => {
         const fetchCategory = async (categoryId) => {
@@ -96,7 +94,7 @@ function FilterViewer({filters = {},onChange = null}) {
     ]
 
     return (
-        <Box className={classes.root}>
+        <RootBox>
             {FILTER_LIST.filter(x=>x.isVisible(filters)).map(x=>(
                 <li key={x.id}>
                     <Chip 
@@ -122,7 +120,7 @@ function FilterViewer({filters = {},onChange = null}) {
                     </Chip>
                 </li>
             ))}
-        </Box>
+        </RootBox>
     );
 }
 

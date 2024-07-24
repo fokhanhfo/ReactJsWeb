@@ -1,4 +1,5 @@
-import { Close } from '@mui/icons-material';
+import styled from '@emotion/styled';
+import { Close, ShoppingCart } from '@mui/icons-material';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import { Avatar } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
@@ -12,7 +13,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { makeStyles } from '@mui/styles';
 import Login from 'features/Auth/Components/Login';
 import Register from 'features/Auth/Components/Register';
 import { logout } from 'features/Auth/userSlice';
@@ -20,16 +20,26 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, NavLink } from 'react-router-dom';
 
-const useStyles = makeStyles((theme) => ({
-    link: {
-      color: '#fff',
-      textDecoration: 'none',
-    },
-    closeDialog:{
-      top: 0,
-      right: 0,
-    }
-}));
+// const useStyles = makeStyles((theme) => ({
+//     link: {
+//       color: '#fff',
+//       textDecoration: 'none',
+//     },
+//     closeDialog:{
+//       top: 0,
+//       right: 0,
+//     }
+// }));
+
+const LinkStyled = styled(Link)`
+  color: #fff,
+  text-decoration: none;
+`
+const CloseDialogButton= styled(IconButton)`
+  position: absolute;
+  top: 0,
+  right: 0,
+`
 
 const MODE ={
   LOGIN: 'login',
@@ -45,7 +55,6 @@ export default function ButtonAppBar() {
     }
     const currentUser = useCurrentUser();
     const [mode,setMode]=React.useState(MODE.LOGIN);
-    const classes = useStyles();
     const [open, setOpen] = React.useState(false);
 
     const handleClickOpen = () => {
@@ -78,16 +87,21 @@ export default function ButtonAppBar() {
         <Toolbar>
         <AddShoppingCartIcon style={{padding: '0 10px'}}/>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <Link className={classes.link} to="/">FashionShop</Link>
+            <LinkStyled to="/">FashionShop</LinkStyled>
           </Typography>
-          <NavLink className={classes.link} to="/todos">
+          <NavLink className={({ isActive }) => (isActive ? 'active-link' : 'link')} to="/todos">
             <Button color="inherit">Todo</Button>
           </NavLink>
-          <NavLink className={classes.link} to="/albums">
+          <NavLink className={({ isActive }) => (isActive ? 'active-link' : 'link')} to="/albums">
             <Button color="inherit">Album</Button>
           </NavLink>
-          <NavLink className={classes.link} to="/products">
+          <NavLink className={({ isActive }) => (isActive ? 'active-link' : 'link')} to="/products">
             <Button color="inherit">Products</Button>
+          </NavLink>
+          <NavLink className={({ isActive }) => (isActive ? 'active-link' : 'link')} to="/cart">
+            <IconButton>
+              <ShoppingCart />
+            </IconButton>
           </NavLink>
           {!currentUser || !currentUser.id ?
           <Button color="inherit" onClick={handleClickOpen}>Login</Button> : 
@@ -117,9 +131,9 @@ export default function ButtonAppBar() {
           aria-describedby="alert-dialog-description"
           disableEscapeKeyDown
         >
-          <IconButton style={{position: 'absolute'}} onClick={handleClose} className={classes.closeDialog}>
-            <Close></Close>
-          </IconButton>
+          <CloseDialogButton onClick={handleClose}>
+            <Close />
+          </CloseDialogButton>
           <DialogContent>
             {mode === MODE.REGISTER && (
               <>

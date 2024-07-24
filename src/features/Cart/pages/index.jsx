@@ -1,21 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Route, Routes } from 'react-router-dom';
 import ListPage from './ListPage';
+import { Box } from '@mui/material';
+import { Route, Routes } from 'react-router-dom';
 
-ProductFeature.propTypes = {
+CartFeature.propTypes = {
     
 };
 
-function ProductFeature(props) {
+function CartFeature(props) {
     return (
-        <div>
-            product feature
+        <Box mt={2}>
             <Routes>
                 <Route path="" element={<ListPage />} />
             </Routes>
-        </div>
+        </Box>
     );
 }
 
-export default ProductFeature;
+export default CartFeature;

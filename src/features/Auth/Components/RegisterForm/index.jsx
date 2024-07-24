@@ -1,7 +1,7 @@
+import styled from '@emotion/styled';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LockOutlined } from '@mui/icons-material';
 import { Avatar, Button, Typography} from '@mui/material';
-import { makeStyles } from '@mui/styles';
 import InputField from 'components/form-controls/InputForm';
 import PasswordField from 'components/form-controls/PassworField';
 import PropTypes from 'prop-types';
@@ -9,26 +9,24 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 
+const StyledAvatar = styled(Avatar)`
+  margin: 0 auto;
+  background: red;
+`;
+
+const StyledTypography = styled(Typography)`
+  text-align: center;
+`;
+
+const StyledButton = styled(Button)`
+  margin: 16.5px 0;
+`;
+
 RegisterForm.propTypes = {
   onSubmit: PropTypes.func,
 };
 
-const useStyles = makeStyles((theme) =>({
-  root:{},
-
-  avatar:{
-    margin:'0 auto',
-  },
-
-  title:{
-    textAlign: 'center',
-  },
-
-  submit:{},
-}));
-
 function RegisterForm(props) {
-  const classes = useStyles();
 
   const schema = yup
     .object({
@@ -60,22 +58,23 @@ function RegisterForm(props) {
   };
 
   return (
-    <div className={classes.root}>
-      <Avatar className={classes.avatar} style={{background:'red'}}>
-      </Avatar>
+    <div>
+      <StyledAvatar>
+        <LockOutlined />
+      </StyledAvatar>
 
-      <Typography className={classes.title} component="h3" variant='h5'>
+      <StyledTypography component="h3" variant="h5">
         Create An Account
-      </Typography>
+      </StyledTypography>
 
       <form onSubmit={form.handleSubmit(handleSubmit)}>
         <InputField name='fullName' label='Full Name' form={form}/>
         <InputField name='email' label='Email' form={form}/>
         <PasswordField name='password' label='Password' form={form}/>
         <PasswordField name='retypePassword' label='Retype Password' form={form}/>
-        <Button type='submit' fullWidth variant='contained' style={{margin:'16.5px 0'}}>
-          Sign up
-        </Button>
+        <StyledButton type="submit" fullWidth variant="contained">
+          Sign Up
+        </StyledButton>
       </form>
     </div>
   );

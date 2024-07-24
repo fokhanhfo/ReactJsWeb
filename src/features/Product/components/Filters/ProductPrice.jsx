@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, TextField, Typography } from '@mui/material';
-import { makeStyles } from '@mui/styles';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
+import styled from '@emotion/styled';
 
-const useStyles = makeStyles((theme)=>({
-    box:{
-        display: 'flex',
-    },
-    
-}));
+const StyledBox = styled(Box)`
+  display: flex;
+`;
+
+const StyledTextField = styled(TextField)`
+  margin-right: 10px;
+`;
 
 ProductPrice.propTypes = {
     onChange: PropTypes.func,
 };
 
 function ProductPrice(props) {
-    const classes = useStyles();
     const { onChange } = props;
 
     const [price,setPrice]= useState({
@@ -44,23 +44,23 @@ function ProductPrice(props) {
     return (
         <Box>
             <Typography>Giá</Typography>
-            <Box className={classes.box}>
-                <TextField 
-                    name="salePrice_gte"
-                    value={price.salePrice_gte}
-                    type='text' 
-                    onChange={handlePrice}
-                    size='small' 
+            <StyledBox>
+                <StyledTextField
+                name="salePrice_gte"
+                value={price.salePrice_gte}
+                type='text'
+                onChange={handlePrice}
+                size='small'
                 />
-                <ArrowRightAltIcon style={{margin:'10px'}}></ArrowRightAltIcon>
-                <TextField 
-                    name="salePrice_lte"
-                    value={price.salePrice_lte}
-                    type='text' 
-                    onChange={handlePrice}
-                    size='small' 
+                <ArrowRightAltIcon style={{ margin: '10px' }} />
+                <StyledTextField
+                name="salePrice_lte"
+                value={price.salePrice_lte}
+                type='text'
+                onChange={handlePrice}
+                size='small'
                 />
-            </Box>
+            </StyledBox>
             <Button onClick={handleSubmit}>
                 Lọc
             </Button>

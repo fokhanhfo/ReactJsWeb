@@ -1,7 +1,7 @@
+import styled from '@emotion/styled';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LockOutlined } from '@mui/icons-material';
 import { Avatar, Button, Typography} from '@mui/material';
-import { makeStyles } from '@mui/styles';
 import InputField from 'components/form-controls/InputForm';
 import PasswordField from 'components/form-controls/PassworField';
 import PropTypes from 'prop-types';
@@ -13,22 +13,34 @@ LoginForm.propTypes = {
   onSubmit: PropTypes.func,
 };
 
-const useStyles = makeStyles((theme) =>({
-  root:{},
+// const useStyles = makeStyles((theme) =>({
+//   root:{},
 
-  avatar:{
-    margin:'0 auto',
-  },
+//   avatar:{
+//     margin:'0 auto',
+//   },
 
-  title:{
-    textAlign: 'center',
-  },
+//   title:{
+//     textAlign: 'center',
+//   },
 
-  submit:{},
-}));
+//   submit:{},
+// }));
+
+const StyledAvatar = styled(Avatar)`
+  margin: 0 auto;
+  background: red;
+`;
+
+const StyledTypography = styled(Typography)`
+  text-align: center;
+`;
+
+const StyledButton = styled(Button)`
+  margin: 16.5px 0;
+`;
 
 function LoginForm(props) {
-  const classes = useStyles();
 
   const schema = yup
     .object({
@@ -54,20 +66,21 @@ function LoginForm(props) {
   };
 
   return (
-    <div className={classes.root}>
-      <Avatar className={classes.avatar} style={{background:'red'}}>
-      </Avatar>
+    <div>
+      <StyledAvatar>
+        <LockOutlined />
+      </StyledAvatar>
 
-      <Typography className={classes.title} component="h3" variant='h5'> 
+      <StyledTypography component="h3" variant="h5">
         Sign in
-      </Typography>
+      </StyledTypography>
 
       <form onSubmit={form.handleSubmit(handleSubmit)}>
         <InputField name='identifier' label='Email' form={form}/>
         <PasswordField name='password' label='Password' form={form}/>
-        <Button type='submit' fullWidth variant='contained' style={{margin:'16.5px 0'}}>
+        <StyledButton type="submit" fullWidth variant="contained">
           Sign in
-        </Button>
+        </StyledButton>
       </form>
     </div>
   );
