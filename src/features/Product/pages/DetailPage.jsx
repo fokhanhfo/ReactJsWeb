@@ -3,6 +3,7 @@ import ProductThumbnail from '../components/ProductThumbnail';
 import { useMatch } from 'react-router-dom';
 import useProductDetail from '../hooks/useProductDetail';
 import styled from '@emotion/styled';
+import ProductInfo from '../components/ProductInfo';
 
 DetailPage.propTypes = {
     
@@ -15,13 +16,14 @@ const RootBox = styled(Box)`
 
 const LeftGrid = styled(Grid)`
     width: 400px;
-    padding: 12px;
+    padding: 8px;
     border-right: 1px solid #ccc;
 `;
 
 const RightGrid = styled(Grid)`
     flex: 1 1 0;
-    padding: 12px;
+    padding: 8px;
+    justifyContent: center;
 `;
 
 function DetailPage(props) {
@@ -37,14 +39,14 @@ function DetailPage(props) {
     return (
         <RootBox>
             <Container>
-                <Paper elevation={0}>
-                    <Grid container spacing={1}>
-                        <LeftGrid item>
+                <Paper>
+                    <Grid container spacing={1} marginLeft={0}>
+                        <LeftGrid item >
                             <ProductThumbnail product={product}></ProductThumbnail>
                         </LeftGrid>
 
                         <RightGrid item>
-                            Product Info
+                            <ProductInfo product={product} />
                         </RightGrid>
                     </Grid>
                 </Paper>

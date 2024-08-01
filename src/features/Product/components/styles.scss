@@ -1,0 +1,80 @@
+.button_cart {
+    background-color: #007bff;
+    color: #fff;
+    &:hover {
+      background-color: #00b31e;
+    }
+  }
+
+.imageProduct-main{
+  cursor: pointer;
+}
+
+.main-image-sub{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.image_sub{
+    padding:0 5px;
+    box-sizing: border-box;
+    width: 20%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.image_sub_detail{
+  padding:0 5px;
+  box-sizing: border-box;
+  width: 33%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.image_sub_active{
+    border: 1px solid;
+    padding:0 5px;
+    box-sizing: border-box;
+    width: 20%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.image_sub_active_detail{
+    border: 1px solid;
+    padding:0 5px;
+    box-sizing: border-box;
+    width: 33%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.button_back_img {
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(132, 136, 140, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  transition: background-color 0.3s;
+}
+
+.button_back_img.left {
+  left: 0;
+}
+
+.button_back_img.right {
+  right: 0;
+}
+.button_back_img:hover {
+  background-color: cadetblue;
+}
+
+
+  

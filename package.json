@@ -7,7 +7,7 @@
     "@emotion/styled": "^11.13.0",
     "@hookform/error-message": "^2.0.1",
     "@hookform/resolvers": "^3.4.2",
-    "@mui/icons-material": "^5.15.19",
+    "@mui/icons-material": "^5.16.4",
     "@mui/material": "^5.15.19",
     "@mui/styled-engine-sc": "^6.0.0-alpha.18",
     "@reduxjs/toolkit": "^2.2.5",
