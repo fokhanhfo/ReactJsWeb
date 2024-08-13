@@ -8,8 +8,10 @@ Loading.propTypes = {
 
 function Loading(props) {
     return (
-        <div>
-
+        <div className="loading-container">
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
         </div>
     );
 }

@@ -14,6 +14,11 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
+  object-fit: fill;
+}
+
+.controls-image{
+  position: relative;
 }
 
 .image_sub{

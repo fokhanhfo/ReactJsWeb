@@ -5,18 +5,22 @@ export default function useProductDetail(productId){
     const [product , setProduct] = useState({});
     const [loading,setLoading] = useState(true);
 
-    useEffect(()=>{
-        (async()=>{
-            try{
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
                 setLoading(true);
                 const result = await productApi.get(productId);
-                setProduct(result);
-            }catch(e){
-                console.log("lỗi",e);
+                setProduct(result.data);
+            } catch (error) {
+                console.error("Error fetching product details:", error);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
-        })()
-    },[productId])
+        };
+
+        fetchProduct();
+    }, [productId]);
+    console.log(product);
 
     return { product, loading };
 }

@@ -1,0 +1,45 @@
+.header-admin {
+    height: 50px;
+    background-color: blue;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    .header_auth {
+        display: flex;
+        align-items: center;
+    }
+}
+
+.wrapper {
+    display: flex;
+    margin-top: 50px;
+    .nav_menu {
+        width: 200px;
+        background-color: black;
+        height: calc(100vh - 50px);
+        position: fixed;
+        top: 50px; 
+        left: 0;
+        transform: translateX(-100%); 
+        transition: transform 0.3s ease;
+        z-index: 999;
+    }
+    .content {
+        flex: 1; 
+        transition: margin-left 0.3s ease;
+    }
+}
+
+.nav_menu.show {
+    transform: translateX(0);
+}
+
+
+.content_nav {
+    margin-left: 200px;
+}

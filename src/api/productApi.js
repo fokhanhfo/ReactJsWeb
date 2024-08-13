@@ -4,36 +4,54 @@ import axiosClient from "./axiosClient";
 const productApi = {
     async getAll(params){
         const newParams = {...params};
-        newParams._start = !params._page || params._page <= 1 ? 0 : (params._page -1 ) * (params._limit || 50);
 
-        delete newParams._page;
-
-        const productList = await axiosClient.get('/products',{params:newParams});
-        const count = await axiosClient.get('/products/count',{params:newParams});
+        newParams.page -=1;
+        const productList = await axiosClient.get('/shop',{params:newParams});
 
         return {
-            data : productList,
+            data : productList.data.products,
             pagination :{
-                page: params._page,
-                limit: params._limit,
-                total:count,
+                page: params.page,
+                limit: params.limit,
+                count:productList.data.count,
+            }
+        };
+    },
+
+    async getNewProduct(params) {
+        const newParams = {...params}
+        newParams.page -=1;
+        const productList = await axiosClient.get('/shop/newproduct',{params:newParams});
+        return {
+            data : productList.data,
+            pagination :{
+                page: params.page,
+                limit: params.limit
             }
         };
     },
 
     get(id){
-        const url = `/products/${id}`;
+        const url = `/product/${id}`;
         return axiosClient.get(url);
     },
 
-    add(data){
-        const url = `/products/${data.id}`;
-        return axiosClient.post(url,data);
+    async add(data){
+        const url = `/product/Add`;
+        if (data instanceof FormData) {
+            return axiosClient.post(url, data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+        } else {
+            return axiosClient.post(url, data);
+        }
     },
 
     update(data){
-        const url = `/products/${data.id}`;
-        return axiosClient.patch(url,data);
+        const url = `/product/${data.id}`;
+        return axiosClient.put(url,data);
     },
 
     remove(id){

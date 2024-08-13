@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { login } from 'features/Auth/userSlice';
 import { useSnackbar } from 'notistack';
+import { useNavigate } from 'react-router-dom';
 
 Login.propTypes = {
     closeDialog : PropTypes.func,
@@ -13,21 +14,31 @@ Login.propTypes = {
 function Login(props) {
     const dispatch = useDispatch();
     const {enqueueSnackbar} = useSnackbar();
+    const navigate = useNavigate();
 
     const handleSubmit = async (value) => {
         try {
             console.log('form submit',value);
             const action = login(value);
             const resultAction = await dispatch(action);
+            if (login.rejected.match(resultAction)) {
+                const error = resultAction.payload;
+                throw error;
+            }
+            console.log(resultAction);
             const user = unwrapResult(resultAction);
-
+            const listRoles = user.scope.split(' ');
             const {closeDialog}= props;
             if(closeDialog){
                 closeDialog();
+                if(listRoles[0] === 'ROLE_ADMIN'){
+                    navigate('/admin/home');
+                }else {
+                    navigate('/');
+                }
             }
         } catch (error) {
-            console.log('new user to Login:',error);
-            enqueueSnackbar('Đăng nhập thất bại',{variant:'error'})
+            console.log(error);
         }
     }
 

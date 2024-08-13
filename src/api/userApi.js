@@ -7,7 +7,7 @@ const userApi = {
         return axiosClient.post(url,data);
     },
     login(data){
-        const url = `/auth/local`;
+        const url = `/auth/token`;
         return axiosClient.post(url,data);
     },
 };

@@ -1,0 +1,167 @@
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.header{
+    background-color: rgb(171, 171, 204);
+
+}
+
+.nav-noti{
+    p{
+        color: white;
+        margin-left: 20px;
+    }
+    height: 30px;
+    width: 100%;
+    background-color: black;
+    display: none;
+}
+
+.nav-container {
+    height: 50px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+.nav-content{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav__link{
+    width: 60%;
+    display: flex;
+    justify-content: space-around;
+    a{
+        text-decoration: none;
+    }
+}
+  
+  .nav {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .nav a {
+    text-decoration: none;
+    color: black;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav__sign{
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Ẩn menu khi màn hình nhỏ hơn 768px */
+  .nav {
+    display: none;
+  }
+  
+  .nav-icon {
+    display: block;
+  }
+
+  
+  /* Hiển thị menu khi màn hình rộng hơn 768px */
+  @media (min-width: 768px) {
+    .nav {
+      display: flex;
+    }
+  
+    .nav-icon {
+      display: none;
+    }
+    .nav-noti{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+  }
+  
+  /* Các kiểu cho menu trên màn hình nhỏ */
+  .nav-mobile {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background-color: gray;
+    z-index: 1000;
+    display: none;
+    li {
+      float: right;
+      display: block;
+      padding: 1rem;
+    }
+    .nav-mobile-menu {
+      display: block;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      border-bottom: 1px solid gray;
+    }
+    .nav-mobile-category {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      margin: 0;
+      a{
+        justify-content: flex-end;
+      }
+    }
+    a {
+      color: black;
+      text-decoration: none;
+    }
+  }
+
+  .nav-mobile.open {
+    display: flex; /* Hiện khi mở */
+    flex-direction: column;
+    animation: slideIn 0.5s forwards;
+  }
+  
+  .nav-mobile.close {
+    animation: slideOut 0.5s forwards;
+  }
+
+  .active-link{
+    border-bottom: 1px solid black;
+  }
+
+  .icon_cart{
+    svg{
+      position: relative;
+      color: red;
+    }
+    span{
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-size: 15px;
+    }
+  }
+  

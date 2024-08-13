@@ -25,8 +25,8 @@ function ProductSort(props) {
                     <MenuItem value="">
                         <em>Sắp xếp</em>
                     </MenuItem>
-                    <MenuItem value='salePrice:ASC'>Tăng dần</MenuItem>
-                    <MenuItem value='salePrice:DESC'>Giảm dần</MenuItem>
+                    <MenuItem value='Price:ASC'>Tăng dần</MenuItem>
+                    <MenuItem value='Price:DESC'>Giảm dần</MenuItem>
                 </Select>
             </Box>
         </div>

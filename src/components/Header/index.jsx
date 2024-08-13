@@ -19,17 +19,7 @@ import { logout } from 'features/Auth/userSlice';
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, NavLink } from 'react-router-dom';
-
-// const useStyles = makeStyles((theme) => ({
-//     link: {
-//       color: '#fff',
-//       textDecoration: 'none',
-//     },
-//     closeDialog:{
-//       top: 0,
-//       right: 0,
-//     }
-// }));
+import './styles.scss';
 
 const LinkStyled = styled(Link)`
   color: #fff,

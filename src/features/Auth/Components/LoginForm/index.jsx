@@ -7,25 +7,12 @@ import PasswordField from 'components/form-controls/PassworField';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
 import * as yup from 'yup';
 
 LoginForm.propTypes = {
   onSubmit: PropTypes.func,
 };
-
-// const useStyles = makeStyles((theme) =>({
-//   root:{},
-
-//   avatar:{
-//     margin:'0 auto',
-//   },
-
-//   title:{
-//     textAlign: 'center',
-//   },
-
-//   submit:{},
-// }));
 
 const StyledAvatar = styled(Avatar)`
   margin: 0 auto;
@@ -44,25 +31,28 @@ function LoginForm(props) {
 
   const schema = yup
     .object({
-      identifier : yup.string().required('Bắt buộc').email('Nhập đúng đinh dạng email'),
-      password : yup.string().required('Bắt buộc').min(8,'Mật khẩu phải có 8 chữ số'),
+      username : yup.string().required('Bắt buộc'),
+      password : yup.string().required('Bắt buộc'),
     })
     .required();
 
   const form = useForm({
     defaultValues: {
-      identifier: '',
+      username: '',
       password: '',
     },
     resolver: yupResolver(schema),
   });
 
-  const handleSubmit = (value) => {
+  const { setError } = form;
+  const errorMessage = useSelector((state) => state.user.error?.message || '');
+
+  const handleSubmit = async(value) => {
     const {onSubmit} = props;
-    if(onSubmit){
-      onSubmit(value);
+    if (onSubmit) {
+      await onSubmit(value);
     }
-    form.reset();
+    // form.reset();
   };
 
   return (
@@ -70,13 +60,14 @@ function LoginForm(props) {
       <StyledAvatar>
         <LockOutlined />
       </StyledAvatar>
-
       <StyledTypography component="h3" variant="h5">
         Sign in
       </StyledTypography>
 
+      <p>{errorMessage}</p>
+
       <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <InputField name='identifier' label='Email' form={form}/>
+        <InputField name='username' label='Username' form={form}/>
         <PasswordField name='password' label='Password' form={form}/>
         <StyledButton type="submit" fullWidth variant="contained">
           Sign in

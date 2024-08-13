@@ -5,11 +5,11 @@ import ListPage from './pages/ListPage';
 import { Box } from '@mui/material';
 import DetailPage from './pages/DetailPage';
 
-ProductFeature.propTypes = {
+ProductFeatureCopy.propTypes = {
     
 };
 
-function ProductFeature(props) {
+function ProductFeatureCopy(props) {
     return (
         <Box mt={2}>
             <Routes>
@@ -20,4 +20,4 @@ function ProductFeature(props) {
     );
 }
 
-export default ProductFeature;
+export default ProductFeatureCopy;

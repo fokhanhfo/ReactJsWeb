@@ -16,7 +16,7 @@ function ProductFilter(props) {
         if(onChange){
             const newFilter = {
                 ...filters,
-                'category.id': newCategoryId,
+                'category': newCategoryId,
             }
             onChange(newFilter);
         }
@@ -26,8 +26,8 @@ function ProductFilter(props) {
         if(onChange){
             const newFilter = {
                 ...filters,
-                'salePrice_gte': newPrice.salePrice_gte,
-                'salePrice_lte': newPrice.salePrice_lte
+                'price_gte': newPrice.salePrice_gte,
+                'price_lte': newPrice.salePrice_lte
             }
             onChange(newFilter);
         }

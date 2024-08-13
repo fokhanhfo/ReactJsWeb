@@ -1,0 +1,32 @@
+.filter{
+    display: flex;
+}
+.filter_category{
+    display: flex;
+    cursor: pointer;
+}
+.filter_category_list{
+    width: 100%;
+    background-color: burlywood;
+    display: flex;
+    .category_filter_item{
+        cursor: pointer;
+        margin-left: 20px;
+    }
+}
+
+//table
+
+.table-cell {
+    padding: 5px;
+    width: 150px;
+    height: 150px;
+}
+
+.image-cell img {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+}
+
+

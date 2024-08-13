@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Chip } from '@mui/material';
 import categoryApi from 'api/categoryApi';
@@ -29,16 +29,16 @@ function FilterViewer({filters = {},onChange = null}) {
         const fetchCategory = async (categoryId) => {
             try {
                 const data = await categoryApi.get(categoryId);
-                setDataCategory(data);
+                setDataCategory(data.data);
             } catch (error) {
                 console.log("lỗi", error);
             }
         };
-        const categoryId= filters['category.id'];
+        const categoryId= filters['category'];
         if (categoryId) {
             fetchCategory(categoryId);
         }
-    },[filters['category.id']]);
+    },[filters['category']]);
 
     const FILTER_LIST =[
         {
@@ -60,18 +60,18 @@ function FilterViewer({filters = {},onChange = null}) {
         },
         {
             id:2,
-            getLabel:(filter) => `${filter.salePrice_gte}=>${filter.salePrice_lte}`,
+            getLabel:(filter) => `${filter.price_gte}=>${filter.price_lte}`,
             isActive:() => true,
             isVisible:(filter) =>{
-                if(filter.salePrice_lte){
+                if(filter.price_lte){
                     return true;
                 }
             },
             isRemovable:true,
             onRemove:filter =>{
                 const newFilters = { ...filter };
-                delete newFilters.salePrice_lte;
-                delete newFilters.salePrice_gte;
+                delete newFilters.price_lte;
+                delete newFilters.price_gte;
                 return newFilters;
             },
             onToggle:()=>{},
@@ -82,20 +82,24 @@ function FilterViewer({filters = {},onChange = null}) {
                 return dataCategory?.name || 'Loading...';
             },
             isActive:filter => true,
-            isVisible:(filter) =>Boolean(filter['category.id']),
+            isVisible:(filter) =>Boolean(filter['category']),
             isRemovable:true,
             onRemove:filter =>{
                 const newFilters = { ...filter };
-                delete newFilters['category.id'];
+                delete newFilters['category'];
                 return newFilters;
             },
             onToggle:()=>{},
         },
     ]
 
+    const visibleFilters = useMemo(()=>{
+        return FILTER_LIST.filter(x=>x.isVisible(filters))
+    })
+
     return (
         <RootBox>
-            {FILTER_LIST.filter(x=>x.isVisible(filters)).map(x=>(
+            {visibleFilters.map(x=>(
                 <li key={x.id}>
                     <Chip 
                     label={x.getLabel(filters)} 

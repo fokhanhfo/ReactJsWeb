@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
 import userApi from 'api/userApi';
 import StorageKeys from 'constants/storage-keys';
+import { jwtDecode } from 'jwt-decode';
 
 
 export const register = createAsyncThunk(
@@ -15,18 +16,33 @@ export const register = createAsyncThunk(
 
 export const login = createAsyncThunk(
     'user/login',
-    async(payload) => {
+    async(payload,{ rejectWithValue }) => {
         const data = await userApi.login(payload);
-        localStorage.setItem(StorageKeys.TOKEN, data.jwt);
-        localStorage.setItem(StorageKeys.USER, JSON.stringify(data.user));
-        return data.user;
+        console.log(data)
+        if (data.statusCode === 'BAD_REQUEST') {
+            return rejectWithValue(data.body);
+        }
+        const token = data.body.data;
+        localStorage.setItem(StorageKeys.TOKEN, token);
+        const decodedToken = jwtDecode(data.body.data);
+        const jsonJWT = JSON.stringify(decodedToken);
+        localStorage.setItem(StorageKeys.USER, jsonJWT);
+        try {
+          const decodedToken = jwtDecode(token);
+          return decodedToken;
+        } catch (decodeError) {
+            console.error('Failed to decode token:', decodeError);
+            return rejectWithValue({ message: 'Token không hợp lệ' });
+        }
     }
 );
+
 const userSlice = createSlice({
   name: 'user',
   initialState: {
-    current: JSON.parse(localStorage.getItem(StorageKeys.USER)) ||{},
+    current: JSON.parse(localStorage.getItem(StorageKeys.USER)) || {},
     settings:{},
+    error: null,
   },
   reducers: {
     logout(state){
@@ -38,10 +54,14 @@ const userSlice = createSlice({
   extraReducers: (builder) => {
     builder
         .addCase(register.fulfilled, (state, action) => {
-        state.current = action.payload;
+          state.current = action.payload;
         })
         .addCase(login.fulfilled, (state, action) => {
             state.current = action.payload;
+            state.error = null;
+        })
+        .addCase(login.rejected, (state, action) => {
+            state.error = action.payload;
         });
   },
 });

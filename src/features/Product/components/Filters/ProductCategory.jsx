@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import categoryApi from 'api/categoryApi';
 import { Box, Button, Typography } from '@mui/material';
+import { useSelector } from 'react-redux';
 
 ProductCategory.propTypes = {
     onChange : PropTypes.func,
@@ -10,18 +10,12 @@ ProductCategory.propTypes = {
 function ProductCategory(props) {
     const { onChange } = props;
     const [dataCategory,setDataCategory] = useState([]);
-
-    useEffect(()=>{
-        (async()=>{
-            try {
-                const data = await categoryApi.getAll();
-                setDataCategory(data);
-                console.log(data);
-            } catch (error) {
-                console.log("lỗi",error);
-            }
-        })();
-    },[]);
+    const categoryQuery = useSelector((state)=> state.categoryApi.queries["getCategory(undefined)"]);
+    useEffect(() => {
+        if (categoryQuery && categoryQuery.data) {
+            setDataCategory(categoryQuery.data.data);
+        }
+    }, [categoryQuery]);
 
     const handleCategory = (category)=>{
         if(onChange){

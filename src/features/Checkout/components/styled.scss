@@ -1,0 +1,82 @@
+.checkout_product{
+    padding: 10px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    border-bottom: 0.5px solid rgb(229 231 235);
+    height: 150px;
+}
+
+.checkout_product_img{
+    width: 20%;
+    img{
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+    }
+}
+
+.checkout_product_deltail{
+    width: 80%;
+    margin-left: 10px;
+    .checkout_product_price{
+        font-weight: 450;
+    }
+    .checkout_product_quantity{
+        display: flex;
+        .checkout_quantity{
+            margin: 0 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+    }
+}
+
+.checkout_lable{
+    font-weight: 300;
+}
+
+.pay_method{
+    margin-left: 10px;
+}
+
+/////
+.voucher-component {  
+    float: right;
+    border: 1px solid #ccc;  
+    padding: 10px;  
+    border-radius: 8px;  
+    background-color: #fff;  
+    width: 30%;
+}  
+
+.voucher-header {  
+    display: flex;  
+    justify-content: space-between;  
+    align-items: center;  
+}  
+
+.voucher-button{
+    background-color: white;  
+    color: black;  
+    border: none;  
+    padding: 10px;  
+    cursor: pointer; 
+}
+
+.apply-button, .complete-order {  
+    background-color: black;  
+    color: white;  
+    border: none;  
+    padding: 10px;  
+    cursor: pointer;  
+}  
+
+.voucher-details {  
+    margin: 15px 0;  
+}  
+
+.total-amount {  
+    font-weight: bold;  
+    margin-top: 10px;  
+}
