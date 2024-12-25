@@ -7,6 +7,7 @@ import PasswordField from 'components/form-controls/PassworField';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
 import * as yup from 'yup';
 
 const StyledAvatar = styled(Avatar)`
@@ -27,12 +28,12 @@ RegisterForm.propTypes = {
 };
 
 function RegisterForm(props) {
-
+  // .test('hai từ','Họ tên phải có 2 từ trở lên',(value)=>{
+  //   return value.trim().split(' ').length >=2;
+  // }),
   const schema = yup
     .object({
-      fullName: yup.string().required('please enter fullname').test('hai từ','Họ tên phải có 2 từ trở lên',(value)=>{
-        return value.trim().split(' ').length >=2;
-      }),
+      username: yup.string().required('please enter fullname'),
       email : yup.string().required('Bắt buộc').email('Nhập đúng đinh dạng email'),
       password : yup.string().required('Bắt buộc').min(8,'Mật khẩu phải có 8 chữ số'),
       retypePassword:yup.string().required('Băt buộc').oneOf([yup.ref('password')],'Nhập lại sai')
@@ -41,7 +42,7 @@ function RegisterForm(props) {
 
   const form = useForm({
     defaultValues: {
-      fullName: '',
+      username: '',
       email: '',
       password: '',
       retypePassword: '',
@@ -57,6 +58,8 @@ function RegisterForm(props) {
     form.reset();
   };
 
+  const errorMessage = useSelector((state) => state.user.error?.message || '');
+
   return (
     <div>
       <StyledAvatar>
@@ -67,8 +70,10 @@ function RegisterForm(props) {
         Create An Account
       </StyledTypography>
 
+      <p>{errorMessage}</p>
+
       <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <InputField name='fullName' label='Full Name' form={form}/>
+        <InputField name='username' label='User Name' form={form}/>
         <InputField name='email' label='Email' form={form}/>
         <PasswordField name='password' label='Password' form={form}/>
         <PasswordField name='retypePassword' label='Retype Password' form={form}/>

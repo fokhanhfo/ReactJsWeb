@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Paper, Select, Typography } from '@mui/material';
+import { Button, Paper, Select, Typography } from '@mui/material';
 import InputField from 'components/form-controls/InputForm';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axios from 'axios';
 import SelectFrom from 'components/form-controls/SelectFrom';
 import styled from 'styled-components';
+import { CheckoutContext } from './CheckoutProvider';
 
 ShipDetail.propTypes = {
-    
+  form : PropTypes.object.isRequired,
 };
 
 const StyledTypography = styled(Typography)`
@@ -36,13 +37,12 @@ const { data: communeList } = await axios.get(
 return communeList;
 }
 
-function ShipDetail(props) { 
+function ShipDetail({form}) { 
     const [optionsCity,setOptionsCity] = useState([]); 
     const [districtList, setDistrictList] = React.useState([]);
     const [communeList, setCommuneList] = React.useState([]);
     const [districtValue, setDistrictValue] = React.useState(0);
     const [communeValue, setCommuneValue] = React.useState(0);
-    
     const [isLoadingDistrict, setIsLoadingDistrict] = React.useState(false);
     const [isLoadingCommune, setIsLoadingCommune] = React.useState(false);
     useEffect(() => {
@@ -57,24 +57,7 @@ function ShipDetail(props) {
 
         fetchData();
     }, []);
-    const schema = yup
-    .object({
 
-    })
-    .required();
-
-    const form = useForm({
-        defaultValues: {
-          fullname: '',
-          email: '',
-          phone:'',
-          city:'',
-          district:'',
-          commune:'',
-        },
-        resolver: yupResolver(schema),
-      });
-    
       const handleChangeProvince = async (id) => {
         if (Number(id) < 1) {
             setDistrictList([]);
@@ -104,14 +87,15 @@ function ShipDetail(props) {
       };
 
     return (
-        <Paper>
-            <StyledTypography>Thông tin giao dịch</StyledTypography>
-            <InputField label='Họ Và Tên' name='fullname' form={form}></InputField>
-            <InputField label='Email' name='email' form={form}></InputField>
-            <InputField label='Phone' name='phone' form={form}></InputField>
-            <SelectFrom id='idProvince' onSubmit={(id)=>handleChangeProvince(id)} label='Thành Phố' name='city' form={form} options={optionsCity}></SelectFrom>
-            <SelectFrom id='idDistrict' onSubmit={(id)=>handleChangeDistrict(id)} label='Huyện' name='district' form={form} options={districtList}></SelectFrom>
-            <SelectFrom id='idCommune' label='Chọn Phường/Xã' form={form} options={communeList} name='commune'></SelectFrom>
+        <Paper style={{padding:'5px'}}>
+                <StyledTypography>Thông tin giao dịch</StyledTypography>
+                <InputField label='Họ Và Tên' name='fullname' form={form}></InputField>
+                <InputField label='Email' name='email' form={form}></InputField>
+                <InputField label='Phone' name='phone' form={form}></InputField>
+                <SelectFrom transmitId='idProvince' onSubmit={(id)=>handleChangeProvince(id)} label='Thành Phố' name='city' form={form} options={optionsCity}></SelectFrom>
+                <SelectFrom transmitId='idDistrict' onSubmit={(id)=>handleChangeDistrict(id)} label='Huyện' name='district' form={form} options={districtList}></SelectFrom>
+                <SelectFrom transmitId='idCommune' label='Chọn Phường/Xã' form={form} options={communeList} name='commune'></SelectFrom>
+                <InputField name='addressDetail' label='Số nhà, Tên đường' form={form}></InputField>
         </Paper>
     );
 }

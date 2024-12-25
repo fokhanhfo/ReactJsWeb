@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, InputLabel, MenuItem, OutlinedInput, Select, useTheme } from '@mui/material';
+import { FormControl, FormHelperText, InputLabel, MenuItem, OutlinedInput, Select, useTheme } from '@mui/material';
 import { Controller } from 'react-hook-form';
 
 SelectFrom.propTypes = {
@@ -11,7 +11,7 @@ SelectFrom.propTypes = {
     options: PropTypes.array.isRequired,
     onSubmit: PropTypes.func,
     isLoading: PropTypes.bool,
-    id: PropTypes.string,
+    transmitId: PropTypes.string,
 };
 
 const ITEM_HEIGHT = 48;
@@ -26,16 +26,27 @@ const MenuProps = {
 };
 
 function SelectFrom(props) {
-    const { id,form, name, label, disabled, options,onSubmit,isLoading } = props;
+    const { transmitId,form, name, label, disabled, options,onSubmit,isLoading } = props;
     const { formState: { errors } } = form;
 
     const handleChange = (event) => {
+        const selectedValue = event.target.value;
+        const selectedOption = options.find(option => valueSelect(option) === selectedValue);
         if (onSubmit) {
-          onSubmit(event.target.value);
+            onSubmit(selectedOption[`${transmitId}`]);
         }
-      };
+    };
+
+    const valueSelect = (value) => {
+        if(transmitId){
+            return value.name;
+        }
+        return value.id;
+    };
+
+
     return (
-        <FormControl margin='normal' className='select_form' sx={{width:'100%'}}>
+        <FormControl margin='normal' className='select_form' sx={{width:'100%'}} error={!!errors[name]}> 
             <InputLabel id="demo-multiple-name-label">{label}</InputLabel>
             <Controller 
                 name={name}
@@ -54,8 +65,8 @@ function SelectFrom(props) {
                         >
                         {options.map((option) => (
                             <MenuItem
-                                key={option.id}
-                                value={option.id}
+                                key={valueSelect(option)}
+                                value={valueSelect(option)}
                             >
                             {option.name}
                             </MenuItem>
@@ -63,6 +74,9 @@ function SelectFrom(props) {
                     </Select>
                 )}
             />
+            {errors[name] && (
+                <FormHelperText>{errors[name]?.message}</FormHelperText>
+            )}
         </FormControl>
     );
 }

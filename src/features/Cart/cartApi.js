@@ -1,16 +1,19 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-const token = 'eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiIiLCJzdWIiOiJqb2huZG9lNCIsImV4cCI6MTcyNTI3MTQ1NywiaWF0IjoxNzIyNjc5NDU3LCJqdGkiOiI3NTdiYjNkYy0xOTU4LTQyNjItYjg4Zi04NDEyNzViZjA5YjIiLCJzY29wZSI6IlJPTEVfVVNFUiBBUFBST1ZFX1BPU1QifQ.cQaWG9Li8OI7l60wJEirCsu-adveot6DBD6KPb1xYfYQnr4C8UcN5Pl8nrMuVrZykowW9KnU5DcFNz8tImhjfA'
+import baseQueryWithReauth from "api/baseQuery";
+import StorageKeys from "constants/storage-keys";
 export const cartApi = createApi({
     reducerPath:'cartApi',
-    baseQuery : fetchBaseQuery({
-        baseUrl:"http://localhost:8080",
-        prepareHeaders: (headers) => {
-            if (token) {
-              headers.set('Authorization', `Bearer ${token}`);
-            }
-            return headers;
-          },
-    }),
+    baseQuery: baseQueryWithReauth,
+    // baseQuery : fetchBaseQuery({
+    //     baseUrl:"http://localhost:8080",
+    //     prepareHeaders: (headers) => {
+    //         const token = localStorage.getItem(StorageKeys.TOKEN);
+    //         if (token) {
+    //           headers.set('Authorization', `Bearer ${token}`);
+    //         }
+    //         return headers;
+    //       },
+    // }),
     endpoints: (builder)=>({
         getCart : builder.query({
             query:()=>"cart",
@@ -40,7 +43,11 @@ export const cartApi = createApi({
             }),
             invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
         }),
+        clearCart: builder.mutation({  // Đổi tên thành clearCart
+            queryFn: () => ({ data: null }), // Không cần request, chỉ cần xóa state
+            invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
+        }),
     }),
 });
 
-export const { useGetCartQuery,useAddToCartMutation,useUpdateCartMutation,useDeletecartMutation   } = cartApi;
+export const { useGetCartQuery,useAddToCartMutation,useUpdateCartMutation,useDeletecartMutation,useClearCartMutation} = cartApi;

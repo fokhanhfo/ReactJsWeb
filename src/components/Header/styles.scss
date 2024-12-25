@@ -25,6 +25,12 @@
 
 }
 
+.nav_logo{
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
 .nav-noti{
     p{
         color: white;
@@ -55,113 +61,140 @@
     width: 60%;
     display: flex;
     justify-content: space-around;
+    align-items: center;
+    margin-bottom: 5px;
+    .nav_category{
+      display: flex;
+      align-items: center;
+      .nav_category_btn{
+        display: flex;
+        align-items: center;
+        position: relative;
+        justify-content: center;
+        cursor: pointer;
+      }
+    }
     a{
         text-decoration: none;
+        height: 100%;
     }
 }
   
+.nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav a {
+  text-decoration: none;
+  color: black;
+  display: flex;
+  align-items: center;
+}
+
+.nav__sign{
+  display: flex;
+  align-items: center;
+}
+
+/* Ẩn menu khi màn hình nhỏ hơn 768px */
+.nav {
+  display: none;
+}
+
+.nav-icon {
+  display: block;
+}
+
+
+/* Hiển thị menu khi màn hình rộng hơn 768px */
+@media (min-width: 768px) {
   .nav {
     display: flex;
-    gap: 1rem;
-  }
-  
-  .nav a {
-    text-decoration: none;
-    color: black;
-    display: flex;
-    align-items: center;
   }
 
-  .nav__sign{
-    display: flex;
-    align-items: center;
-  }
-  
-  /* Ẩn menu khi màn hình nhỏ hơn 768px */
-  .nav {
-    display: none;
-  }
-  
   .nav-icon {
-    display: block;
-  }
-
-  
-  /* Hiển thị menu khi màn hình rộng hơn 768px */
-  @media (min-width: 768px) {
-    .nav {
-      display: flex;
-    }
-  
-    .nav-icon {
-      display: none;
-    }
-    .nav-noti{
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-  }
-  
-  /* Các kiểu cho menu trên màn hình nhỏ */
-  .nav-mobile {
-    position: absolute;
-    top: 50px;
-    right: 0;
-    background-color: gray;
-    z-index: 1000;
     display: none;
-    li {
-      float: right;
-      display: block;
-      padding: 1rem;
-    }
-    .nav-mobile-menu {
-      display: block;
-      padding: 0;
-      margin: 0;
+  }
+  .nav-noti{
       display: flex;
-      border-bottom: 1px solid gray;
-    }
-    .nav-mobile-category {
-      display: flex;
-      flex-direction: column;
-      padding: 0;
-      margin: 0;
-      a{
-        justify-content: flex-end;
-      }
-    }
-    a {
-      color: black;
-      text-decoration: none;
-    }
+      justify-content: space-between;
+      align-items: center;
   }
+}
 
-  .nav-mobile.open {
-    display: flex; /* Hiện khi mở */
-    flex-direction: column;
-    animation: slideIn 0.5s forwards;
+/* Các kiểu cho menu trên màn hình nhỏ */
+.nav-mobile {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background-color: gray;
+  z-index: 1000;
+  display: none;
+  li {
+    float: right;
+    display: block;
+    padding: 1rem;
   }
-  
-  .nav-mobile.close {
-    animation: slideOut 0.5s forwards;
+  .nav-mobile-menu {
+    display: block;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    border-bottom: 1px solid gray;
   }
+  a {
+    color: black;
+    text-decoration: none;
+  }
+}
 
-  .active-link{
-    border-bottom: 1px solid black;
+.nav-mobile-category {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  a{
+    justify-content: flex-end;
+    color: black;
   }
+}
 
-  .icon_cart{
-    svg{
-      position: relative;
-      color: red;
-    }
-    span{
-      position: absolute;
-      top: 0;
-      right: 0;
-      font-size: 15px;
-    }
+.nav-mobile.open {
+  display: flex; /* Hiện khi mở */
+  flex-direction: column;
+  animation: slideIn 0.5s forwards;
+}
+
+.nav-mobile.close {
+  animation: slideOut 0.5s forwards;
+}
+
+.icon_cart{
+  svg{
+    position: relative;
+    color: red;
   }
+  span{
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 15px;
+  }
+}
+
+.nav_category_list{
+  width: 300px;
+  top: 25px;
+  left: 25px;
+  position: absolute;
+  z-index: 998;
+  background-color: white;
+  li{
+    display: block;
+    padding: 1rem;
+  }
+}
+
   

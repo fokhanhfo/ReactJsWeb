@@ -47,14 +47,12 @@ function ListProdcut({cartQuery}) {
         }
     };
 
-    const CartItemSelect = cartData.filter(item => item.status === 1);
-
     return (
         <Paper>
             {cartData ? (
                 <div>
-                    {CartItemSelect.map(item => (
-                        <div className='checkout_product'>
+                    {cartData.filter(item => item.status === 1).map(item => (
+                        <div key={item.id} className='checkout_product'>
                             <div className='checkout_product_img'>
                                 <img src={item.product.imagesUrl[0]} alt="" />
                             </div>

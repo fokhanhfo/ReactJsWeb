@@ -53,7 +53,6 @@ function CKEditorForm({ form, name, lable, disabled }) {
                             mediaEmbed: {
                                 previewsInData: true
                             },
-                            initialData: '<p>Hello from CKEditor 5 in React!</p>',
                         }}
                         data={field.value}
                         onChange={(event, editor) => {

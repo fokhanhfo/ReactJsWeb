@@ -16,21 +16,28 @@ function Register(props) {
 
     const handleSubmit = async (value) => {
         try {
-            value.username = value.email;
-            console.log('form submit',value);
-            const action = register(value);
+            const newValue={
+                ...value,
+                typeLogin:0,
+            };
+            const action = register(newValue);
             const resultAction = await dispatch(action);
+            if (register.rejected.match(resultAction)) {
+                const error = resultAction.payload;
+                throw error;
+            }
             const user = unwrapResult(resultAction);
+            console.log(user);
 
             const {closeDialog}= props;
             if(closeDialog){
                 closeDialog();
             }
 
-            enqueueSnackbar('Tạo tài khoản thành công',{variant:'success'})
+            enqueueSnackbar('Tạo tài khoản thành công',{variant:'success'});
         } catch (error) {
-            console.log('new user to register:',error);
-            enqueueSnackbar('Tạo tài khoản thất bại',{variant:'error'})
+            console.error('new user to register:',error);
+            enqueueSnackbar('Tạo tài khoản thất bại',{variant:'error'});
         }
     }
 

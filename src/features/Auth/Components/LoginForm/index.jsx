@@ -8,10 +8,14 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useSelector } from 'react-redux';
+import {LoginSocialFacebook} from 'reactjs-social-login';
+import {FacebookLoginButton} from 'react-social-login-buttons'
 import * as yup from 'yup';
+import { facebookLogin } from 'features/Auth/userSlice';
 
 LoginForm.propTypes = {
   onSubmit: PropTypes.func,
+  loginFacebook: PropTypes.func,
 };
 
 const StyledAvatar = styled(Avatar)`
@@ -55,6 +59,16 @@ function LoginForm(props) {
     // form.reset();
   };
 
+  const handleLoginFacebook = async(value) => {
+    const {loginFacebook} = props;
+    if (loginFacebook) {
+      const newValue = {
+        token:value
+      }
+      await loginFacebook(newValue);
+    }
+  };
+
   return (
     <div>
       <StyledAvatar>
@@ -73,6 +87,20 @@ function LoginForm(props) {
           Sign in
         </StyledButton>
       </form>
+      <div>
+        <LoginSocialFacebook
+          appId="1261402088556652"
+          onResolve={(response)=>{
+            handleLoginFacebook(response.data.accessToken);
+          }}
+          onReject={(error)=>{
+            console.log(error);
+          }}
+          scope="email,public_profile" 
+        >
+          <FacebookLoginButton/>
+        </LoginSocialFacebook>
+      </div>
     </div>
   );
 }

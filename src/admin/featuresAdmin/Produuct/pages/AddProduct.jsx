@@ -10,7 +10,7 @@ AddProduct.propTypes = {
 };
 
 function AddProduct(props) {
-    const{enqueueSnackbar } = useSnackbar(props);
+    const{enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
     const handleSubmit = async(value)=>{

@@ -37,31 +37,19 @@ function CartItem({ listCart = [], onCheckboxChange  }) {
 
     const handleIncrement = async (cartItem) => {
         const newQuantity = {...cartItem,quantity: (cartItem.quantity+1),product: cartItem.product.id}
-        try {
-            await updateCart(newQuantity).unwrap();
-        } catch (error) {
-            console.log(error);
-        }
+        await updateCart(newQuantity).unwrap();
     };
 
     const handleDecrement = async (cartItem) => {
         if (cartItem.quantity > 1) {
             const newQuantity = {...cartItem,quantity: (cartItem.quantity-1),product: cartItem.product.id};
             console.log(newQuantity);
-            try {
-                await updateCart(newQuantity).unwrap();
-            } catch (error) {
-                console.log(error);
-            }
+            await updateCart(newQuantity).unwrap();
         }
     };
 
     const handleDelete = async (id) => {
-        try {
-            const response = await deleteCart(id).unwrap();
-        } catch (error) {
-            console.log(error);
-        }
+        const response = await deleteCart(id).unwrap();
     }
     const isChecked = (cartItem) => {
         if(cartItem.status===1){
