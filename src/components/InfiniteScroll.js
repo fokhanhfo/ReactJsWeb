@@ -7,6 +7,7 @@ const InfiniteScroll = ({
   hasMore,
   endMessage,
   className,
+  isSearch,
 }) => {
   const pageEndRef = useRef(null);
   useEffect(() => {
@@ -32,7 +33,7 @@ const InfiniteScroll = ({
     <div className={className}>
       {children}
 
-      {hasMore ? <div ref={pageEndRef}>{loader}</div> : endMessage}
+      {hasMore && !isSearch ? <div ref={pageEndRef}>{loader}</div> : endMessage}
     </div>
   );
 };

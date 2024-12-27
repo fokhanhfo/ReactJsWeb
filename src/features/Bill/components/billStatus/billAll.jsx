@@ -39,10 +39,22 @@ const StyledTextField = styled(TextField)`
 function BillAll({ listBill, queryParams, onSubmit, pagination }) {
   const [page, setPage] = useState(queryParams.page);
   const [posts, setPosts] = useState([]);
+  const [isSearch, setIsSearch] = useState(false);
 
   useEffect(() => {
-    setPosts([...posts, ...listBill]);
-  }, [listBill]);
+    if (queryParams.status) {
+      // Khi có trạng thái cụ thể, thay thế danh sách hóa đơn
+      setPosts([...listBill]);
+      setPage(1); // Đặt lại page
+    } else {
+      // Khi quay lại trạng thái "Tất cả", làm mới danh sách
+      setPosts((prevPosts) => {
+        const newPosts = listBill.filter((newBill) => !prevPosts.some((prevBill) => prevBill.id === newBill.id));
+        return [...prevPosts, ...newPosts];
+      });
+    }
+    setIsSearch(queryParams.search != null);
+  }, [listBill, queryParams.status, queryParams.search]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -51,10 +63,12 @@ function BillAll({ listBill, queryParams, onSubmit, pagination }) {
       search: event.target.search.value,
       page: 1,
     };
+    if (queryParams.search !== newFilter.search) {
+      setPosts([]);
+    }
     if (onSubmit) {
       onSubmit(newFilter);
     }
-    setPosts([]);
   };
 
   const fetchMore = () => {
@@ -63,7 +77,7 @@ function BillAll({ listBill, queryParams, onSubmit, pagination }) {
     }
     setTimeout(() => {
       setPage((prevPage) => {
-        const newPage = prevPage + 1;
+        const newPage = parseInt(prevPage) + 1;
         const newFilter = {
           ...queryParams,
           page: newPage,
@@ -78,42 +92,50 @@ function BillAll({ listBill, queryParams, onSubmit, pagination }) {
 
   return (
     <Box>
-      <form onSubmit={(event) => handleSearch(event)}>
-        <Box sx={{ marginBottom: '20px' }}>
-          <StyledTextField
-            name="search"
-            placeholder="Tìm kiếm"
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-      </form>
+      {!queryParams.status && (
+        <form onSubmit={(event) => handleSearch(event)}>
+          <Box sx={{ marginBottom: '20px' }}>
+            <StyledTextField
+              name="search"
+              placeholder="Tìm kiếm"
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+        </form>
+      )}
 
       <InfiniteScroll
         loader={<Loading />}
         className="w-[800px] mx-auto my-10"
         fetchMore={fetchMore}
-        hasMore={posts.length < pagination.count}
+        hasMore={queryParams.search != null ? isSearch : posts.length < pagination.count}
         endMessage={
           <>
             <p style={{ textAlign: 'center' }}>Đã hết sản phẩm</p>
           </>
         }
+        isSearch={isSearch}
       >
         <Box>
           {posts.map((item) => {
             const billDetails = item.billDetail;
             return (
               <Paper key={item.id} elevation={3} sx={{ marginBottom: '20px', padding: '20px' }}>
-                <Typography variant="h6" sx={{ marginBottom: '10px' }}>
-                  ID Hóa Đơn: {item.id}
-                </Typography>
+                <Box>
+                  <Typography variant="h6" sx={{ marginBottom: '10px' }}>
+                    ID Hóa Đơn: {item.id}
+                  </Typography>
+                  <Typography variant="h6" sx={{ marginBottom: '10px' }}>
+                    Trạng thái: {item.status}
+                  </Typography>
+                </Box>
                 {billDetails.map((item, i) => {
                   const product = item.productId;
                   return (

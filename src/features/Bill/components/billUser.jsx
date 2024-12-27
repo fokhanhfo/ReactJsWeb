@@ -56,6 +56,7 @@ function BillUser(props) {
         handleGlobalError(error, enqueueSnackbar);
       }
     };
+    console.log('Fetching all');
 
     fetchBills();
   }, [queryParams]);
@@ -79,7 +80,7 @@ function BillUser(props) {
             <NavLink to="./all?status=1">Chờ thanh toán</NavLink>
             <NavLink to="./shipping">Vận chuyển</NavLink>
             <NavLink to="./delivered">Chờ giao hàng</NavLink>
-            <NavLink to="./completed">Hoàn thành</NavLink>
+            <NavLink to="./all?status=2">Hoàn thành</NavLink>
             <NavLink to="./cancelled">Đã hủy</NavLink>
             <NavLink to="./returned">Trả hàng/Hoàn tiền</NavLink>
           </Box>
@@ -95,11 +96,6 @@ function BillUser(props) {
             }
           />
           <Route path="/:billId" element={<PageBillDetail />} />
-          <Route
-            path="/:status"
-            element={<BillAll listBill={listBill} onSubmit={onSubmit} queryParams={queryParams} />}
-          />
-          {/* Thêm các route khác nếu cần */}
         </Routes>
       </Box>
     </Box>
