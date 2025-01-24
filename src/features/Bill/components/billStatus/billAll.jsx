@@ -16,7 +16,7 @@ import Loading from 'components/Loading';
 BillAll.propTypes = {
   listBills: PropTypes.array.isRequired,
   pagination: PropTypes.object.isRequired,
-  queryParams: PropTypes.object.isRequired,
+  filter: PropTypes.object.isRequired,
   onSubmit: PropTypes.func.isRequired,
 };
 
@@ -36,13 +36,15 @@ const StyledTextField = styled(TextField)`
   }
 `;
 
-function BillAll({ listBill, queryParams, onSubmit, pagination }) {
-  const [page, setPage] = useState(queryParams.page);
+function BillAll({ listBill, filter, onSubmit, pagination }) {
+  const [page, setPage] = useState(filter.page);
   const [posts, setPosts] = useState([]);
   const [isSearch, setIsSearch] = useState(false);
+  const isPage = pagination.count / filter.limit > page;
+  console.log(listBill);
 
   useEffect(() => {
-    if (queryParams.status) {
+    if (filter.status) {
       // Khi có trạng thái cụ thể, thay thế danh sách hóa đơn
       setPosts([...listBill]);
       setPage(1); // Đặt lại page
@@ -53,17 +55,17 @@ function BillAll({ listBill, queryParams, onSubmit, pagination }) {
         return [...prevPosts, ...newPosts];
       });
     }
-    setIsSearch(queryParams.search != null);
-  }, [listBill, queryParams.status, queryParams.search]);
+    setIsSearch(filter.search != null);
+  }, [listBill, filter.status, filter.search]);
 
   const handleSearch = (event) => {
     event.preventDefault();
     const newFilter = {
-      ...queryParams,
+      ...filter,
       search: event.target.search.value,
       page: 1,
     };
-    if (queryParams.search !== newFilter.search) {
+    if (filter.search !== newFilter.search) {
       setPosts([]);
     }
     if (onSubmit) {
@@ -72,14 +74,11 @@ function BillAll({ listBill, queryParams, onSubmit, pagination }) {
   };
 
   const fetchMore = () => {
-    if (queryParams.search != null) {
-      return;
-    }
     setTimeout(() => {
       setPage((prevPage) => {
         const newPage = parseInt(prevPage) + 1;
         const newFilter = {
-          ...queryParams,
+          ...filter,
           page: newPage,
         };
         if (onSubmit) {
@@ -92,7 +91,7 @@ function BillAll({ listBill, queryParams, onSubmit, pagination }) {
 
   return (
     <Box>
-      {!queryParams.status && (
+      {!filter.status && (
         <form onSubmit={(event) => handleSearch(event)}>
           <Box sx={{ marginBottom: '20px' }}>
             <StyledTextField
@@ -115,7 +114,7 @@ function BillAll({ listBill, queryParams, onSubmit, pagination }) {
         loader={<Loading />}
         className="w-[800px] mx-auto my-10"
         fetchMore={fetchMore}
-        hasMore={queryParams.search != null ? isSearch : posts.length < pagination.count}
+        hasMore={posts.length < pagination.count}
         endMessage={
           <>
             <p style={{ textAlign: 'center' }}>Đã hết sản phẩm</p>

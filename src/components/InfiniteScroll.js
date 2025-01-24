@@ -33,7 +33,7 @@ const InfiniteScroll = ({
     <div className={className}>
       {children}
 
-      {hasMore && !isSearch ? <div ref={pageEndRef}>{loader}</div> : endMessage}
+      {hasMore ? <div ref={pageEndRef}>{loader}</div> : endMessage}
     </div>
   );
 };

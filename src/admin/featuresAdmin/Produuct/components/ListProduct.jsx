@@ -18,82 +18,87 @@ import FormControl from '@mui/material/FormControl';
 import NativeSelect from '@mui/material/NativeSelect';
 import { useSnackbar } from 'notistack';
 import TableHeadComponent from 'admin/components/Table/TableHeadComponent';
+import ReusableTable from 'admin/components/Table/ReusableTable';
+import { formatPrice } from 'utils';
 
 ListProduct.propTypes = {
-    products : PropTypes.array.isRequired,
-    onUpdateSuccess: PropTypes.func.isRequired,
+  products: PropTypes.array.isRequired,
+  onUpdateSuccess: PropTypes.func.isRequired,
 };
 
-function ListProduct({products,onUpdateSuccess}) {
-    const {enqueueSnackbar} = useSnackbar();
-    const listHead = ["name","deatil","price","quantity","category","images","Thao tác","Trạng thái"]
-    const handleClickStatus = async(event,product) =>{
-        try{
-            product.status = event.target.value;
-            product.category = product.category.id;
-            delete product.imagesUrl;
-            await productApi.update(product);
-            enqueueSnackbar("Update trạng thái thành công" ,{ variant: "success" })
-            onUpdateSuccess();
-        }catch(e){
-            console.log(e);
-            enqueueSnackbar("Update trạng thái không thành công"+ {e} ,{ variant: "error" })
-        }
-    }
+function ListProduct({ products, onUpdateSuccess }) {
+  const { enqueueSnackbar } = useSnackbar();
 
-    return (
+  const listHead = [
+    { label: 'ID', key: 'id', width: '5%' },
+    { label: 'Name', key: 'name', width: '15%' },
+    { label: 'Detail', key: 'detail', width: '20%' },
+    { label: 'Price', key: 'price', width: '10%', render: (row) => formatPrice(row?.price) },
+    { label: 'Quantity', key: 'quantity', width: '10%' },
+    { label: 'Category', width: '10%', render: (row) => row.category.name },
+    {
+      label: 'Images',
+      width: '15%',
+      render: (row) => {
+        return (
+          <>
+            <img src={row?.imagesUrl[0]} alt="" style={{ width: 50, height: 50 }} />
+            <Button>
+              <Link to={`./${row.id}/image/`}>Danh sách ảnh</Link>
+            </Button>
+          </>
+        );
+      },
+    },
+    {
+      label: 'Actions',
+      width: '5%',
+      render: (row) => (
         <>
-            <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                    <TableHeadComponent listHead={listHead} />
-                    <TableBody>
-                    {products.map((row) => (
-                        <TableRow
-                        key={row.id}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                        >
-                            <TableCell component="th" scope="row">
-                                {row.id}
-                            </TableCell>
-                            <TableCell align="right">{row.name}</TableCell>
-                            <TableCell align="right">{row.detail}</TableCell>
-                            <TableCell align="right">{row.price}</TableCell>
-                            <TableCell align="right">{row.quantity}</TableCell>
-                            <TableCell align="right">{row.category.name}</TableCell>
-                            <TableCell align="right" className="table-cell image-cell">
-                                <img src={row.imagesUrl[0]} alt="" />
-                                <Button><Link to={`./${row.id}/image/`}>Danh sách ảnh</Link></Button>
-                            </TableCell>
-                            <TableCell align="right">
-                                <IconButton>
-                                    <DeleteIcon/>
-                                </IconButton>
-                                <IconButton>
-                                    <Link to={`./${row.id}`}><Update/></Link>
-                                </IconButton>
-                            </TableCell>
-                            <TableCell align="right">
-                                <FormControl fullWidth>
-                                    <NativeSelect
-                                        value = {row.status}
-                                        onChange={(event)=>handleClickStatus(event,row)}
-                                        inputProps={{
-                                        name: 'age',
-                                        id: 'uncontrolled-native',
-                                        }}
-                                    >
-                                        <option value={1}>On</option>
-                                        <option value={0}>Off</option>
-                                    </NativeSelect>
-                                </FormControl>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+          <IconButton>
+            <DeleteIcon />
+          </IconButton>
+          <IconButton>
+            <Link to={`./${row.id}`}>
+              <Update />
+            </Link>
+          </IconButton>
         </>
-    );
+      ),
+    },
+    {
+      label: 'Status',
+      width: '20%',
+      render: (row) => (
+        <FormControl fullWidth>
+          <NativeSelect
+            value={row.status}
+            onChange={(event) => handleClickStatus(event, row)}
+            inputProps={{
+              name: 'status',
+              id: 'status-select',
+            }}
+          >
+            <option value={1}>On</option>
+            <option value={0}>Off</option>
+          </NativeSelect>
+        </FormControl>
+      ),
+    },
+  ];
+
+  const handleClickStatus = async (event, product) => {
+    try {
+      product.status = event.target.value;
+      await productApi.update(product);
+      enqueueSnackbar('Update trạng thái thành công', { variant: 'success' });
+      onUpdateSuccess();
+    } catch (e) {
+      enqueueSnackbar(`Update trạng thái không thành công: ${e.message}`, { variant: 'error' });
+    }
+  };
+
+  return <ReusableTable listHead={listHead} rows={products} />;
 }
 
 export default ListProduct;

@@ -17,6 +17,21 @@ const billApi = {
             }
         };
     },
+    async getAllTest(params){
+        const newParams = {...params};
+
+        newParams.page -=1;
+        const billList = await axiosClient.get('/bill',{params:newParams});
+
+        return {
+            data : billList.data.bill,
+            pagination :{
+                page: params.page,
+                limit: params.limit,
+                count:billList.data.count,
+            }
+        };
+    },
     updateStatus(data){
         const url = `/bill/${data.id}`;
         return axiosClient.put(url,{status:data.status});

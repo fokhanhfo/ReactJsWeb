@@ -36,39 +36,34 @@ function BillUser(props) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const queryParams = useMemo(() => {
+  const [filter, setFilter] = useState({
+    page: 1,
+    limit: 5,
+    status: null,
+    search: '',
+  });
+
+  useEffect(() => {
     const params = queryString.parse(location.search);
-    return {
-      page: Number.parseInt(params.page) || 1,
-      limit: Number.parseInt(params.limit) || 5,
-      status: Number.parseInt(params.status) || null,
-      ...params,
-    };
+    setFilter((prev) => ({ ...prev, status: params.status }));
   }, [location.search]);
 
   useEffect(() => {
     const fetchBills = async () => {
       try {
-        const res = await billApi.getAll(queryParams);
+        const res = await billApi.getAll(filter);
         setListBill(res.data);
         setPagination(res.pagination);
       } catch (error) {
         handleGlobalError(error, enqueueSnackbar);
       }
     };
-    console.log('Fetching all');
 
     fetchBills();
-  }, [queryParams]);
+  }, [filter]);
 
   const onSubmit = (newFilter) => {
-    navigate(
-      {
-        pathname: location.pathname,
-        search: queryString.stringify(newFilter),
-      },
-      { replace: true },
-    );
+    setFilter((prev) => ({ ...prev, ...newFilter }));
   };
 
   return (
@@ -91,9 +86,7 @@ function BillUser(props) {
         <Routes>
           <Route
             path="/all"
-            element={
-              <BillAll listBill={listBill} onSubmit={onSubmit} queryParams={queryParams} pagination={pagination} />
-            }
+            element={<BillAll listBill={listBill} onSubmit={onSubmit} filter={filter} pagination={pagination} />}
           />
           <Route path="/:billId" element={<PageBillDetail />} />
         </Routes>
