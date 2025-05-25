@@ -1,0 +1,26 @@
+Discount
+Trạng thái	Ý nghĩa
+Draft (Nháp)	Đang tạo, chưa áp dụng. Chỉ admin thấy.
+Pending / Chờ phê duyệt	Đã tạo xong, đang chờ phê duyệt (nếu có cơ chế kiểm duyệt)
+Active / Đang hoạt động	Đang có hiệu lực, người dùng có thể áp dụng
+Scheduled / Đã lên lịch	Được lên lịch để kích hoạt trong tương lai (có startDate > ngày hiện tại)
+Expired / Hết hạn	Đã quá thời gian kết thúc (endDate < ngày hiện tại)
+Disabled / Đã tắt	Đã bị tắt thủ công, không thể áp dụng nữa
+
+export const optionTypeDiscount = [
+    { id: 1, name: 'Phần trăm %' },
+    { id: 2, name: 'Tiền mặt 💵' }
+];
+
+
+export const optionCategoryDiscount = [
+    { id: 1, name: 'Sản phẩm' },
+    { id: 2, name: 'Vận chuyển' }
+];
+
+export const optionStatusDiscount = [
+    { id: 1, name: 'Không hoạt động' },
+    { id: 2, name: 'Đang hoạt động' },
+    { id: 3, name: 'Hết hạn' }
+];
+

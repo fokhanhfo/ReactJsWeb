@@ -1,66 +1,100 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Checkbox, FormControlLabel, Grid, Paper, Typography } from '@mui/material';
-import { CheckBox } from '@mui/icons-material';
+import { Box, Button, Checkbox, Divider, FormControlLabel, Paper, Typography } from '@mui/material';
 import styled from 'styled-components';
 import { formatPrice } from 'utils';
 import { Link } from 'react-router-dom';
 
 PayCart.propTypes = {
-    listCart: PropTypes.array.isRequired,
-    onAllCheckboxChange :PropTypes.func.isRequired,
+  listCart: PropTypes.array.isRequired,
+  onAllCheckboxChange: PropTypes.func.isRequired,
+  setOpen: PropTypes.func,
 };
 
-const StyledGridCheckbox= styled(Grid)`
-    display: flex;
-    align-items:center;
-`
+function PayCart({ listCart = [], onAllCheckboxChange, setOpen }) {
+  const selectCartItem = listCart.filter((item) => item.status === 1);
+  const totalPrice = selectCartItem.reduce((sum, item) => sum + item.productDetail.sellingPrice * item.quantity, 0);
+  const [statusCheckBox, setStatusCheckBox] = useState(1);
 
-const StyledGridToTal= styled(Grid)`
-    display: flex;
-    align-items:center;
-    justify-content:flex-end;
-`
+  const handleCheckboxChange = (event) => {
+    const newStatus = event.target.checked ? 1 : 0;
+    setStatusCheckBox(newStatus);
+    onAllCheckboxChange(newStatus);
+  };
 
-const StyledGridContainer = styled(Grid)`
-    justify-content: space-between;
-    height:100%;
-`
+  useEffect(() => {
+    const allChecked = listCart.every((item) => item.status === 1);
+    setStatusCheckBox(allChecked ? 1 : 0);
+  }, [listCart]);
 
+  return (
+    <Paper
+      elevation={2}
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        overflow: 'hidden',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+        }}
+      >
+        <FormControlLabel
+          control={<Checkbox checked={statusCheckBox === 1} onChange={handleCheckboxChange} color="primary" />}
+          label={
+            <Typography variant="body2" fontWeight="medium">
+              Chọn tất cả
+            </Typography>
+          }
+        />
+        <Button variant="outlined" color="error" size="small" sx={{ minWidth: '60px' }}>
+          Xóa
+        </Button>
+      </Box>
 
-function PayCart({listCart=[],selectedItems,onAllCheckboxChange}) {
+      <Divider sx={{ my: 2 }} />
 
-    const selectCartItem = listCart.filter(item => item.status === 1);
-    const totalPrice = selectCartItem.reduce((sum, item) => sum + (item.product.price*item.quantity), 0);
-    const [statusCheckBox,setStatusCheckBox] =useState(1);
+      <Box sx={{ mt: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            Tổng ({selectCartItem.length} sản phẩm):
+          </Typography>
+          <Typography variant="h6" color="primary" fontWeight="bold">
+            {formatPrice(totalPrice)}
+          </Typography>
+        </Box>
 
-    const handleCheckboxChange = (event)=>{
-        const newStatus = event.target.checked ? 1 : 0;
-        setStatusCheckBox(newStatus);
-        onAllCheckboxChange(newStatus);
-    }
-
-    useEffect(() => {
-        const allChecked = listCart.every(item => item.status === 1);
-        setStatusCheckBox(allChecked ? 1 : 0);
-    }, [listCart]);
-
-
-    return (
-        <Paper className='pay_cart'>
-            <StyledGridContainer container>
-                <StyledGridCheckbox item xs={12} md={6}>
-                    <FormControlLabel control={<Checkbox checked={statusCheckBox === 1} onChange={handleCheckboxChange}/>} label="Chọn tất cả" />
-                    <Button>Xóa</Button>
-                </StyledGridCheckbox>
-                <StyledGridToTal item xs={12} md={6}>
-                    <Typography>Tổng thanh toán ( {selectCartItem.length} Sản phẩm )</Typography>
-                    <Typography>{formatPrice(totalPrice)}</Typography>
-                    <Link to={"/checkout"}>Thanh Toán</Link>
-                </StyledGridToTal>
-            </StyledGridContainer>
-        </Paper>
-    );
+        <Button
+          component={Link}
+          to="/checkout"
+          variant="contained"
+          color="primary"
+          fullWidth
+          onClick={() => setOpen(false)}
+          sx={{
+            mt: 2,
+            py: 1,
+            textTransform: 'none',
+            fontWeight: 'bold',
+          }}
+        >
+          Thanh Toán
+        </Button>
+      </Box>
+    </Paper>
+  );
 }
 
 export default PayCart;

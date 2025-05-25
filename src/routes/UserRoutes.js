@@ -11,6 +11,8 @@ import NotFound from 'components/NotFound';
 import HomeFeatures from 'features/Home';
 import CounterFeature from 'features/Counter';
 import Bill from 'features/Bill';
+import Footer from 'components/Footer/Footer';
+import UserDetail from 'features/Bill';
 
 function UserRoutes() {
   return (
@@ -20,18 +22,19 @@ function UserRoutes() {
         <Route path="/counttest" element={<CounterFeature/>} />
         <Route path="/" element={<HomeFeatures/>} />
         <Route path="/todos/*" element={<TodoFeature />} />
-        <Route path="/albums" element={<AlbumFeature />} />
+        <Route path="/contact" element={<AlbumFeature />} />
 
         <Route element={<PrivateRoute/>} >
           <Route path="/products/*" element={<ProductFeatureCopy />} />
-          <Route path="/cart/*" element={<CartFeature />} />
+          {/* <Route path="/cart/*" element={<CartFeature />} /> */}
           <Route path="/checkout/*" element={<CheckOutFeatures />} />
           <Route path="/newproduct/" element={<NewArrivalsFeatures />} />
-          <Route path="/bill/*" element={<Bill />} />
+          <Route path="/user/*" element={<UserDetail />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Footer/>
     </>
   );
 }

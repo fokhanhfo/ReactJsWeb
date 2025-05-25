@@ -1,117 +1,92 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box } from '@mui/material';
-import { STATIC_HOST } from 'constants';
-import { THUMBNAIL_PLACEHOLDER } from 'constants';
-import "./styles.scss";
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import { ArrowForwardIos } from '@mui/icons-material';
+import { Box, IconButton, Grid, Dialog } from '@mui/material';
+import { ArrowBackIosNew, ArrowForwardIos, Close } from '@mui/icons-material';
 import ImageDetail from './ProductThumbnailDetail/ImageDetail';
 
-// const images = [
-//     'https://down-vn.img.susercontent.com/file/vn-11134207-7r98o-ly2cepottyvt4e',
-//     'https://cc-prod.scene7.com/is/image/CCProdAuthor/tti-marquee-desktop@2x?$png$&jpegSize=200&wid=1162',
-//     'https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg',
-//     'https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp',
-//     'https://images.ctfassets.net/hrltx12pl8hq/28ECAQiPJZ78hxatLTa7Ts/2f695d869736ae3b0de3e56ceaca3958/free-nature-images.jpg?fit=fill&w=1200&h=630',
-//     'https://thumbs.dreamstime.com/z/earth-fresh-spring-green-grass-green-leaf-summer-time-31254943.jpg',
-//     'https://down-vn.img.susercontent.com/file/sg-11134201-7rbkk-ln5rcc2bpdf946',
-//     'https://media-cdn-v2.laodong.vn/storage/newsportal/2023/8/26/1233821/Giai-Nhi-1--Nang-Tre.jpg',
-//     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN0Y_SeJHZINmA_vwcN_rR71JW9wJXegQWiA&s',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-//     'https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645-t.jpg',
-// ]
-
 ProductThumbnail.propTypes = {
-    product: PropTypes.object,
+  product: PropTypes.object.isRequired,
 };
 
 function ProductThumbnail({ product }) {
-    console.log(product);
-    const images = product.imagesUrl;
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [currentIndexClick,setCurrentIndexClick] =useState(0);
-    const [displayedImages, setDisplayedImages] = useState(images.slice(0, 5));
-    const thumbnailUrl = product.thumbnail ? `${product.thumbnail?.url}` : THUMBNAIL_PLACEHOLDER;
+  const images = product.productDetails.flatMap((productDetail) => productDetail.image.map((img) => img.imageUrl));
+  console.log(images);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [open, setOpen] = useState(false);
 
-    // useEffect(() => {
-    //     if (!limit.includes(images[currentIndex]) && currentIndex >= 4) {
-    //         setDisplayedImages(images.slice(currentIndex-4,currentIndex+1));
-    //         setLimit(images.slice(currentIndex-4,currentIndex+1));
-    //     }else if(currentIndex < 4 && !limit.includes(images[currentIndex])){
-    //         setDisplayedImages(images.slice(currentIndex,currentIndex+5));
-    //         setLimit(images.slice(currentIndex,currentIndex+5));
-    //     }
-    // }, [currentIndex]);
+  const handlePrevClick = () => {
+    setCurrentIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
+  };
 
-    const handlePrevClick = () => {
-        // setCurrentIndex(prevIndex => prevIndex > 0 ? prevIndex - 1 : 0);
-        setCurrentIndexClick(prevIndex => {
-            const newIndex = prevIndex > 0 ? prevIndex -1 : 0;
-            setDisplayedImages(images.slice(newIndex,newIndex+5));
-            return newIndex;
-        })
-    }
+  const handleNextClick = () => {
+    setCurrentIndex((prevIndex) => (prevIndex < images.length - 1 ? prevIndex + 1 : prevIndex));
+  };
 
-    const handleNextClick = () => {
-        if(images.length <5){
-            setDisplayedImages(images.slice(0,5));
-        }else{
-            setCurrentIndexClick(prevIndex => {
-                const newIndex = prevIndex < images.length - 5 ? prevIndex + 1 : images.length - 5;
-                setDisplayedImages(images.slice(newIndex,newIndex+5));
-                return newIndex;
-            })
-        }
-        // setCurrentIndex(prevIndex => prevIndex < images.length - 1 ? prevIndex + 1 : images.length-1);
-    }
-
-    const [open, setOpen] = React.useState(false);
-
-    const handleClickOpen = () => {
-        setOpen(true);
-    };
-    const handleClose = () => {
-        setOpen(false);
-    };
-
-    return (
-        <Box className="imageProduct">
-            <Box onClick={handleClickOpen} className="imageProduct-main">
-                <img className='main-image-sub' src={images[currentIndex]} alt={product.name} width="100%" />
+  return (
+    <Box sx={{ display: 'flex', width: '100%' }}>
+      <Grid width={'20%'} height={60} container spacing={1} sx={{ mt: 2 }}>
+        {images.slice(0, 5).map((src, index) => (
+          <Grid item key={index} lg={12}>
+            <Box
+              sx={{
+                width: 60,
+                borderRadius: 1,
+                overflow: 'hidden',
+                border: currentIndex === index ? '2px solid #1976d2' : '2px solid transparent',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  borderColor: '#1976d2',
+                },
+                margin: '0 auto',
+              }}
+              onMouseEnter={() => setCurrentIndex(index)}
+            >
+              <img src={src} alt={`Thumbnail ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </Box>
-            <Box className="controls-image">
-                <div onClick={handlePrevClick} className='button_back_img left'>
-                    <ArrowBackIosNewIcon />
-                </div>
-                <div>
-                    {displayedImages.map((src, index) => (
-                        <img
-                            className={images[currentIndex] === src ? 'image_sub_active' : 'image_sub'}
-                            key={index}
-                            src={src}
-                            alt={`Thumbnail ${index}`}
-                            onMouseEnter={() => setCurrentIndex(images.indexOf(src))}
-                        />
-                    ))}
-                </div>
-                <div onClick={handleNextClick} className='button_back_img right'>
-                    <ArrowForwardIos />
-                </div>
-            </Box>
-            <React.Fragment>
-                <ImageDetail images={images} open={open} onClose={handleClose}></ImageDetail>
-            </React.Fragment>
-        </Box>
-    );
+          </Grid>
+        ))}
+        {/* <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: 400, mt: 2 }}
+          position={'absolute'}
+        >
+          <IconButton onClick={handlePrevClick} disabled={currentIndex === 0}>
+            <ArrowBackIosNew />
+          </IconButton>
+          <IconButton onClick={handleNextClick} disabled={currentIndex === images.length - 1}>
+            <ArrowForwardIos />
+          </IconButton>
+        </Box> */}
+      </Grid>
+
+      {/* Hình ảnh chính */}
+      <Box
+        sx={{
+          position: 'relative',
+          width: '80%',
+          overflow: 'hidden',
+          borderRadius: 2,
+          boxShadow: 3,
+          cursor: 'pointer',
+        }}
+        onClick={() => setOpen(true)}
+      >
+        <img
+          src={images[currentIndex]}
+          alt={product.name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      </Box>
+
+      {/* Popup chi tiết ảnh */}
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md">
+        <IconButton sx={{ position: 'absolute', top: 10, right: 10, color: '#fff' }} onClick={() => setOpen(false)}>
+          <Close />
+        </IconButton>
+        <ImageDetail images={images} open={open} onClose={() => setOpen(false)} />
+      </Dialog>
+    </Box>
+  );
 }
 
 export default ProductThumbnail;

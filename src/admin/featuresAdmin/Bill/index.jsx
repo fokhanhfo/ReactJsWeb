@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Container } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
 import ListPageBill from './page/ListPageBill';
-import PageBillDetail from 'components/billDetail/PageBillDetail';
+import PageBillDetail from './page/PageBillDetail';
 
 BillFeature.propTypes = {};
 

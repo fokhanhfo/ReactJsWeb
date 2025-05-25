@@ -20,7 +20,6 @@ export default function useProductDetail(productId){
 
         fetchProduct();
     }, [productId]);
-    console.log(product);
 
     return { product, loading };
 }

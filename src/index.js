@@ -13,7 +13,7 @@ root.render(
   // <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <SnackbarProvider anchorOrigin={{vertical:'top',horizontal:'right'}} autoHideDuration={1000} maxSnack={1}>
+        <SnackbarProvider anchorOrigin={{vertical:'top',horizontal:'right'}} autoHideDuration={2000} maxSnack={1}>
           <App />
         </SnackbarProvider>
       </BrowserRouter>

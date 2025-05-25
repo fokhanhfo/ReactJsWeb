@@ -1,53 +1,178 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Skeleton, Typography } from '@mui/material';
-import { STATIC_HOST } from 'constants';
+import { Button, Card, CardActionArea, CardContent, CardMedia, Typography, Box } from '@mui/material';
 import { THUMBNAIL_PLACEHOLDER } from 'constants';
 import { useNavigate } from 'react-router-dom';
-import { formatPrice } from 'utils';
-import styled from 'styled-components';
+import { formatPrice, imageMainProduct } from 'utils';
 
 Product.propTypes = {
-    product : PropTypes.object,
+  product: PropTypes.object.isRequired,
 };
 
-const StylesBox = styled(Box)`
-    img{
-        width:100%;
-        aspect-ratio: 1 / 1;
-        object-fit: cover;
-    }
-`
+function Product({ product }) {
+  console.log(product);
+  const navigate = useNavigate();
 
-const StyledTypography = styled(Typography)`
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-`;
+  const image = product.productDetails
+    .flatMap((productDetail) => productDetail.image)
+    .find((image) => image.mainProduct === true);
 
-function Product({product}) {
+  const thumbnailUrl = image?.imageUrl || imageMainProduct(product.productDetails)?.imageUrl || THUMBNAIL_PLACEHOLDER;
 
-    const history = useNavigate()
+  const sellingPrice = product.productDetails.flatMap((productDetail) => productDetail.sellingPrice);
 
-    const thumbnailUrl = product.imagesUrl ? `${product.imagesUrl[0]}` : THUMBNAIL_PLACEHOLDER; 
+  const basePrice = sellingPrice[0];
 
-    const handleClick = () => {
-        history(`/products/${product.id}`);
-    };
+  // Discount info
+  const discount = product.productDiscountPeriods?.[0];
+  const percentageValue = discount?.percentageValue;
+  const finalPrice = percentageValue ? basePrice * (1 - percentageValue / 100) : basePrice;
 
-    return (
-        <StylesBox onClick={handleClick}>
-            <img src={thumbnailUrl} alt={product.name}/>
-            <StyledTypography
-                variant="body1"
-            >{product.name}</StyledTypography>
-            <Typography>
-                {formatPrice(product.price)}
+  const handleClick = () => {
+    navigate(`/products/${product.id}`);
+  };
+
+  return (
+    <Card
+      elevation={2}
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 2,
+        overflow: 'hidden',
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+        },
+      }}
+    >
+      <CardActionArea
+        onClick={handleClick}
+        sx={{
+          position: 'relative',
+          '&:hover .slide-button': {
+            transform: 'translate(-50%, -50%)',
+            opacity: 1,
+            backgroundColor: '#fff',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+            pointerEvents: 'auto',
+          },
+        }}
+      >
+        <Box sx={{ position: 'relative' }}>
+          <CardMedia
+            component="img"
+            image={thumbnailUrl}
+            alt={product.name}
+            sx={{
+              width: '100%',
+              aspectRatio: '1 / 1',
+              objectFit: 'cover',
+              position: 'relative',
+            }}
+          />
+          {/* Discount badge */}
+          {percentageValue && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 8,
+                left: 8,
+                backgroundColor: 'red',
+                color: 'white',
+                px: 1,
+                py: 0.5,
+                fontSize: '12px',
+                borderRadius: '4px',
+                fontWeight: 'bold',
+              }}
+            >
+              -{percentageValue}%
+            </Box>
+          )}
+
+          {/* Overlay Button */}
+          <Button
+            size="small"
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, 100%)',
+              opacity: 0,
+              backgroundColor: '#fff',
+              color: 'black',
+              transition: 'transform 0.3s ease, opacity 0.3s ease',
+              textTransform: 'none',
+              pointerEvents: 'none',
+            }}
+            className="slide-button"
+          >
+            Xem chi tiết
+          </Button>
+        </Box>
+
+        <CardContent
+          sx={{
+            padding: 2,
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 500,
+              marginBottom: 1,
+              display: '-webkit-box',
+              WebkitLineClamp: 1,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {product.name}
+          </Typography>
+
+          {/* Giá sản phẩm với khuyến mãi nếu có */}
+          {percentageValue ? (
+            <>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 400,
+                  textDecoration: 'line-through',
+                  color: 'gray',
+                }}
+              >
+                {formatPrice(basePrice)}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  color: 'red',
+                }}
+              >
+                {formatPrice(finalPrice)}
+              </Typography>
+            </>
+          ) : (
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 400,
+              }}
+            >
+              {formatPrice(basePrice)}
             </Typography>
-        </StylesBox>
-    );
+          )}
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
 }
 
 export default Product;

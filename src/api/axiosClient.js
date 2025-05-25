@@ -69,9 +69,7 @@ axiosClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return axiosClient(originalRequest);
       } catch (refreshError) {
-        console.log('log out ở đây ' + refreshError);
-        const dispatch = useDispatch();
-        dispatch(logout());
+        window.dispatchEvent(new CustomEvent('logout'));
       }
     }
 

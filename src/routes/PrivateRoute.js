@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginWindow } from 'features/Auth/userSlice';
+import Loading from 'components/Loading';
 
 const PrivateRoute = () => {
   const currentUser = useSelector((state) => state.user.current);
-  console.log(currentUser)
+  const dispatch = useDispatch();
 
-  return currentUser && currentUser.jti ? <Outlet /> : <Navigate to="/" />;
+  useEffect(() => {
+    if (!currentUser || !currentUser.jti) {
+      dispatch(loginWindow());
+    }
+  }, [currentUser, dispatch]);
+
+  return currentUser && currentUser.jti ? <Outlet /> : <Loading/>;
 };
 
 export default PrivateRoute;

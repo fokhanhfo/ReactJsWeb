@@ -6,7 +6,7 @@ const productApi = {
         const newParams = {...params};
 
         newParams.page -=1;
-        const productList = await axiosClient.get('/shop',{params:newParams});
+        const productList = await axiosClient.get('/product',{params:newParams});
 
         return {
             data : productList.data.products,
@@ -37,7 +37,7 @@ const productApi = {
     },
 
     async add(data){
-        const url = `/product/Add`;
+        const url = `/product`;
         if (data instanceof FormData) {
             return axiosClient.post(url, data, {
                 headers: {

@@ -1,111 +1,160 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Checkbox, IconButton, Paper, TextField, Typography } from '@mui/material';
-import './styles.scss';
+import { Button, Checkbox, IconButton, Paper, TextField, Typography, Box, List, Card, Grid } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { formatPrice } from 'utils';
-import styled from 'styled-components';
 import { useDeletecartMutation, useUpdateCartMutation } from '../cartApi';
 import { useSnackbar } from 'notistack';
+import { THUMBNAIL_PLACEHOLDER } from 'constants';
+import CloseIcon from '@mui/icons-material/Close';
 
 CartItem.propTypes = {
-    listCart: PropTypes.array.isRequired,
-    onCheckboxChange :PropTypes.func.isRequired,
+  listCart: PropTypes.array.isRequired,
+  onCheckboxChange: PropTypes.func.isRequired,
 };
 
-const StyledTypography = styled(Typography)`
-    width: 100%;
-    height: 100%;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-`;
+function CartItem({ listCart = [], onCheckboxChange }) {
+  const [updateCart] = useUpdateCartMutation();
+  const { enqueueSnackbar } = useSnackbar();
+  const [deleteCart] = useDeletecartMutation();
 
-const StyledPaper = styled(Paper)`
-    margin: 20px 0 ;
-`;
+  const handleIncrement = async (cartItem) => {
+    const newQuantity = { ...cartItem, quantity: cartItem.quantity + 1 };
+    await updateCart(newQuantity).unwrap();
+  };
 
-const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
-
-function CartItem({ listCart = [], onCheckboxChange  }) {
-    const [updateCart] = useUpdateCartMutation();
-    const { enqueueSnackbar } = useSnackbar();
-    const [deleteCart] = useDeletecartMutation();
-
-    const handleIncrement = async (cartItem) => {
-        const newQuantity = {...cartItem,quantity: (cartItem.quantity+1),product: cartItem.product.id}
-        await updateCart(newQuantity).unwrap();
-    };
-
-    const handleDecrement = async (cartItem) => {
-        if (cartItem.quantity > 1) {
-            const newQuantity = {...cartItem,quantity: (cartItem.quantity-1),product: cartItem.product.id};
-            console.log(newQuantity);
-            await updateCart(newQuantity).unwrap();
-        }
-    };
-
-    const handleDelete = async (id) => {
-        const response = await deleteCart(id).unwrap();
+  const handleDecrement = async (cartItem) => {
+    if (cartItem.quantity > 1) {
+      const newQuantity = { ...cartItem, quantity: cartItem.quantity - 1 };
+      await updateCart(newQuantity).unwrap();
     }
-    const isChecked = (cartItem) => {
-        if(cartItem.status===1){
-            return true;
-        }
-        return false;
-    };
+  };
 
-    return (
-        <div>
-            {listCart.map((cartItem, index) => (
-                <StyledPaper className='cart_item' key={index}>
-                    <div className='cart_item_checkbox'>
-                        <Checkbox 
-                            {...label} 
-                            checked={isChecked(cartItem)}                            
-                            onChange={()=>onCheckboxChange(cartItem)}
-                        />
-                    </div>
-                    <div className='cart_item_product'>
-                        <img src={cartItem.product.imagesUrl[0]} alt="" />
-                        <StyledTypography>{cartItem.product.name}</StyledTypography>
-                    </div>
-                    <div className='cart_item_category'>
-                        <p>Phân Loại Hàng :</p>
-                        <p>{cartItem.product.category.name}</p>
-                    </div>
-                    <div className='cart_item_sale'>
-                        <p>{formatPrice(cartItem.product.price*cartItem.quantity)}</p>
-                    </div>
+  const handleDelete = async (id) => {
+    await deleteCart(id).unwrap();
+    enqueueSnackbar('Sản phẩm đã bị xóa', { variant: 'success' });
+  };
 
-                    <div className='cart_item_quantity'>
-                        <IconButton onClick={() => handleDecrement(cartItem)}>
-                            <RemoveIcon />
-                        </IconButton>
-                        <TextField
-                            value={cartItem.quantity}
-                            readOnly
-                            sx={{
-                                width: '50px',
-                                textAlign: 'center',
-                                mx: 1,
-                            }}
-                        />
-                        <IconButton onClick={() => handleIncrement(cartItem)}>
-                            <AddIcon />
-                        </IconButton>
-                    </div>
+  const handleDecreaseQuantity = (product) => {};
 
-                    <Button onClick={() => handleDelete(cartItem.id)}>
-                        Xóa
-                    </Button>
-                </StyledPaper>
-            ))}
-        </div>
-    );
+  const handleIncreaseQuantity = (product) => {};
+
+  console.log(listCart);
+
+  return (
+    <List sx={{ flex: 1, overflowY: 'auto', maxHeight: '100vh' }}>
+      {listCart.map((item, index) => (
+        <Card
+          key={index}
+          sx={{
+            marginBottom: 2,
+            position: 'relative',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Checkbox checked={item.status === 1} onChange={() => onCheckboxChange(item)} />
+              <Typography variant="h6" fontWeight="500">
+                {item.productDetail.product.name}
+              </Typography>
+            </Box>
+            <IconButton size="small" sx={{ p: 0 }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 3 }}>
+            {/* Product Image */}
+            <Box sx={{ width: '33%' }}>
+              <Paper
+                component="img"
+                src={
+                  item.productDetail.image.length > 0
+                    ? item.productDetail.image[0].imageUrl
+                    : 'https://via.placeholder.com/64'
+                }
+                alt="White shirt"
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  objectFit: 'cover',
+                  bgcolor: '#f5f5f5',
+                }}
+              />
+            </Box>
+
+            {/* Product Details */}
+            <Box sx={{ width: '67%' }}>
+              {/* Price */}
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Typography sx={{ color: 'error.main', fontWeight: 500, fontSize: '1.1rem' }}>
+                  {item.productDetail.sellingPrice.toLocaleString()} VND
+                </Typography>
+                <Typography sx={{ ml: 2, color: 'text.disabled', textDecoration: 'line-through' }}>40000</Typography>
+              </Box>
+
+              {/* Details Grid */}
+              <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                <Grid item xs={6}>
+                  <Typography sx={{ color: 'text.secondary' }}>Số Lượng</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDecrement(item)}
+                      sx={{
+                        border: '1px solid rgba(0,0,0,0.23)',
+                        borderRadius: '50%',
+                        p: 0.5,
+                      }}
+                    >
+                      <RemoveIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                    <Typography sx={{ mx: 2 }}>{item.quantity}</Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleIncrement(item)}
+                      sx={{
+                        border: '1px solid rgba(0,0,0,0.23)',
+                        borderRadius: '50%',
+                        p: 0.5,
+                      }}
+                    >
+                      <AddIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={6}>
+                  <Typography sx={{ color: 'text.secondary' }}>Màu</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography>{item.color.name}</Typography>
+                </Grid>
+
+                <Grid item xs={6}>
+                  <Typography sx={{ color: 'text.secondary' }}>Size</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography>{item.size.name}</Typography>
+                </Grid>
+              </Grid>
+
+              {/* Total Price */}
+              <Box sx={{ textAlign: 'right', pt: 1 }}>
+                <Typography sx={{ fontWeight: 500, fontSize: '1.1rem' }}>
+                  {(item.productDetail.sellingPrice * item.quantity).toLocaleString()} VND
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Card>
+      ))}
+    </List>
+  );
 }
 
 export default CartItem;

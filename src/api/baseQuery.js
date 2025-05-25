@@ -23,15 +23,12 @@ const baseQuery = fetchBaseQuery({
 
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
-    console.log(result);
   if (result?.error?.status === 401) {
     try{
       const refreshToken = localStorage.getItem('access_token');
-      console.log(refreshToken);
       const refreshResult = await axiosInstance.post('/auth/refresh',{
           token: refreshToken, // Body chứa refresh token
         });
-        console.log('Refresh result:', refreshResult);
 
       if (refreshResult) {
         localStorage.setItem(StorageKeys.TOKEN, refreshResult?.data?.data);
@@ -39,7 +36,6 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
         result = await baseQuery(args, api, extraOptions);
       }
     }catch(e){
-      console.log('log out ở đây ' + e);
       api.dispatch(logout());
     }
   }

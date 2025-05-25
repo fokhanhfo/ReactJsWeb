@@ -7,10 +7,90 @@ import UserRoutes from 'routes/UserRoutes';
 import AdminRoutes from 'routes/AdminRoutes';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import userApi from 'api/userApi';
-import { logout } from 'features/Auth/userSlice';
-import StorageKeys from 'constants/storage-keys';
-import { useEffect } from 'react';
+import { createTheme, responsiveFontSizes, ThemeProvider } from '@mui/material';
+import LogoutListener from 'components/LogoutListener';
+import { BreadcrumbProvider } from 'admin/components/Breadcrumbs/BreadcrumbContext';
+// const theme = responsiveFontSizes(
+//   createTheme({
+//     palette: {
+//       primary: {
+//         main: '#1976d2',
+//         success: 'rgba(113,221,55,0.16)',
+//       },
+//       success: {
+//         main: '#2e7d32',
+//       },
+//     },
+//     typography: {
+//       fontSize: 12, // base = 12px (~0.75rem)
+//       '@media (max-width:600px)': {
+//         fontSize: 10, // 👈 khi màn hình <600px, giảm xuống
+//       },
+//       '@media (max-width:400px)': {
+//         fontSize: 9,
+//       },
+//       body1: {
+//         fontSize: '0.85rem',
+//         '@media (max-width:600px)': {
+//           fontSize: '0.75rem', // 👈 nhỏ hơn khi màn hình <600px
+//         },
+//         '@media (max-width:400px)': {
+//           fontSize: '0.7rem', // 👈 siêu nhỏ cho điện thoại bé
+//         },
+//       },
+//       h1: {
+//         fontSize: '2rem',
+//         '@media (max-width:600px)': {
+//           fontSize: '1.5rem',
+//         },
+//       },
+//       h2: {
+//         fontSize: '1.5rem',
+//         '@media (max-width:600px)': {
+//           fontSize: '1.2rem',
+//         },
+//       },
+//     },
+//   })
+// );
+let theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+      success: 'rgba(113,221,55,0.16)',
+    },
+    success: {
+      main: '#2e7d32',
+    },
+  },
+  typography: {
+    fontSize: 14, // base font size
+    h5: {
+      fontSize: '1.5rem',
+      [`@media (max-width:600px)`]: {
+        fontSize: '1rem',
+      },
+      [`@media (max-width:400px)`]: {
+        fontSize: '0.8rem',
+      },
+    },
+    body1: {
+      fontSize: '1rem',
+      [`@media (max-width:600px)`]: {
+        fontSize: '0.875rem',
+      },
+      [`@media (max-width:400px)`]: {
+        fontSize: '0.75rem',
+      },
+    },
+  },
+});
+
+theme = responsiveFontSizes(theme);
+
+
+
+
 
 function App() {
   const {enqueueSnackbar} = useSnackbar();
@@ -53,18 +133,24 @@ function App() {
   }
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <div className="App">
+          <LogoutListener/>
           <Routes>
             <Route path="/home" element={<Navigate to="/" />} />
-            <Route path="/admin/*" element={<AdminRoutes />} />
+            <Route path="/admin/*" element={
+                <BreadcrumbProvider>
+                    <AdminRoutes />
+                </BreadcrumbProvider>
+              } 
+            />
             
             <Route path="/login" element={<Navigate to="/" />}/>
         
             <Route path="/*" element={<UserRoutes />} />
           </Routes>
       </div>
-    </>
+    </ThemeProvider>
   );
 }
 

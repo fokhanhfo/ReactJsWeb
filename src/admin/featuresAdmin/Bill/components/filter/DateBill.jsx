@@ -19,8 +19,6 @@ function DateBill({ filter, onSubmit }) {
     filter.start_date ? dayjs(filter.start_date, 'DD-MM-YYYY') : dayjs().subtract(1, 'month'),
   );
   const [endDate, setEndDate] = React.useState(filter.end_date ? dayjs(filter.end_date, 'DD-MM-YYYY') : dayjs());
-  console.log(startDate);
-  console.log(endDate);
 
   const handleStartDateChange = (newStartDate) => {
     if (newStartDate && newStartDate.isAfter(endDate)) {
@@ -70,14 +68,14 @@ function DateBill({ filter, onSubmit }) {
               value={startDate}
               onChange={handleStartDateChange}
               format="DD-MM-YYYY"
-              renderInput={(params) => <TextField {...params} />}
+              textField={(params) => <TextField {...params} />}
             />
             <DatePicker
               label="End Date"
               value={endDate}
               onChange={handleEndDateChange}
               format="DD-MM-YYYY"
-              renderInput={(params) => <TextField {...params} />}
+              textField={(params) => <TextField {...params} />}
             />
           </Box>
         </LocalizationProvider>

@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LockOutlined } from '@mui/icons-material';
-import { Avatar, Button, Typography} from '@mui/material';
+import { Avatar, Button, Typography } from '@mui/material';
 import InputField from 'components/form-controls/InputForm';
 import PasswordField from 'components/form-controls/PassworField';
 import PropTypes from 'prop-types';
@@ -20,7 +20,7 @@ const StyledTypography = styled(Typography)`
 `;
 
 const StyledButton = styled(Button)`
-  margin: 16.5px 0;
+  margi-top: 10px;
 `;
 
 RegisterForm.propTypes = {
@@ -34,9 +34,12 @@ function RegisterForm(props) {
   const schema = yup
     .object({
       username: yup.string().required('please enter fullname'),
-      email : yup.string().required('Bắt buộc').email('Nhập đúng đinh dạng email'),
-      password : yup.string().required('Bắt buộc').min(8,'Mật khẩu phải có 8 chữ số'),
-      retypePassword:yup.string().required('Băt buộc').oneOf([yup.ref('password')],'Nhập lại sai')
+      email: yup.string().required('Bắt buộc').email('Nhập đúng đinh dạng email'),
+      password: yup.string().required('Bắt buộc').min(8, 'Mật khẩu phải có 8 chữ số'),
+      retypePassword: yup
+        .string()
+        .required('Băt buộc')
+        .oneOf([yup.ref('password')], 'Nhập lại sai'),
     })
     .required();
 
@@ -51,8 +54,8 @@ function RegisterForm(props) {
   });
 
   const handleSubmit = (value) => {
-    const {onSubmit} = props;
-    if(onSubmit){
+    const { onSubmit } = props;
+    if (onSubmit) {
       onSubmit(value);
     }
     form.reset();
@@ -73,10 +76,10 @@ function RegisterForm(props) {
       <p>{errorMessage}</p>
 
       <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <InputField name='username' label='User Name' form={form}/>
-        <InputField name='email' label='Email' form={form}/>
-        <PasswordField name='password' label='Password' form={form}/>
-        <PasswordField name='retypePassword' label='Retype Password' form={form}/>
+        <InputField name="username" label="User Name" form={form} />
+        <InputField name="email" label="Email" form={form} />
+        <PasswordField name="password" label="Password" form={form} />
+        <PasswordField name="retypePassword" label="Retype Password" form={form} />
         <StyledButton type="submit" fullWidth variant="contained">
           Sign Up
         </StyledButton>

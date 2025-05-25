@@ -5,77 +5,91 @@ import imageApi from 'api/imageApi';
 import { useParams } from 'react-router-dom';
 import Loading from 'components/Loading';
 import { useSnackbar } from 'notistack';
-import { Button } from '@mui/material';
+import { Button, Box, Typography, Stack } from '@mui/material';
+import * as yup from 'yup';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import FileForm from 'components/form-controls/FileForm';
 
-EditImage.propTypes = {
-    
-};
+EditImage.propTypes = {};
 
 function EditImage(props) {
-    const [isLoading,setIsLoading] = useState(false);
-    const {productId} = useParams();
-    const [images , setImages] = useState([]);
-    const [selectedFiles, setSelectedFiles] = useState([]);
-    const {enqueueSnackbar} = useSnackbar();
-    const handleFileChange = (e) => {
-        setSelectedFiles(e.target.files);
-    };
+  const [isLoading, setIsLoading] = useState(false);
+  const { productId } = useParams();
+  const [images, setImages] = useState([]);
+  const { enqueueSnackbar } = useSnackbar();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleCreateClick = async() => {
-        if(selectedFiles){
-            const data = new FormData();
-            for (let i = 0; i < selectedFiles.length; i++) {
-                data.append('file', selectedFiles[i]);
-            }
-            try{
-                const response = await imageApi.add(productId,data);
-                enqueueSnackbar('success',{variant:'success'});
-                fetchImages();
-            }catch(e){
-                console.error(e);
-                enqueueSnackbar('error',{variant:'error'});
-            }
-        }
-    };
-    const fetchImages = async() =>{
-        setIsLoading(true);
-        try{
-            const response = await imageApi.getImageProduct(productId);
-            setImages(response.data);
-        }catch(e){
-            console.e("Lỗi khi fetch image:", e);
-        }finally{
-            setIsLoading(false);
-        }
-    }
-    useEffect(()=>{
+  const schema = yup
+    .object({
+      file: yup.mixed().required('Bắt buộc'),
+    })
+    .required();
+
+  const form = useForm({
+    defaultValues: {
+      file: null,
+    },
+    resolver: yupResolver(schema),
+  });
+
+  const handleCreateClick = async (values) => {
+    setIsSubmitting(true);
+    if (values.file.length > 0) {
+      const data = new FormData();
+      for (let i = 0; i < values.file.length; i++) {
+        data.append('file', values.file[i]);
+      }
+      try {
+        await imageApi.add(productId, data);
+        enqueueSnackbar('Ảnh đã được thêm thành công!', { variant: 'success' });
         fetchImages();
-    },[]);
+      } catch (e) {
+        console.error(e);
+        enqueueSnackbar('Có lỗi xảy ra khi thêm ảnh!', { variant: 'error' });
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
 
-    return (
+  const fetchImages = async () => {
+    setIsLoading(true);
+    try {
+      const response = await imageApi.getImageProduct(productId);
+      setImages(response.data);
+    } catch (e) {
+      console.error('Lỗi khi fetch image:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
+
+  return (
+    <Box>
+      <Typography variant="h5" gutterBottom>
+        Danh sách ảnh
+      </Typography>
+      {!isLoading ? (
         <>
-            <div>
-                <h3>Danh sách ảnh</h3>
-            </div>
-            {!isLoading ? 
-                <>
-                    <ListImage listImage={images} onUpdate={fetchImages}></ListImage>
-                    <div>
-                        <h3>Thêm ảnh</h3>
-                        <div>
-                            <input type="file" 
-                                multiple
-                                accept="image/*,video/*"
-                                onChange={(e)=>handleFileChange(e)} 
-                            />
-                            <Button onClick={handleCreateClick}>Thêm ảnh</Button>
-                        </div>
-                    </div>
-                </>
-            : <Loading/>
-            }
+          <ListImage listImage={images} onUpdate={fetchImages} />
+
+          <form onSubmit={form.handleSubmit(handleCreateClick)}>
+            {<FileForm name="file" form={form} />}
+            <Button type="submit" autoFocus disabled={isSubmitting}>
+              Thêm ảnh
+            </Button>
+          </form>
         </>
-    );
+      ) : (
+        <Loading />
+      )}
+    </Box>
+  );
 }
 
 export default EditImage;

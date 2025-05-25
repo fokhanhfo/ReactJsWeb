@@ -1,3 +1,4 @@
+
 .header-admin {
     height: 50px;
     background-color: blue;
@@ -12,13 +13,6 @@
         display: flex;
         align-items: center;
     }
-
-    .header_home{
-        display: flex;
-        .header_home_img{
-            width: 200px;
-        }
-    }
 }
 
 .header_home_img{
@@ -29,10 +23,10 @@
 }
 
 
-.menu_management{
+.item_menu_mangament{
     color: white;
 }
 
-.item_menu_mangament{
-    color: white;
+.active-link-nav{
+    background-color: black;
 }

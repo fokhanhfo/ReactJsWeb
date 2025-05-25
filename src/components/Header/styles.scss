@@ -20,16 +20,6 @@
   }
 }
 
-.header{
-    background-color: rgb(171, 171, 204);
-
-}
-
-.nav_logo{
-  display: flex;
-  align-items: center;
-  margin-bottom: 5px;
-}
 
 .nav-noti{
     p{
@@ -50,12 +40,12 @@
     align-items: center;
   }
 
-.nav-content{
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+// .nav-content{
+//     width: 100%;
+//     display: flex;
+//     justify-content: space-between;
+//     align-items: center;
+// }
 
 .nav__link{
     width: 60%;

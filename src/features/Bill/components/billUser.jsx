@@ -4,12 +4,12 @@ import { Box, Container, Paper, TextField, Typography } from '@mui/material';
 import { NavLink, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import BillAll from './billStatus/billAll';
-import PageBillDetail from 'components/billDetail/PageBillDetail';
 import BillPending from './billStatus/billPending';
 import { useSnackbar } from 'notistack';
 import billApi from 'api/billApi';
 import { handleGlobalError } from 'utils';
 import queryString from 'query-string';
+import PageBillDetail from './PageBillDetail';
 
 BillUser.propTypes = {};
 
@@ -39,14 +39,14 @@ function BillUser(props) {
   const [filter, setFilter] = useState({
     page: 1,
     limit: 5,
-    status: null,
-    search: '',
   });
 
   useEffect(() => {
     const params = queryString.parse(location.search);
-    setFilter((prev) => ({ ...prev, status: params.status }));
-  }, [location.search]);
+    if (params.status !== filter.status) {
+      setFilter((prev) => ({ ...prev, status: params.status }));
+    }
+  }, [location.search, filter.status]);
 
   useEffect(() => {
     const fetchBills = async () => {
@@ -66,18 +66,54 @@ function BillUser(props) {
     setFilter((prev) => ({ ...prev, ...newFilter }));
   };
 
+  const currentStatus = new URLSearchParams(location.search).get('status');
+
+  const isTabActive = (path) => {
+    if (path === '/bill/all' && !currentStatus) return true;
+    const matchStatus = new URLSearchParams(path.split('?')[1] || '').get('status');
+    return currentStatus === matchStatus;
+  };
+
   return (
     <Box>
-      <Box my={2}>
-        <Paper>
-          <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" p={2}>
-            <NavLink to="./all">Tất cả</NavLink>
-            <NavLink to="./all?status=1">Chờ thanh toán</NavLink>
-            <NavLink to="./shipping">Vận chuyển</NavLink>
-            <NavLink to="./delivered">Chờ giao hàng</NavLink>
-            <NavLink to="./all?status=2">Hoàn thành</NavLink>
-            <NavLink to="./cancelled">Đã hủy</NavLink>
-            <NavLink to="./returned">Trả hàng/Hoàn tiền</NavLink>
+      <Box mb={2}>
+        <Paper elevation={3} sx={{ borderRadius: '8px', overflow: 'hidden' }}>
+          <Box
+            display="flex"
+            flexWrap="wrap"
+            justifyContent="space-between"
+            alignItems="center"
+            p={2}
+            sx={{ borderBottom: '1px solid #ddd' }}
+          >
+            {[
+              { label: 'Tất cả', path: './all' },
+              { label: 'Chờ phê duyệt', path: './all?status=0' },
+              { label: 'Vận chuyển', path: './all?status=2' },
+              { label: 'Chờ giao hàng', path: './all?status=3' },
+              { label: 'Hoàn thành', path: './all?status=1' },
+              { label: 'Đã hủy', path: './all?status=5' },
+              { label: 'Trả hàng/Hoàn tiền', path: './all?status=4' },
+            ].map((item, index) => {
+              const active = isTabActive(item.path);
+              return (
+                <NavLink
+                  key={index}
+                  to={item.path}
+                  style={{
+                    textDecoration: 'none',
+                    color: active ? '#fff' : '#555',
+                    fontWeight: active ? 'bold' : 'normal',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    backgroundColor: active ? '#000' : 'transparent',
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  {item.label}
+                </NavLink>
+              );
+            })}
           </Box>
         </Paper>
       </Box>

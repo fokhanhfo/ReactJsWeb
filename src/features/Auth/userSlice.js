@@ -24,7 +24,6 @@ export const login = createAsyncThunk(
     async(payload,{ rejectWithValue }) => {
       try{
         const data = await userApi.login(payload);
-        console.log(data)
         const token = data.data;
         localStorage.setItem(StorageKeys.TOKEN, token);
         const decodedToken = jwtDecode(data.data);

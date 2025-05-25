@@ -22,6 +22,10 @@ const userApi = {
     myInfor(id){
         const url = `/user/myInfo`;
         return axiosClient.get(url);
+    },
+    getAll(){
+        const url = `/user`;
+        return axiosClient.get(url);
     }
 };
 
