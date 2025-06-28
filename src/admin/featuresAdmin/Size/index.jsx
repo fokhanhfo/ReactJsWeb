@@ -1,35 +1,37 @@
-import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { useDispatch, useSelector } from 'react-redux';
-import { resetState } from 'admin/reduxAdmin/slices/actionsSlice';
-import Loading from 'components/Loading';
-import { Container } from '@mui/material';
-import ListSize from './componennts/ListSize';
-import AddSize from './componennts/AddSize';
+import React, { useState } from 'react';
+import { Box, Button, Typography } from '@mui/material';
 import { useGetSizeQuery } from 'hookApi/sizeApi';
+import Loading from 'components/Loading';
+import AddSize from './componennts/AddSize';
+import ListSize from './componennts/ListSize';
 
-SizeAdmin.propTypes = {};
+function SizeAdmin() {
+  const { data, isLoading, refetch } = useGetSizeQuery();
+  const [openAdd, setOpenAdd] = useState(false);
 
-function SizeAdmin(props) {
-  const { data, error, isLoading, refetch } = useGetSizeQuery();
-  console.log(data);
-  const dispatch = useDispatch();
-  useEffect(() => {
-    return () => {
-      dispatch(resetState());
-    };
-  }, [dispatch]);
-  const actionsState = useSelector((state) => state.actions);
-  const onSubmit = (status) => {
-    if (status) {
-      refetch();
-    }
+  const handleOpenAdd = () => setOpenAdd(true);
+  const handleCloseAdd = () => setOpenAdd(false);
+
+  const handleSubmitSuccess = () => {
+    refetch();
+    handleCloseAdd();
   };
+
   return (
-    <Container maxWidth={false}>
-      {!isLoading ? <ListSize sizes={data.data} actionsState={actionsState} /> : <Loading />}
-      {actionsState.add && <AddSize actionsState={actionsState} onSubmit={onSubmit} />}
-    </Container>
+    <Box p={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap">
+        <Typography variant="h6" fontWeight={600} color="primary.main">
+          Quản lý kích thước
+        </Typography>
+        <Button variant="contained" onClick={handleOpenAdd}>
+          Thêm kích thước
+        </Button>
+      </Box>
+
+      {isLoading ? <Loading /> : <ListSize sizes={data?.data || []} onRefresh={refetch} />}
+
+      {openAdd && <AddSize onClose={handleCloseAdd} onSubmitSuccess={handleSubmitSuccess} />}
+    </Box>
   );
 }
 

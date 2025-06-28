@@ -1,6 +1,4 @@
-'use client';
-
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import queryString from 'query-string';
 import {
@@ -48,22 +46,31 @@ function ListPage() {
   const [loading, setLoading] = useState(true);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [pagination, setPagination] = useState({ limit: 10, count: 10, page: 1 });
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [category, setCategory] = useState('');
 
   const categoryQuery = useSelector((state) => state.categoryApi.queries['getCategory(undefined)']);
 
   const queryParams = useMemo(() => {
     const params = queryString.parse(location.search);
+
     return {
       page: Number.parseInt(params.page) || 1,
-      limit: Number.parseInt(params.limit) || 10,
-      sort: 'hasDiscount',
-      status: 1,
-      ...params,
+      limit: Number.parseInt(params.limit) || rowsPerPage || 10,
+      sort: params.sort || 'hasDiscount',
+      status: Number.parseInt(params.status) || 1,
+      category: params.category || '',
     };
-  }, [location.search]);
+  }, [location.search, rowsPerPage]);
 
   useEffect(() => {
+    const params = queryString.parse(location.search);
+
+    if (params.category) {
+      setCategory(params.category);
+    } else {
+      setCategory('');
+    }
     const fetchProducts = async () => {
       setLoading(true);
       try {
@@ -118,6 +125,23 @@ function ListPage() {
     );
   };
 
+  const handleRowsPerPageChange = (e) => {
+    const newLimit = e.target.value;
+    setRowsPerPage(newLimit);
+
+    const currentParams = queryString.parse(location.search);
+    const newParams = {
+      ...currentParams,
+      limit: newLimit,
+      page: 1, // reset về page 1 khi thay đổi limit
+    };
+
+    navigate({
+      pathname: location.pathname,
+      search: `?${queryString.stringify(newParams)}`,
+    });
+  };
+
   return (
     <Box>
       <Box
@@ -141,10 +165,10 @@ function ListPage() {
               <Typography color="text.primary">Shop</Typography>
             </Breadcrumbs>
             <Typography variant="h5" fontWeight="bold" gutterBottom>
-              Our Products
+              Sản Phẩm Của Chúng Tôi
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Discover our collection of high-quality products
+              Khám phá bộ sưu tập sản phẩm chất lượng cao của chúng tôi
             </Typography>
           </Card>
         </Container>
@@ -230,12 +254,52 @@ function ListPage() {
                     mb: 1,
                   }}
                 >
-                  <Typography variant="h5" color="text.primary">
-                    Featured Products
-                  </Typography>
+                  <Box>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        mb: 1,
+                      }}
+                    >
+                      Sản Phẩm Nổi Bật
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Discover our handpicked selection of premium products
+                    </Typography>
+                  </Box>
 
-                  <Box width={'30%'} display="flex" justifyContent={'end'} gap={1}>
-                    <FormControl fullWidth size="small">
+                  {/* <Box width="70%" display="flex" flexWrap="wrap" justifyContent="flex-end" gap={2} sx={{ mt: 2 }}>
+                    <FormControl
+                      size="small"
+                      sx={{
+                        width: {
+                          xs: '100%',
+                          sm: '120px',
+                          md: '140px',
+                        },
+                      }}
+                    >
+                      <Select value={rowsPerPage} onChange={(e) => setRowsPerPage(e.target.value)} displayEmpty>
+                        <MenuItem value={10}>10 Items</MenuItem>
+                        <MenuItem value={20}>20 Items</MenuItem>
+                        <MenuItem value={50}>50 Items</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <FormControl
+                      size="small"
+                      sx={{
+                        minWidth: {
+                          xs: '100%',
+                          sm: '160px',
+                          md: '180px',
+                        },
+                      }}
+                    >
                       <InputLabel>Category</InputLabel>
                       <Select value={category} label="Category" onChange={(e) => handleCategory(e)}>
                         <MenuItem value="">All</MenuItem>
@@ -246,31 +310,149 @@ function ListPage() {
                         ))}
                       </Select>
                     </FormControl>
+
                     <Button
                       variant="outlined"
                       startIcon={<SortIcon />}
-                      fullWidth
                       sx={{
+                        display: {
+                          xs: 'none',
+                          sm: 'flex',
+                        },
                         borderRadius: 2,
-                        display: { xs: 'none', sm: 'flex' },
                         textTransform: 'none',
+                        minWidth: '120px',
                       }}
                     >
                       Sort
                     </Button>
+
                     <Button
                       variant="contained"
                       startIcon={<FilterListIcon />}
                       onClick={() => setOpenDrawer(true)}
-                      fullWidth
                       sx={{
-                        display: { md: 'none' },
+                        display: {
+                          xs: 'flex',
+                          md: 'none',
+                        },
                         borderRadius: 2,
                         textTransform: 'none',
+                        minWidth: '120px',
                       }}
                     >
                       Filters
                     </Button>
+                  </Box> */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'stretch', sm: 'center' },
+                      justifyContent: 'space-between',
+                      gap: 2,
+                      p: 2,
+                    }}
+                  >
+                    {/* Left side - Items per page */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                        Hiển thị:
+                      </Typography>
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <Select
+                          value={rowsPerPage}
+                          onChange={(e) => setRowsPerPage(e.target.value)}
+                          displayEmpty
+                          sx={{ borderRadius: 2 }}
+                        >
+                          <MenuItem value={20}>20 Thẻ</MenuItem>
+                          <MenuItem value={30}>30 Thẻ</MenuItem>
+                          <MenuItem value={50}>50 Thẻ</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+
+                    {/* Right side - Filters and Sort */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: 2,
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                        flex: 1,
+                        justifyContent: 'flex-end',
+                      }}
+                    >
+                      {/* Category Filter */}
+                      <FormControl
+                        size="small"
+                        sx={{
+                          minWidth: { xs: '100%', sm: 180 },
+                        }}
+                      >
+                        <InputLabel>Danh Mục</InputLabel>
+                        <Select value={category} label="Category" onChange={handleCategory} sx={{ borderRadius: 2 }}>
+                          <MenuItem value="">All Categories</MenuItem>
+                          {categoryQuery?.data?.data.map((cat) => (
+                            <MenuItem key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      {/* Sort - Desktop */}
+                      {!isMobile && (
+                        <FormControl size="small" sx={{ minWidth: 140 }}>
+                          <InputLabel>Sort By</InputLabel>
+                          <Select
+                            value={''}
+                            label="Giá"
+                            // onChange={handleSortChange}
+                            sx={{ borderRadius: 2 }}
+                          >
+                            <MenuItem value="">Default</MenuItem>
+                            <MenuItem value="price-low">Price: Low to High</MenuItem>
+                            <MenuItem value="price-high">Price: High to Low</MenuItem>
+                            <MenuItem value="rating">Highest Rated</MenuItem>
+                            <MenuItem value="newest">Newest First</MenuItem>
+                          </Select>
+                        </FormControl>
+                      )}
+
+                      {/* Sort Button - Mobile */}
+                      {isMobile && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<SortIcon />}
+                          sx={{
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Sort
+                        </Button>
+                      )}
+
+                      {/* Filters Button - Mobile */}
+                      {isMobile && (
+                        <Button
+                          variant="contained"
+                          startIcon={<FilterListIcon />}
+                          onClick={() => setOpenDrawer(true)}
+                          sx={{
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                          }}
+                        >
+                          Filters
+                        </Button>
+                      )}
+                    </Box>
                   </Box>
                 </Box>
 

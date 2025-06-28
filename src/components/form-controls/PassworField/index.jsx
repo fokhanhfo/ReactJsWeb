@@ -1,14 +1,9 @@
-import React from 'react';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import FormControl from '@mui/material/FormControl';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import InputLabel from '@mui/material/InputLabel';
-import OutlinedInput from '@mui/material/OutlinedInput';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Controller } from 'react-hook-form';
-import { FormHelperText } from '@mui/material';
+import { FormControl, FormHelperText, OutlinedInput, InputAdornment, IconButton, InputLabel } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 PasswordField.propTypes = {
   form: PropTypes.object.isRequired,
@@ -16,9 +11,24 @@ PasswordField.propTypes = {
 
   label: PropTypes.string,
   disabled: PropTypes.bool,
+  width: PropTypes.string,
+  height: PropTypes.string,
+  size: PropTypes.string,
+  readOnly: PropTypes.bool,
+  defaultValue: PropTypes.any,
+  hidden: PropTypes.bool,
 };
 
 function PasswordField(props) {
+  const { form, name, label, disabled, width, height, size = 'small', readOnly, defaultValue, hidden } = props;
+
+  const {
+    formState: { errors },
+    setValue,
+  } = form;
+
+  const message = errors[name]?.message;
+
   const [showPassword, setShowPassword] = React.useState(false);
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -27,44 +37,37 @@ function PasswordField(props) {
     event.preventDefault();
   };
 
-  const { form, name, label, disabled } = props;
-  // const {errors,formState} = form;
-  // console.log(errors,formState);
-  const {
-    formState: { errors },
-  } = form;
+  useEffect(() => {
+    if (defaultValue !== undefined) {
+      setValue(name, defaultValue);
+    }
+  }, [defaultValue, name, setValue]);
 
   return (
-    // <Controller
-    //     name={name}
-    //     control={form.control}
-    //     render={({field}) => (
-    //         <TextField
-    //             {...field}
-    //             margin='normal'
-    //             variant='outlined'
-    //             fullWidth
-    //             label={label}
-    //             disabled={disabled}
-    //             error={!!errors[name]}
-    //             helperText={errors[name]?.message}
-    //         />
-    //     )}
-    // />
-    <FormControl fullWidth margin="normal" variant="outlined">
-      <InputLabel htmlFor="outlined-adornment-password" sx={{ top: '-5px' }}>
-        Password
-      </InputLabel>
+    <FormControl
+      fullWidth
+      variant="outlined"
+      error={Boolean(message)}
+      sx={{
+        width: width || '100%',
+        height: height || 'auto',
+        display: hidden && 'none',
+      }}
+      size={size}
+    >
+      <InputLabel htmlFor={`outlined-adornment-password-${name}`}>{label}</InputLabel>
       <Controller
         name={name}
         control={form.control}
         render={({ field }) => (
           <OutlinedInput
             {...field}
-            id="outlined-adornment-password"
+            id={`outlined-adornment-password-${name}`}
             type={showPassword ? 'text' : 'password'}
-            variant="outlined"
-            size="small"
+            label={label}
+            disabled={disabled}
+            readOnly={readOnly}
+            size={size}
             endAdornment={
               <InputAdornment position="end">
                 <IconButton
@@ -72,18 +75,16 @@ function PasswordField(props) {
                   onClick={handleClickShowPassword}
                   onMouseDown={handleMouseDownPassword}
                   edge="end"
+                  tabIndex={-1}
                 >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </InputAdornment>
             }
-            label="Password"
-            disabled={disabled}
-            error={!!errors[name]}
           />
         )}
       />
-      {errors[name] && <FormHelperText>{errors[name]?.message}</FormHelperText>}
+      <FormHelperText>{message}</FormHelperText>
     </FormControl>
   );
 }

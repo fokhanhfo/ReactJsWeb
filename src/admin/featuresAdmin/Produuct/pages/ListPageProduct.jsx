@@ -37,9 +37,13 @@ import StoreIcon from '@mui/icons-material/Store';
 import LanguageIcon from '@mui/icons-material/Language';
 import DiscountIcon from '@mui/icons-material/Discount';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
-import { useGetProductsQuery } from 'hookApi/productApi';
+import { useGetAllProductStatisticsQuery, useGetProductsQuery } from 'hookApi/productApi';
 import { optionStatus } from 'utils/status';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import WarningIcon from '@mui/icons-material/Warning';
+import WarehouseIcon from '@mui/icons-material/Warehouse';
 
 ListPageProduct.propTypes = {
   actionsState: PropTypes.object.isRequired,
@@ -55,24 +59,27 @@ function ListPageProduct({ actionsState }) {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const categoryQuery = useSelector((state) => state.categoryApi.queries['getCategory(undefined)']);
+  const [status, setStatus] = React.useState('');
+  const [category, setCategory] = React.useState('');
+  const [sortPrice, setSortPrice] = React.useState('');
+  const [rowsPerPage, setRowsPerPage] = React.useState(20);
   const queryParams = useMemo(() => {
     const params = queryString.parse(location.search);
     return {
       page: Number.parseInt(params.page) || 1,
-      limit: Number.parseInt(params.limit) || 5,
+      limit: rowsPerPage || 20,
       ...params,
     };
-  }, [location.search]);
-
-  const [status, setStatus] = React.useState('');
-  const [category, setCategory] = React.useState('');
-  const [stock, setStock] = React.useState('');
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  }, [location.search, rowsPerPage]);
 
   const { data, error, isLoading } = useGetProductsQuery(queryParams);
   const { data: colors, error: colorsError, isLoading: colorsLoading } = useGetColorQuery();
   const { data: sizes, error: sizesError, isLoading: sizesLoading } = useGetSizeQuery();
-
+  const {
+    data: productStatistics,
+    isLoading: isLoadingProductStatistics,
+    error: errorProductStatistics,
+  } = useGetAllProductStatisticsQuery();
   if (isLoading) return <Loading />;
   if (error) return <p>Đã xảy ra lỗi khi tải sản phẩm!</p>;
 
@@ -95,11 +102,32 @@ function ListPageProduct({ actionsState }) {
 
   // console.log(rows);
 
+  const updateFilter = (key, value) => {
+    const newFilter = { ...queryParams };
+
+    if (value === '') {
+      delete newFilter[key];
+    } else {
+      newFilter[key] = value;
+      newFilter.page = 1; // Reset to first page on filter change
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
+  };
+
+  // Các handler tối ưu
   const handleNextPage = (event, page) => {
     const newFilter = {
       ...queryParams,
       page: page,
     };
+
     navigate(
       {
         pathname: location.pathname,
@@ -112,43 +140,39 @@ function ListPageProduct({ actionsState }) {
   const handleStatus = (event) => {
     const value = event.target.value;
     setStatus(value);
-
-    const newFilter = { ...queryParams };
-
-    if (value === '') {
-      delete newFilter.status;
-    } else {
-      newFilter.status = value;
-    }
-
-    navigate(
-      {
-        pathname: location.pathname,
-        search: queryString.stringify(newFilter),
-      },
-      { replace: true },
-    );
+    updateFilter('status', value);
   };
 
   const handleCategory = (event) => {
     const value = event.target.value;
     setCategory(value);
+    updateFilter('category', value);
+  };
 
-    const newFilter = { ...queryParams };
+  const handleSortPrice = (event) => {
+    const value = event.target.value;
+    setSortPrice(value);
+    updateFilter('sort', value);
+  };
 
-    if (value === '') {
-      delete newFilter.category;
-    } else {
-      newFilter.category = value;
-    }
+  const handleRowsPerPage = (event) => {
+    const value = event.target.value;
+    setRowsPerPage(value);
+    updateFilter('limit', value);
+  };
 
-    navigate(
-      {
-        pathname: location.pathname,
-        search: queryString.stringify(newFilter),
-      },
-      { replace: true },
-    );
+  const handleSearchChange = (e) => {
+    const newName = e.target.value;
+
+    const currentParams = queryString.parse(location.search);
+    const updatedParams = {
+      ...currentParams,
+      name: newName,
+      page: 1,
+    };
+
+    const newSearch = queryString.stringify(updatedParams);
+    navigate(`?${newSearch}`);
   };
 
   const handleChangeFilter = (newfilter) => {
@@ -162,37 +186,42 @@ function ListPageProduct({ actionsState }) {
   };
   const handleActions = (state) => handleAction(state, dispatch, actionsState);
 
+  if (isLoadingProductStatistics || !productStatistics?.data) {
+    return <Loading />;
+  }
+
+  const { productStatusStats, productSalesView, topProduct, productQuantityDTOS } = productStatistics?.data;
+
   const salesData = [
     {
-      title: 'In-Store Sales',
-      amount: '$5,345',
-      orders: '5k orders',
-      change: '+5.7%',
+      title: 'Sản phẩm bán chạy nhất',
+      amount: `${productSalesView.name}`,
+      orders: `Đã bán ${productSalesView.totalSold} sản phẩm`,
+      change: `ID: ${productSalesView.id}`,
       changeColor: 'green',
-      icon: <StoreIcon fontSize="large" />,
+      icon: <TrendingUpIcon fontSize="large" sx={{ color: 'green' }} />, // Biểu tượng tăng trưởng
     },
     {
-      title: 'Website Sales',
-      amount: '$74,347',
-      orders: '21k orders',
-      change: '+12.4%',
-      changeColor: 'green',
-      icon: <LanguageIcon fontSize="large" />,
+      title: 'Số sản phẩm sắp hết hàng',
+      amount: `${productQuantityDTOS.length + 1} sản phẩm`,
+      orders: 'Cần nhập hàng',
+      changeColor: 'orange',
+      icon: <WarningIcon fontSize="large" sx={{ color: 'orange' }} />, // Biểu tượng cảnh báo
     },
     {
-      title: 'Discount',
-      amount: '$14,235',
-      orders: '6k orders',
-      change: null,
-      icon: <DiscountIcon fontSize="large" />,
+      title: 'Sản phẩm đang hoạt động',
+      amount: `${productStatusStats.find((s) => s.status === 'Đang hoạt động')?.count || 0}`,
+      orders: 'Hoạt động',
+      changeColor: 'blue',
+      icon: <InventoryIcon fontSize="large" sx={{ color: 'blue' }} />, // Biểu tượng kho hàng
     },
     {
-      title: 'Affiliate',
-      amount: '$8,345',
-      orders: '150 orders',
-      change: '-3.5%',
-      changeColor: 'red',
-      icon: <CreditCardIcon fontSize="large" />,
+      title: 'Sản phẩm còn nhiều hàng',
+      amount: `${topProduct.name}`,
+      orders: `Còn ${topProduct.totalQuantity} sản phẩm`,
+      change: `ID: ${topProduct.id}`,
+      changeColor: 'teal',
+      icon: <WarehouseIcon fontSize="large" sx={{ color: 'teal' }} />, // Biểu tượng kho bãi
     },
   ];
 
@@ -261,14 +290,18 @@ function ListPageProduct({ actionsState }) {
             <Paper>
               <Box sx={{ p: 3, backgroundColor: '#fff', borderRadius: 2 }}>
                 <Typography variant="h6" fontWeight="bold" mb={2}>
-                  Filters
+                  Bộ lọc
                 </Typography>
 
                 {/* Filter Selects */}
                 <Box display="flex" gap={2}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Status</InputLabel>
-                    <Select value={status} label="Status" onChange={(e) => handleStatus(e)}>
+                    <InputLabel>Trạng thái</InputLabel>
+                    <Select
+                      value={queryParams.status ? queryParams.status : status}
+                      label="Trạng thái"
+                      onChange={(e) => handleStatus(e)}
+                    >
                       <MenuItem value="">All</MenuItem>
                       {optionStatus.map((option) => (
                         <MenuItem key={option.id} value={option.id}>
@@ -279,8 +312,12 @@ function ListPageProduct({ actionsState }) {
                   </FormControl>
 
                   <FormControl fullWidth size="small">
-                    <InputLabel>Category</InputLabel>
-                    <Select value={category} label="Category" onChange={(e) => handleCategory(e)}>
+                    <InputLabel>Danh mục</InputLabel>
+                    <Select
+                      value={queryParams.category ? queryParams.category : category}
+                      label="Category"
+                      onChange={(e) => handleCategory(e)}
+                    >
                       <MenuItem value="">All</MenuItem>
                       {categoryQuery?.data?.data.map((category) => (
                         <MenuItem key={category.id} value={category.id}>
@@ -291,11 +328,11 @@ function ListPageProduct({ actionsState }) {
                   </FormControl>
 
                   <FormControl fullWidth size="small">
-                    <InputLabel>Stock</InputLabel>
-                    <Select value={stock} label="Stock" onChange={(e) => setStock(e.target.value)}>
-                      <MenuItem value="">All</MenuItem>
-                      <MenuItem value="in">In Stock</MenuItem>
-                      <MenuItem value="out">Out of Stock</MenuItem>
+                    <InputLabel>Giá</InputLabel>
+                    <Select value={sortPrice} label="Giá" onChange={(e) => handleSortPrice(e)}>
+                      <MenuItem value="">Bỏ chọn</MenuItem>
+                      <MenuItem value="sellingPrice:desc">Giảm dần</MenuItem>
+                      <MenuItem value="sellingPrice:asc">Tăng dần</MenuItem>
                     </Select>
                   </FormControl>
                 </Box>
@@ -304,14 +341,25 @@ function ListPageProduct({ actionsState }) {
 
                 {/* Search and Actions */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-                  <TextField size="small" placeholder="Search Product" sx={{ width: 300 }} />
+                  <Box>
+                    <TextField
+                      value={queryParams.name ? queryParams.name : ''}
+                      onChange={handleSearchChange}
+                      size="small"
+                      placeholder="Search Product"
+                      sx={{ width: 300 }}
+                    />
+                  </Box>
 
                   <Box display="flex" alignItems="center" gap={1}>
                     <FormControl size="small">
-                      <Select value={rowsPerPage} onChange={(e) => setRowsPerPage(e.target.value)}>
-                        <MenuItem value={10}>10</MenuItem>
-                        <MenuItem value={20}>20</MenuItem>
-                        <MenuItem value={50}>50</MenuItem>
+                      <Select
+                        value={queryParams.limit ? queryParams.limit : rowsPerPage}
+                        onChange={(e) => handleRowsPerPage(e)}
+                      >
+                        <MenuItem value={20}>20 thẻ</MenuItem>
+                        <MenuItem value={50}>50 thẻ</MenuItem>
+                        <MenuItem value={100}>100 thẻ</MenuItem>
                       </Select>
                     </FormControl>
 
@@ -329,7 +377,7 @@ function ListPageProduct({ actionsState }) {
                       Add Product
                     </Button>
 
-                    <IconButton borderRadius="50%" sx={{ backgroundColor: '#f0f0f0' }}>
+                    <IconButton sx={{ backgroundColor: '#f0f0f0', borderRadius: '50%' }}>
                       <MoreVertIcon />
                     </IconButton>
                   </Box>
@@ -357,7 +405,9 @@ function ListPageProduct({ actionsState }) {
       ) : (
         <Loading></Loading>
       )}
-      {actionsState.add && <AddProduct listSize={sizes.data} listColor={colors.data} actionsState={actionsState} />}
+      {actionsState.add && !colorsLoading && !sizesLoading && (
+        <AddProduct listSize={sizes.data} listColor={colors.data} actionsState={actionsState} />
+      )}
     </div>
   );
 }

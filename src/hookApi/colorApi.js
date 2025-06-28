@@ -30,8 +30,8 @@ export const colorApi = createApi({
         }),
         updateColor: builder.mutation({
             query: (updatedItem) => ({
-                url: `product/color/${updatedItem.id}`,
-                method: 'PUT',
+                url: `product/color/update`,
+                method: 'POST',
                 body: updatedItem,
             }),
             invalidatesTags: [{ type: 'Color', id: 'LIST' }],

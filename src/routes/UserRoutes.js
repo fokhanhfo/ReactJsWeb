@@ -13,6 +13,7 @@ import CounterFeature from 'features/Counter';
 import Bill from 'features/Bill';
 import Footer from 'components/Footer/Footer';
 import UserDetail from 'features/Bill';
+import HoangHaiFashionMUI from 'features/AboutUs';
 
 function UserRoutes() {
   return (
@@ -23,9 +24,11 @@ function UserRoutes() {
         <Route path="/" element={<HomeFeatures/>} />
         <Route path="/todos/*" element={<TodoFeature />} />
         <Route path="/contact" element={<AlbumFeature />} />
+        <Route path="/ABOUT-US" element={<HoangHaiFashionMUI />} />
+        <Route path="/products/*" element={<ProductFeatureCopy />} />
+        
 
         <Route element={<PrivateRoute/>} >
-          <Route path="/products/*" element={<ProductFeatureCopy />} />
           {/* <Route path="/cart/*" element={<CartFeature />} /> */}
           <Route path="/checkout/*" element={<CheckOutFeatures />} />
           <Route path="/newproduct/" element={<NewArrivalsFeatures />} />

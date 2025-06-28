@@ -10,11 +10,18 @@ DataTable.propTypes = {
   pageSize: PropTypes.number,
   handleSelectionChange: PropTypes.func,
   selectedUsers: PropTypes.array,
+  height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
-function DataTable({ rows, columns, pageSize = 5, handleSelectionChange, selectedUsers }) {
+function DataTable({ rows, columns, pageSize = 5, handleSelectionChange, selectedUsers, height = 'auto' }) {
   return (
-    <Box margin={2}>
+    <Box
+      margin={2}
+      sx={{
+        height: height,
+        overflow: 'auto',
+      }}
+    >
       <DataGrid
         rows={rows}
         rowHeight={80}

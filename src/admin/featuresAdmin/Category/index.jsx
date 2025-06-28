@@ -23,17 +23,31 @@ import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 import { useGetCategoryQuery } from 'hookApi/categoryApi';
 import ListCategory from './components/ListCategory';
 import AddCategory from './components/AddCategory';
+import Fuse from 'fuse.js';
 CategoryAdmin.propTypes = {};
 
 function CategoryAdmin(props) {
   const { data, error, isLoading, refetch } = useGetCategoryQuery();
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [searchTerm, setSearchTerm] = React.useState('');
+
   const dispatch = useDispatch();
   useEffect(() => {
     return () => {
       dispatch(resetState());
     };
   }, [dispatch]);
+  const fuse = new Fuse(data?.data || [], {
+    keys: ['name', 'description'], // bạn có thể thêm các trường muốn tìm
+    threshold: 0.4, // độ "lỏng" của tìm kiếm (0: chính xác tuyệt đối, 1: lỏng nhất)
+    ignoreLocation: true,
+    includeScore: true,
+    isCaseSensitive: false,
+    // bạn có thể thêm config để xử lý dấu tiếng việt nếu muốn
+  });
+
+  const filteredCategories = searchTerm ? fuse.search(searchTerm).map((result) => result.item) : data?.data || [];
+
   const actionsState = useSelector((state) => state.actions);
   const handleActions = (state) => handleAction(state, dispatch, actionsState);
 
@@ -45,7 +59,13 @@ function CategoryAdmin(props) {
             <Box sx={{ p: 3, backgroundColor: '#fff', borderRadius: 2 }}>
               {/* Search and Actions */}
               <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-                <TextField size="small" placeholder="Search Product" sx={{ width: 300 }} />
+                <TextField
+                  size="small"
+                  placeholder="Tìm kiếm danh mục"
+                  sx={{ width: 300 }}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
 
                 <Box display="flex" alignItems="center" gap={1}>
                   <FormControl size="small">
@@ -55,10 +75,6 @@ function CategoryAdmin(props) {
                       <MenuItem value={50}>50</MenuItem>
                     </Select>
                   </FormControl>
-
-                  <Button variant="outlined" disabled>
-                    Export
-                  </Button>
 
                   <Button
                     variant="contained"
@@ -72,7 +88,7 @@ function CategoryAdmin(props) {
                 </Box>
               </Box>
             </Box>
-            <ListCategory actionsState={actionsState} categorys={data.data} />
+            <ListCategory actionsState={actionsState} categorys={filteredCategories} />{' '}
             {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 2 }}>
                   <Pagination
                     //   count={Math.ceil(pagination.count / queryParams.limit)}

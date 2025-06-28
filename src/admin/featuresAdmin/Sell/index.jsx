@@ -63,7 +63,7 @@ function FeatureSellAdmin() {
             flexDirection: 'column',
           }}
         >
-          <ProductSellFilter onChange={handleChangeFilter} />
+          <ProductSellFilter onChange={handleChangeFilter} filter={queryParams} />
           <Divider sx={{ marginY: 2 }} />
           <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
             <ListProduct products={products} onPageChange={handleNextPage} />

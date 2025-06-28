@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createTheme, responsiveFontSizes, ThemeProvider } from '@mui/material';
 import LogoutListener from 'components/LogoutListener';
 import { BreadcrumbProvider } from 'admin/components/Breadcrumbs/BreadcrumbContext';
+import HoangHaiFashion from 'features/AboutUs';
 // const theme = responsiveFontSizes(
 //   createTheme({
 //     palette: {
@@ -68,10 +69,10 @@ let theme = createTheme({
     h5: {
       fontSize: '1.5rem',
       [`@media (max-width:600px)`]: {
-        fontSize: '1rem',
+        fontSize: '1.2rem',
       },
       [`@media (max-width:400px)`]: {
-        fontSize: '0.8rem',
+        fontSize: '1rem',
       },
     },
     body1: {
@@ -137,8 +138,7 @@ function App() {
       <div className="App">
           <LogoutListener/>
           <Routes>
-            <Route path="/home" element={<Navigate to="/" />} />
-            <Route path="/admin/*" element={
+            <Route path="/home" element={<Navigate to="/" />} />            <Route path="/admin/*" element={
                 <BreadcrumbProvider>
                     <AdminRoutes />
                 </BreadcrumbProvider>

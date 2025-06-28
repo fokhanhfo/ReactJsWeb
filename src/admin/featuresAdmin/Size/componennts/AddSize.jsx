@@ -2,31 +2,32 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { useDispatch } from 'react-redux';
-import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 import * as yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import InputField from 'components/form-controls/InputForm';
-import { useAddToSizeMutation } from 'hookApi/sizeApi';
-import { ChromePicker } from 'react-color';
+import { useAddToSizeMutation, useUpdateSizeMutation } from 'hookApi/sizeApi';
+import { useSnackbar } from 'notistack';
+import NumericForm from 'components/form-controls/NumericFormat';
 
 AddSize.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
-  actionsState: PropTypes.object.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSubmitSuccess: PropTypes.func,
   initialValues: PropTypes.object,
 };
 
-function AddSize({ actionsState, onSubmit, initialValues }) {
-  const { add, edit, del, view } = actionsState;
-  console.log(initialValues);
-  const activeAction = Object.keys(actionsState).find((key) => actionsState[key]);
-  const dispatch = useDispatch();
+function AddSize({ onClose, onSubmitSuccess, initialValues }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [addSize] = useAddToSizeMutation(); // Sử dụng hook đúng cách
+  const [addSize] = useAddToSizeMutation();
+  const [updateSize] = useUpdateSizeMutation();
+  const { enqueueSnackbar } = useSnackbar();
 
   const schema = yup.object({
-    name: yup.string().required('Bắt buộc'),
+    name: yup
+      .number()
+      .typeError('Phải là số')
+      .required('Bắt buộc')
+      .min(35, 'Giá trị tối thiểu là 35')
+      .max(50, 'Giá trị tối đa là 50'),
   });
 
   const form = useForm({
@@ -36,49 +37,61 @@ function AddSize({ actionsState, onSubmit, initialValues }) {
     resolver: yupResolver(schema),
   });
 
-  const { setValue, handleSubmit } = form;
+  const { handleSubmit, reset, formState } = form;
 
   const onSubmitForm = async (data) => {
     setIsSubmitting(true);
     try {
-      const updateData = { ...data, id: initialValues?.id };
-      await addSize(updateData).unwrap();
-    } catch (error) {
-      console.error('Lỗi khi thêm màu:', error);
+      if (initialValues?.id) {
+        await updateSize({ ...data, id: initialValues.id }).unwrap();
+        enqueueSnackbar('Cập nhật thành công', { variant: 'success' });
+      } else {
+        await addSize(data).unwrap();
+        enqueueSnackbar('Thêm thành công', { variant: 'success' });
+      }
+      onSubmitSuccess?.();
+      reset();
+    } catch (err) {
+      enqueueSnackbar(err?.data?.message || 'Có lỗi xảy ra', { variant: 'error' });
     } finally {
       setIsSubmitting(false);
-      form.reset();
-      handleAction(activeAction, dispatch, { add, edit, del, view });
     }
   };
 
   useEffect(() => {
     if (initialValues) {
-      form.reset({
+      reset({
         name: initialValues.name || '',
       });
     }
-  }, [initialValues, form]);
+  }, [initialValues, reset]);
 
   return (
-    <Dialog aria-labelledby="customized-dialog-title" open={add || edit}>
-      <DialogTitle sx={{ m: 0, p: 2 }}>Thêm màu mới</DialogTitle>
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle sx={{ textAlign: 'center', fontWeight: 600 }}>
+        {initialValues ? 'Cập nhật kích thước' : 'Thêm kích thước'}
+      </DialogTitle>
       <IconButton
-        aria-label="close"
-        onClick={() => handleAction(activeAction, dispatch, { add, edit, del, view })}
-        sx={{ position: 'absolute', right: 8, top: 8 }}
+        onClick={onClose}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: 8,
+          color: (theme) => theme.palette.grey[500],
+        }}
       >
         <CloseIcon />
       </IconButton>
+
       <form onSubmit={handleSubmit(onSubmitForm)}>
-        <DialogContent dividers>
-          <Box display="flex" gap={2} flexDirection="column">
-            <InputField name="name" label="Tên màu" form={form} />
+        <DialogContent dividers sx={{ px: 4, py: 3 }}>
+          <Box display="flex" flexDirection="column" gap={2}>
+            <NumericForm name="name" label="Kích thước (mm)" form={form} />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button type="submit" autoFocus disabled={isSubmitting}>
-            {isSubmitting ? 'Đang thêm...' : 'Thêm Màu'}
+        <DialogActions sx={{ px: 4, pb: 2 }}>
+          <Button type="submit" variant="contained" fullWidth disabled={isSubmitting || !formState.isDirty}>
+            {isSubmitting ? (initialValues ? 'Đang cập nhật...' : 'Đang thêm...') : initialValues ? 'Cập nhật' : 'Thêm'}
           </Button>
         </DialogActions>
       </form>

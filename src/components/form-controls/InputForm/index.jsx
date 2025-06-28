@@ -23,7 +23,6 @@ function InputField(props) {
     formState: { errors },
     setValue,
   } = form;
-  console.log('errors', hidden);
 
   const message = get(errors, name + '.message');
 

@@ -29,12 +29,11 @@ import NumericForm from 'components/form-controls/NumericFormat';
 import SelectFrom from 'components/form-controls/SelectFrom';
 import { handleGlobalError, handleGlobalSuccess, optionCategoryDiscount, optionTypeDiscount } from 'utils';
 import { useAddToDiscountMutation } from 'hookApi/discountApi';
-import { useAddToDiscountPeriodMutation } from 'hookApi/discountPeriodApi';
+import { useAddToDiscountPeriodMutation, useUpdateDiscountPeriodMutation } from 'hookApi/discountPeriodApi';
 import { useSnackbar } from 'notistack';
 
 AddDiscountPeriod.propTypes = {
   actionsState: PropTypes.object.isRequired,
-  onSubmit: PropTypes.func.isRequired,
   initialValues: PropTypes.object,
 };
 
@@ -106,6 +105,7 @@ function AddDiscountPeriod({ actionsState, onSubmit, initialValues }) {
 
   const [addDiscount] = useAddToDiscountMutation();
   const [addToDiscountPeriod] = useAddToDiscountPeriodMutation();
+  const [updateDiscountPeriod, { isLoading, isSuccess, isError, error }] = useUpdateDiscountPeriodMutation();
 
   useEffect(() => {
     if (initialValues && Object.keys(initialValues).length > 0) {
@@ -136,17 +136,29 @@ function AddDiscountPeriod({ actionsState, onSubmit, initialValues }) {
         endTime: convertToVietnamTime(value.endTime),
         status: 1,
       };
-      const response = await addToDiscountPeriod(newValue).unwrap();
+
+      let response;
+      if (newValue.id) {
+        // Có ID → cập nhật
+        response = await updateDiscountPeriod(newValue).unwrap();
+      } else {
+        // Không có ID → thêm mới
+        response = await addToDiscountPeriod(newValue).unwrap();
+      }
+
       console.log(response);
       if (response) {
-        onSubmit(true);
-        enqueueSnackbar('Thêm mã giảm giá thành công', { variant: 'success' });
+        enqueueSnackbar(newValue.id ? 'Cập nhật mã giảm giá thành công' : 'Thêm mã giảm giá thành công', {
+          variant: 'success',
+        });
         handleAction(activeAction, dispatch, { add, edit, del, view });
         form.reset();
       }
     } catch (error) {
       console.log(error);
-      enqueueSnackbar(error?.data?.message, { variant: 'error' });
+      enqueueSnackbar(error?.data?.message || 'Đã xảy ra lỗi', {
+        variant: 'error',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -439,7 +451,7 @@ function AddDiscountPeriod({ actionsState, onSubmit, initialValues }) {
           <Button
             type="submit"
             variant="contained"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isDirty}
             sx={{
               borderRadius: '8px',
               px: 3,

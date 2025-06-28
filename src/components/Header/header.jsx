@@ -32,11 +32,11 @@ const Navbar = () => {
       <Search />
       <Paper>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {isMobile ? (
+          {/* {isMobile ? (
             <NavMobile toggleMenu={toggleMenu} isMenuOpen={isMenuOpen} listCategory={listCategory} />
-          ) : (
-            <NavWeb listCategory={listCategory} />
-          )}
+          ) : ( */}
+          <NavWeb listCategory={listCategory} />
+          {/* )} */}
         </Box>
       </Paper>
       <AuthDialog />

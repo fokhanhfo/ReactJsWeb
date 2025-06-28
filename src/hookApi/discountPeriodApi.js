@@ -34,7 +34,7 @@ export const discountPeriodApi = createApi({
         }),        
         updateDiscountPeriod: builder.mutation({
             query: (updatedItem) => ({
-                url: `discountPeriod/${updatedItem.id}`,
+                url: `discountPeriod`,
                 method: 'PUT',
                 body: updatedItem,
             }),

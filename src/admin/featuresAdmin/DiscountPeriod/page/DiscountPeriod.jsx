@@ -49,11 +49,6 @@ function DiscountPeriod(props) {
     };
   }, [dispatch]);
   const actionsState = useSelector((state) => state.actions);
-  const onSubmit = (status) => {
-    // if (status) {
-    //   refetch();
-    // }
-  };
 
   const { setBreadcrumbs } = useBreadcrumb();
 
@@ -197,7 +192,7 @@ function DiscountPeriod(props) {
       ) : (
         <Loading />
       )}
-      {actionsState.add && <AddDiscountPeriod actionsState={actionsState} onSubmit={onSubmit} />}
+      {actionsState.add && <AddDiscountPeriod actionsState={actionsState} />}
     </>
   );
 }

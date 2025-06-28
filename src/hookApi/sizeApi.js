@@ -30,8 +30,8 @@ export const sizeApi = createApi({
         }),
         updateSize: builder.mutation({
             query: (updatedItem) => ({
-                url: `product/size/${updatedItem.id}`,
-                method: 'PUT',
+                url: `product/size/update`,
+                method: 'POST',
                 body: updatedItem,
             }),
             invalidatesTags: [{ type: 'Size', id: 'LIST' }],

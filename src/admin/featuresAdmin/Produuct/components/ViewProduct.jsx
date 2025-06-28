@@ -81,14 +81,14 @@ function ViewProduct({ actionsState, onSubmit, initialValues }) {
       name: '',
       detail: '',
       category: '',
+      importPrice: 0,
+      sellingPrice: 0,
       status: '',
       isMainProductId: '',
       productDetails: [
         {
           id: null,
           index: 0,
-          importPrice: 0,
-          sellingPrice: 0,
           color: null,
           isMainId: null,
           productDetailSizes: [
@@ -155,6 +155,8 @@ function ViewProduct({ actionsState, onSubmit, initialValues }) {
         name: initialValues.name || '',
         detail: initialValues.detail || '',
         category: initialValues.category || '',
+        importPrice: initialValues.importPrice || 0,
+        sellingPrice: initialValues.sellingPrice || 0,
         status: initialValues.status || '',
         isMainProductId:
           initialValues?.productDetails?.flatMap((detail) => detail.image)?.find((image) => image.mainProduct)?.id ||
@@ -162,8 +164,6 @@ function ViewProduct({ actionsState, onSubmit, initialValues }) {
         productDetails:
           initialValues.productDetails?.map((item) => ({
             id: item.id || null,
-            importPrice: item.importPrice || 0,
-            sellingPrice: item.sellingPrice || 0,
             quantity: item.quantity || 0,
             color: item.color || null,
             size: item.size || null,
@@ -219,6 +219,16 @@ function ViewProduct({ actionsState, onSubmit, initialValues }) {
               form={form}
               options={categoryQuery.data.data}
             />
+            <NumericForm
+              readOnly
+              details={true}
+              name={`importPrice`}
+              label="Giá nhập"
+              form={form}
+              type="number"
+              formSub={true}
+            />
+            <NumericForm readOnly name={`sellingPrice`} label="Giá bán" form={form} type="number" />
           </Box>
           <CKEditorForm name="detail" lable="Chi tiết sản phẩm" form={form} disabled />
           {/* <InputField name="price" label="Giá tiền" form={form} disabled />
@@ -246,7 +256,7 @@ function ViewProduct({ actionsState, onSubmit, initialValues }) {
               </Typography>
               <Box key={item.id} sx={{ borderBottom: '1px solid #ddd' }}>
                 <Box key={item.id} display={'flex'} gap={1} marginBottom={2}>
-                  <NumericForm
+                  {/* <NumericForm
                     readOnly
                     details={true}
                     name={`productDetails[${index}].importPrice`}
@@ -261,8 +271,8 @@ function ViewProduct({ actionsState, onSubmit, initialValues }) {
                     label="Giá bán"
                     form={form}
                     type="number"
-                  />
-                  <FormControl margin="normal" className="select_form" fullWidth>
+                  /> */}
+                  <FormControl className="select_form" fullWidth>
                     <InputLabel id={`${`productDetails[${index}].color`}-label`} sx={{ top: '-6px' }}>
                       Màu sắc
                     </InputLabel>

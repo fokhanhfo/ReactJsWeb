@@ -18,7 +18,7 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch } from 'react-redux';
 import * as yup from 'yup';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import InputField from 'components/form-controls/InputForm';
 import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
@@ -29,15 +29,16 @@ import NumericForm from 'components/form-controls/NumericFormat';
 import SelectFrom from 'components/form-controls/SelectFrom';
 import { handleGlobalError, handleGlobalSuccess, optionCategoryDiscount, optionTypeDiscount } from 'utils';
 import { enqueueSnackbar } from 'notistack';
-import { useAddToDiscountMutation } from 'hookApi/discountApi';
+import { useAddToDiscountMutation, useUpdateDiscountMutation } from 'hookApi/discountApi';
+import { discountType } from 'enum/discountType';
+import RadioForm from 'components/form-controls/RadioForm';
 
 AddDiscount.propTypes = {
   actionsState: PropTypes.object.isRequired,
-  onSubmit: PropTypes.func.isRequired,
   initialValues: PropTypes.object,
 };
 
-function AddDiscount({ actionsState, onSubmit, initialValues }) {
+function AddDiscount({ actionsState, initialValues }) {
   const { add, edit, del, view } = actionsState;
   const activeAction = Object.keys(actionsState).find((key) => actionsState[key]);
   const dispatch = useDispatch();
@@ -58,12 +59,61 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
         .transform((value, originalValue) => (originalValue === '' ? null : value))
         .nullable()
         .required('Danh mục là bắt buộc'),
-      value: yup.number().required('Bắt buộc').positive('Phải là số dương'),
-      maxValue: yup.number().nullable(),
-      discountCondition: yup.number().required('Bắt buộc').min(0, 'Không thể nhỏ hơn 0'),
-      quantity: yup.number().required('Bắt buộc').min(1, 'Phải ít nhất là 1'),
-      startTime: yup.date().required('Bắt buộc'),
-      endTime: yup.date().required('Bắt buộc').min(yup.ref('startTime'), 'Phải sau ngày bắt đầu'),
+      value: yup
+        .number()
+        .transform((value, originalValue) => (originalValue === '' ? undefined : value))
+        .required('Bắt buộc')
+        .positive('Phải là số dương')
+        .when('type', {
+          is: (type) => type?.id === discountType.TIENMAT, // Tiền mặt
+          then: (schema) => schema.min(1000, 'Giá trị phải lớn hơn 1000'),
+          otherwise: (schema) =>
+            schema.max(100, 'Giá trị phải nhỏ hơn hoặc bằng 100').min(0, 'Giá trị phải lớn hơn hoặc bằng 0'),
+        }),
+
+      maxValue: yup
+        .number()
+        .transform((value, originalValue) => (originalValue === '' ? null : value))
+        .nullable()
+        .when('type', {
+          is: (type) => type?.id === 1,
+          then: (schema) =>
+            schema
+              .required('Giá trị tối đa là bắt buộc khi loại giảm giá là tiền mặt')
+              .moreThan(1000, 'Phải lớn hơn 1000'),
+          otherwise: (schema) =>
+            schema
+              .nullable()
+              .test(
+                'is-zero-or-null',
+                'Phải là 0 hoặc để trống',
+                (value) => value === 0 || value === null || value === undefined,
+              ),
+        }),
+
+      discountCondition: yup
+        .number()
+        .transform((value, originalValue) => (originalValue === '' ? undefined : value))
+        .required('Bắt buộc')
+        .min(1001, 'Phải lớn hơn 1000'),
+
+      quantity: yup
+        .number()
+        .transform((value, originalValue) => (originalValue === '' ? undefined : value))
+        .required('Bắt buộc')
+        .min(1, 'Phải ít nhất là 1'),
+
+      startTime: yup
+        .date()
+        .transform((value, originalValue) => (originalValue === '' ? undefined : value))
+        .required('Bắt buộc'),
+
+      endTime: yup
+        .date()
+        .transform((value, originalValue) => (originalValue === '' ? undefined : value))
+        .required('Bắt buộc')
+        .min(yup.ref('startTime'), 'Phải sau ngày bắt đầu'),
+      enable: yup.boolean().required('Trạng thái là bắt buộc'),
     })
     .required();
 
@@ -79,16 +129,29 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
       quantity: '',
       startTime: '',
       endTime: '',
+      enable: 'false',
     },
     resolver: yupResolver(schema),
   });
 
   const {
     control,
+    watch,
+    setValue,
     formState: { errors, isDirty },
   } = form;
 
+  const typeValue = watch('type');
+  const isCashType = typeValue?.id === discountType.TIENMAT;
+
   const [addDiscount] = useAddToDiscountMutation();
+  const [updateDiscount] = useUpdateDiscountMutation();
+
+  useEffect(() => {
+    if (isCashType) {
+      setValue('maxValue', 0);
+    }
+  }, [isCashType, setValue]);
 
   useEffect(() => {
     if (initialValues && Object.keys(initialValues).length > 0) {
@@ -105,6 +168,7 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
         quantity: initialValues.quantity || 0,
         startTime: initialValues.startTime ? dayjs(initialValues.startTime) : null,
         endTime: initialValues.endTime ? dayjs(initialValues.endTime) : null,
+        enable: initialValues.enable || 'false',
       });
     }
   }, [initialValues, form]);
@@ -117,32 +181,52 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
 
   const handleSubmit = async (value) => {
     setIsSubmitting(true);
+
     try {
-      const type = value.type.id;
-      const category = value.category.id;
+      const typeId = value?.type?.id;
+      const categoryId = value?.category?.id;
+
+      if (!typeId || !categoryId) {
+        throw new Error('Loại hoặc danh mục không hợp lệ.');
+      }
+
       const newValue = {
         ...value,
-        id: initialValues?.id || null,
         startTime: convertToVietnamTime(value.startTime),
         endTime: convertToVietnamTime(value.endTime),
-        type,
-        category,
+        type: typeId,
+        category: categoryId,
         status: 1,
       };
-      const response = await addDiscount(newValue);
-      if (response) {
-        onSubmit(true);
+      console.log(value);
+
+      let response;
+      if (initialValues?.id) {
+        response = await updateDiscount({ ...newValue, id: initialValues.id }).unwrap();
+        enqueueSnackbar('Cập nhật mã giảm giá thành công', { variant: 'success' });
+      } else {
+        response = await addDiscount(newValue).unwrap();
+        enqueueSnackbar('Thêm mã giảm giá thành công', { variant: 'success' });
       }
-      handleGlobalSuccess('Thêm mã giảm giá thành công', enqueueSnackbar);
-    } catch (error) {
-      console.error('Error adding permission:', error);
-      handleGlobalError(error, enqueueSnackbar);
-    } finally {
-      setIsSubmitting(false);
+
       form.reset();
       handleAction(activeAction, dispatch, { add, edit, del, view });
+    } catch (error) {
+      console.error('Lỗi khi thêm mã giảm giá:', error);
+      const errorMessage = error.data?.message || error.message || 'Đã xảy ra lỗi!';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const startTime = useWatch({ control, name: 'startTime' });
+  const endTime = useWatch({ control, name: 'endTime' });
+
+  const numberOfDays =
+    startTime && endTime
+      ? dayjs(endTime).diff(dayjs(startTime), 'day') + 1 // +1 nếu muốn tính cả ngày bắt đầu
+      : null;
 
   return (
     <Dialog
@@ -242,7 +326,7 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                   Phân loại
                 </Typography>
                 <Grid container spacing={2.5}>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={3.5}>
                     <SelectFrom
                       height="48px"
                       name={`type`}
@@ -256,7 +340,7 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={3.5}>
                     <SelectFrom
                       height="48px"
                       name={`category`}
@@ -268,6 +352,16 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                           borderRadius: '8px',
                         },
                       }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={5}>
+                    <RadioForm
+                      name="enable"
+                      form={form}
+                      option={[
+                        { id: 'true', name: 'Hiện trang chủ' },
+                        { id: 'false', name: 'Không hiện' },
+                      ]}
                     />
                   </Grid>
                 </Grid>
@@ -285,6 +379,7 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                     <NumericForm
                       name={`value`}
                       label="Giá trị giảm"
+                      disabled={typeValue === null ? true : false}
                       form={form}
                       type="number"
                       sx={{
@@ -295,12 +390,14 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                       }}
                     />
                   </Grid>
+                  {/* {!isCashType && ( */}
                   <Grid item xs={12} sm={6} md={3}>
                     <NumericForm
                       name={`maxValue`}
                       label="Giá trị tối đa"
                       form={form}
                       type="number"
+                      disabled={isCashType}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: '8px',
@@ -309,6 +406,7 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                       }}
                     />
                   </Grid>
+                  {/* )} */}
                   <Grid item xs={12} sm={6} md={3}>
                     <NumericForm
                       name={`discountCondition`}
@@ -357,7 +455,8 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                           <DateTimePicker
                             label="Thời gian bắt đầu"
                             value={field.value ? dayjs(field.value) : null}
-                            onChange={(newValue) => field.onChange(newValue)}
+                            onChange={(newValue) => field.onChange(newValue?.toISOString())}
+                            format="DD/MM/YYYY HH:mm"
                             slotProps={{
                               textField: {
                                 fullWidth: true,
@@ -385,7 +484,8 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                           <DateTimePicker
                             label="Thời gian kết thúc"
                             value={field.value ? dayjs(field.value) : null}
-                            onChange={(newValue) => field.onChange(newValue)}
+                            onChange={(newValue) => field.onChange(newValue?.toISOString())}
+                            format="DD/MM/YYYY HH:mm"
                             slotProps={{
                               textField: {
                                 fullWidth: true,
@@ -405,6 +505,11 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
                     </FormControl>
                   </Grid>
                 </Grid>
+                {numberOfDays !== null && numberOfDays >= 0 && (
+                  <Typography mt={2} color="text.secondary">
+                    Áp dụng trong {numberOfDays} ngày
+                  </Typography>
+                )}
               </Paper>
             </LocalizationProvider>
           </Box>
@@ -427,7 +532,7 @@ function AddDiscount({ actionsState, onSubmit, initialValues }) {
           <Button
             type="submit"
             variant="contained"
-            disabled={isSubmitting}
+            disabled={!isDirty || isSubmitting}
             sx={{
               borderRadius: '8px',
               px: 3,

@@ -1,27 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
   Typography,
   List,
-  Avatar,
+  ListItem,
   IconButton,
   Card,
   CardContent,
-  CardActions,
   Divider,
   Button,
   Paper,
-  Grid,
+  Chip,
+  Stack,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import PaymentIcon from '@mui/icons-material/Payment';
 import { useCart } from '../CartContext';
 import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 import { useDispatch } from 'react-redux';
 import PayOrder from './PayOrder';
-import CloseIcon from '@mui/icons-material/Close';
+import { useSnackbar } from 'notistack';
+import ConfirmDialog from 'components/ConfirmDialog/ConfirmDialog';
+import { calculateDiscount, formatPrice } from 'utils';
 
 OrdersTab.propTypes = {
   actionsState: PropTypes.object,
@@ -29,8 +33,10 @@ OrdersTab.propTypes = {
 
 function OrdersTab({ actionsState }) {
   const { cart, setCart } = useCart();
-
   const dispatch = useDispatch();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+  const [isProductDetail, setIsProductDetail] = useState(null);
 
   const handleIncreaseQuantity = (product) => {
     setCart((prevCart) =>
@@ -58,13 +64,48 @@ function OrdersTab({ actionsState }) {
     );
   };
 
-  const handleRemoveProduct = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+  const handleRemoveProduct = (product) => {
+    setCart((prevCart) =>
+      prevCart.filter(
+        (item) =>
+          !(
+            item.productDetail.id === product.productDetail.id &&
+            item.color.name === product.color.name &&
+            item.size === product.size
+          ),
+      ),
+    );
+  };
+
+  const handleClickRemove = async (product) => {
+    setIsDialogOpen(true);
+    setIsProductDetail(product);
   };
 
   const handleActions = (state) => handleAction(state, dispatch, actionsState);
 
-  const totalPrice = cart.reduce((sum, item) => sum + item.productDetail.sellingPrice * item.quantity, 0);
+  const calculateTotalPrice = (selectCartItem) => {
+    return selectCartItem.reduce((sum, item) => {
+      const sellingPrice = item.productDetail.product.sellingPrice;
+      const { percentageValue, finalPrice } = calculateDiscount(
+        item.productDetail.product,
+        item.productDiscountPeriods,
+      );
+
+      return sum + finalPrice * item.quantity;
+    }, 0);
+  };
+
+  const totalPrice = calculateTotalPrice(cart);
+  const handleRemove = (isProductDetail) => {
+    handleRemoveProduct(isProductDetail);
+    setIsDialogOpen(false);
+    enqueueSnackbar('Đã xóa sản phẩm chi tiết', { variant: 'success' });
+  };
+
+  const handleCancel = () => {
+    setIsDialogOpen(false);
+  };
 
   return (
     <Box
@@ -72,144 +113,286 @@ function OrdersTab({ actionsState }) {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
+        overflow: 'hidden',
       }}
     >
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        🛒 Order
-      </Typography>
-      <Divider sx={{ marginY: 2 }} />
+      {/* Header */}
+      <Box
+        sx={{
+          bgcolor: 'black',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          borderRadius: 2,
+          gap: 1,
+          py: 1,
+          px: 2,
+        }}
+      >
+        <ShoppingCartIcon fontSize="small" />
+        <Typography variant="subtitle1" fontWeight={600}>
+          Giỏ hàng ({cart.length})
+        </Typography>
+      </Box>
 
-      {/* Box chứa danh sách sản phẩm */}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Content */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {cart.length === 0 ? (
-          <Box display="flex" alignItems="center" justifyContent="center" flex={1}>
-            <Typography variant="body1" color="text.secondary">
-              Đơn hàng trống.
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 4,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              Your cart is empty
             </Typography>
           </Box>
         ) : (
-          <List sx={{ flex: 1, overflowY: 'auto', maxHeight: '450px' }}>
-            {cart.map((product, index) => (
-              <Card
-                key={index}
-                sx={{
-                  marginBottom: 2,
-                  position: 'relative',
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-                  <Typography variant="h6" fontWeight="500">
-                    {product.productDetail.product.name}
-                  </Typography>
-                  <IconButton size="small" sx={{ p: 0 }}>
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </Box>
+          <List sx={{ flex: 1, overflow: 'auto', p: 1 }}>
+            {cart.map((product, index) => {
+              const sellingPrice = product.productDetail.product.sellingPrice;
+              const { percentageValue, finalPrice } = calculateDiscount(
+                product.productDetail.product,
+                product.productDiscountPeriods,
+              );
+              return (
+                <ListItem key={index} sx={{ p: 0, mb: 1 }}>
+                  <Card
+                    sx={{
+                      width: '100%',
+                      border: '1px solid #f0f0f0',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        {/* Product Image */}
+                        <Paper
+                          component="img"
+                          src={
+                            product.productDetail.image.length > 0
+                              ? product.productDetail.image[0].imageUrl
+                              : 'https://via.placeholder.com/80'
+                          }
+                          alt={product.productDetail.product.name}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #f0f0f0',
+                          }}
+                        />
 
-                <Box sx={{ display: 'flex', gap: 3 }}>
-                  {/* Product Image */}
-                  <Box sx={{ width: '33%' }}>
-                    <Paper
-                      component="img"
-                      src={
-                        product.productDetail.image.length > 0
-                          ? product.productDetail.image[0].imageUrl
-                          : 'https://via.placeholder.com/64'
-                      }
-                      alt="White shirt"
-                      sx={{
-                        width: '100%',
-                        height: 'auto',
-                        objectFit: 'cover',
-                        bgcolor: '#f5f5f5',
-                      }}
-                    />
-                  </Box>
+                        {/* Product Details */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          {/* Product Name & Delete */}
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography
+                              variant="subtitle2"
+                              fontWeight="600"
+                              sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                flex: 1,
+                                mr: 1,
+                              }}
+                            >
+                              {product.productDetail.product.name}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleClickRemove(product)}
+                              sx={{
+                                p: 0.5,
+                                '&:hover': {
+                                  bgcolor: 'error.light',
+                                  color: 'white',
+                                },
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
 
-                  {/* Product Details */}
-                  <Box sx={{ width: '67%' }}>
-                    {/* Price */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Typography sx={{ color: 'error.main', fontWeight: 500, fontSize: '1.1rem' }}>
-                        {product.productDetail.sellingPrice.toLocaleString()} VND
-                      </Typography>
-                      <Typography sx={{ ml: 2, color: 'text.disabled', textDecoration: 'line-through' }}>
-                        40000
-                      </Typography>
-                    </Box>
+                          {/* Price */}
+                          {percentageValue ? (
+                            <Box display={'flex'} gap={1}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 600,
+                                  color: 'red',
+                                }}
+                              >
+                                {formatPrice(finalPrice)}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 400,
+                                  textDecoration: 'line-through',
+                                  color: 'gray',
+                                }}
+                              >
+                                {formatPrice(sellingPrice)}
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 400,
+                              }}
+                            >
+                              {formatPrice(sellingPrice)}
+                            </Typography>
+                          )}
 
-                    {/* Details Grid */}
-                    <Grid container spacing={1.5} sx={{ mb: 2 }}>
-                      <Grid item xs={6}>
-                        <Typography sx={{ color: 'text.secondary' }}>Số Lượng</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDecreaseQuantity(product)}
-                            sx={{
-                              border: '1px solid rgba(0,0,0,0.23)',
-                              borderRadius: '50%',
-                              p: 0.5,
-                            }}
-                          >
-                            <RemoveIcon sx={{ fontSize: 16 }} />
-                          </IconButton>
-                          <Typography sx={{ mx: 2 }}>{product.quantity}</Typography>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleIncreaseQuantity(product)}
-                            sx={{
-                              border: '1px solid rgba(0,0,0,0.23)',
-                              borderRadius: '50%',
-                              p: 0.5,
-                            }}
-                          >
-                            <AddIcon sx={{ fontSize: 16 }} />
-                          </IconButton>
+                          {/* Product Attributes */}
+                          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                            <Chip
+                              label={product.color.name}
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                fontSize: '0.75rem',
+                                height: 24,
+                                borderColor: 'black',
+                                color: 'black',
+                              }}
+                            />
+                            <Chip
+                              label={`Size ${product.size}`}
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                fontSize: '0.75rem',
+                                height: 24,
+                                borderColor: 'black',
+                                color: 'black',
+                              }}
+                            />
+                          </Stack>
+
+                          {/* Quantity Controls & Total */}
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDecreaseQuantity(product)}
+                                sx={{
+                                  border: '1px solid black',
+                                  borderRadius: '50%',
+                                  width: 28,
+                                  height: 28,
+                                  '&:hover': { bgcolor: 'black', color: 'white' },
+                                }}
+                              >
+                                <RemoveIcon sx={{ fontSize: 14 }} />
+                              </IconButton>
+
+                              <Typography
+                                variant="body2"
+                                fontWeight="600"
+                                sx={{
+                                  minWidth: 24,
+                                  textAlign: 'center',
+                                  bgcolor: '#f5f5f5',
+                                  px: 1,
+                                  py: 0.5,
+                                  borderRadius: 1,
+                                }}
+                              >
+                                {product.quantity}
+                              </Typography>
+
+                              <IconButton
+                                size="small"
+                                onClick={() => handleIncreaseQuantity(product)}
+                                sx={{
+                                  border: '1px solid black',
+                                  borderRadius: '50%',
+                                  width: 28,
+                                  height: 28,
+                                  '&:hover': { bgcolor: 'black', color: 'white' },
+                                }}
+                              >
+                                <AddIcon sx={{ fontSize: 14 }} />
+                              </IconButton>
+                            </Box>
+
+                            <Typography sx={{ fontWeight: 500, fontSize: '1.1rem' }}>
+                              {(percentageValue
+                                ? finalPrice
+                                : product.productDetail.product.sellingPrice * product.quantity
+                              ).toLocaleString()}{' '}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Grid>
-
-                      <Grid item xs={6}>
-                        <Typography sx={{ color: 'text.secondary' }}>Màu</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography>{product.color.name}</Typography>
-                      </Grid>
-
-                      <Grid item xs={6}>
-                        <Typography sx={{ color: 'text.secondary' }}>Size</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography>{product.size}</Typography>
-                      </Grid>
-                    </Grid>
-
-                    {/* Total Price */}
-                    <Box sx={{ textAlign: 'right', pt: 1 }}>
-                      <Typography sx={{ fontWeight: 500, fontSize: '1.1rem' }}>
-                        {(product.productDetail.sellingPrice * product.quantity).toLocaleString()} VND
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </Card>
-            ))}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </ListItem>
+              );
+            })}
           </List>
         )}
       </Box>
 
-      <Divider sx={{ marginY: 2 }} />
-      <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-        <Typography variant="h6" fontWeight="bold" color="primary">
-          Tổng tiền: {totalPrice.toLocaleString()} VND
-        </Typography>
-        <Button sx={{ float: 'right' }} onClick={() => handleActions('view')} variant="contained">
-          Pay
-        </Button>
-      </Box>
+      {/* Footer */}
+      {cart.length > 0 && (
+        <>
+          <Divider />
+          <Box sx={{ p: 2, bgcolor: '#fafafa' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight="700">
+                Tổng tiền
+              </Typography>
+              <Typography variant="h5" fontWeight="700" color="black">
+                {totalPrice.toLocaleString()} VND
+              </Typography>
+            </Box>
+
+            <Button
+              fullWidth
+              variant="contained"
+              size="large"
+              startIcon={<PaymentIcon />}
+              onClick={() => handleActions('view')}
+              sx={{
+                bgcolor: 'black',
+                color: 'white',
+                fontWeight: '600',
+                py: 1.5,
+                '&:hover': {
+                  bgcolor: '#333',
+                },
+              }}
+            >
+              Thanh toán
+            </Button>
+          </Box>
+        </>
+      )}
+
       <PayOrder cart={cart} totalPrice={totalPrice} actionsState={actionsState} />
+      <ConfirmDialog
+        isOpen={isDialogOpen}
+        title="Xác nhận"
+        message="Bạn có chắc chắn muốn thực hiện hành động này không?"
+        onConfirm={() => handleRemove(isProductDetail)}
+        onCancel={handleCancel}
+        dialogType="info"
+      />
     </Box>
   );
 }

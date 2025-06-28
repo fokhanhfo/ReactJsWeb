@@ -31,7 +31,7 @@ function Banner(props) {
             Our Products
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Discover our collection of high-quality products
+            Khám phá bộ sưu tập sản phẩm chất lượng cao của chúng tôi
           </Typography>
         </Card>
       </Container>

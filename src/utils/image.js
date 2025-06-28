@@ -3,7 +3,6 @@ export const imageMainColor = (productDetail) => {
 };
 
 export const imageMainProduct = (data) => {
-  console.log(data);
     const mainProductImages = data
   .flatMap(item => item.image)
   .filter(img => img.mainProduct === true)[0];

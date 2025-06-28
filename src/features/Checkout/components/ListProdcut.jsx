@@ -1,11 +1,23 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Card, Checkbox, Container, Divider, Grid, IconButton, List, Paper, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  Checkbox,
+  Container,
+  Divider,
+  Grid,
+  IconButton,
+  List,
+  Paper,
+  Typography,
+} from '@mui/material';
 import { useSelector } from 'react-redux';
 import CartItem from 'features/Cart/components/CartItem';
 import Loading from 'components/Loading';
 import styled from 'styled-components';
-import { formatPrice, handleGlobalError } from 'utils';
+import { calculateDiscount, formatPrice, handleGlobalError } from 'utils';
 import { useUpdateCartMutation } from 'features/Cart/cartApi';
 import { THUMBNAIL_PLACEHOLDER } from 'constants';
 import CloseIcon from '@mui/icons-material/Close';
@@ -17,6 +29,8 @@ import billApi from 'api/billApi';
 import { useSnackbar } from 'notistack';
 import { useGetCartQuery } from 'hookApi/cartApi';
 import { useNavigate } from 'react-router-dom';
+import ConfirmDialog from 'components/ConfirmDialog/ConfirmDialog';
+import { useFormContext } from 'react-hook-form';
 
 ListProdcut.propTypes = {
   cartQuery: PropTypes.object.isRequired,
@@ -34,14 +48,17 @@ const StyledTypography = styled(Typography)`
 `;
 
 function ListProdcut({ cartQuery, onSubmit, form }) {
-  const cartData = cartQuery?.data.data;
+  const cartData = cartQuery?.data?.data;
   const [updateCart] = useUpdateCartMutation();
   const { enqueueSnackbar } = useSnackbar();
   const { refetch } = useGetCartQuery();
   const navigate = useNavigate();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { handleSubmit, trigger } = useFormContext();
 
   const handleIncrement = async (cartItem) => {
-    const newQuantity = { ...cartItem, quantity: cartItem.quantity + 1, product: cartItem.product.id };
+    const newQuantity = { ...cartItem, quantity: cartItem.quantity + 1, product: cartItem.productDetail.product.id };
     try {
       await updateCart(newQuantity).unwrap();
     } catch (error) {
@@ -51,7 +68,7 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
 
   const handleDecrement = async (cartItem) => {
     if (cartItem.quantity > 1) {
-      const newQuantity = { ...cartItem, quantity: cartItem.quantity - 1, product: cartItem.product.id };
+      const newQuantity = { ...cartItem, quantity: cartItem.quantity - 1, product: cartItem.productDetail.product.id };
       try {
         await updateCart(newQuantity).unwrap();
       } catch (error) {
@@ -60,32 +77,46 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
     }
   };
 
-  const { discountFreeShip, voucherProduct, moneyToPay } = useContext(CheckoutContext);
+  const { discountFreeShip, voucherProduct, moneyToPay, valueVoucherProduct, valueDiscountFreeShip } =
+    useContext(CheckoutContext);
 
-  const handleSubmit = async (value) => {
-    console.log(moneyToPay);
-    console.log(value);
-    console.log(voucherProduct);
-    console.log(discountFreeShip);
+  const handleSubmitAddCart = async (value) => {
     const listIdVoucher = [voucherProduct?.id, discountFreeShip?.id].filter((id) => id !== undefined);
     console.log(listIdVoucher);
+    console.log(voucherProduct);
+    console.log(discountFreeShip);
+
+    setIsLoading(true); // Bắt đầu loading
     try {
-      // form.setValue('listCart', listCart);
-      // form.setValue('selectCartItem', selectCartItem);
-      // form.setValue('totalPrice', totalPrice);
       const city = form.getValues('city').name;
       const district = form.getValues('district').name;
       const commune = form.getValues('commune').name;
+
       const newdata = {
         fullName: form.getValues('fullname'),
         email: form.getValues('email'),
         address: `${form.getValues('addressDetail')} - ${commune} - ${district} - ${city}`,
         phone: form.getValues('phone'),
-        cartRequests: cartData.filter((item) => item.status === 1),
+        cartRequests: cartData
+          .filter((item) => item.status === 1)
+          .map((item) => {
+            const { percentageValue, finalPrice } = calculateDiscount(
+              item.productDetail.product,
+              item.productDetail.product.productDiscountPeriods,
+            );
+
+            return {
+              ...item,
+              discountPrice: finalPrice,
+            };
+          }),
         total_price: moneyToPay,
         discountId: listIdVoucher,
         paymentMethod: form.getValues('paymentMethod'),
+        discountShip: valueDiscountFreeShip,
+        discountUser: valueVoucherProduct,
       };
+
       const res = await billApi.add(newdata);
       enqueueSnackbar(`Mua hàng thành công`, { variant: 'success' });
       if (res) {
@@ -94,7 +125,30 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
       }
     } catch (error) {
       enqueueSnackbar(`Mua hàng thất bại`, { variant: 'error' });
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleValidateAndSubmit = async () => {
+    const isValid = await trigger();
+
+    if (!isValid) {
+      enqueueSnackbar('Vui lòng kiểm tra lại thông tin đơn hàng.', { variant: 'error' });
+      setIsDialogOpen(false);
+      return;
+    }
+
+    handleSubmit(handleSubmitAddCart)();
+  };
+
+  const handleCancel = () => {
+    setIsDialogOpen(false);
+  };
+
+  const handleContinueShopping = () => {
+    navigate('/home');
   };
 
   return (
@@ -104,120 +158,151 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
           <Grid container sx={{ flex: 1 }}>
             {cartData
               .filter((item) => item.status === 1)
-              .map((item, index) => (
-                <Grid item md={6} key={index} sx={index % 2 != 0 ? { borderLeft: '1px solid #ccc', pl: 2 } : null}>
-                  <Container>
-                    <Box sx={{ display: 'flex', justifyContent: 'end', margin: '10px 10px 0 0' }}>
-                      <IconButton size="small" sx={{ p: 0 }}>
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', gap: 3 }}>
-                      {/* Product Image */}
-                      <Box sx={{ width: '33%' }}>
-                        <Paper
-                          component="img"
-                          src={
-                            item.productDetail.image.length > 0
-                              ? item.productDetail.image[0].imageUrl
-                              : 'https://via.placeholder.com/64'
-                          }
-                          alt={item.productDetail.product.name || 'Product Image'}
-                          sx={{
-                            width: '100%',
-                            height: 'auto',
-                            objectFit: 'cover',
-                            bgcolor: '#f5f5f5',
-                          }}
-                        />
+              .map((item, index) => {
+                const sellingPrice = item.productDetail.product.sellingPrice;
+                const { percentageValue, finalPrice } = calculateDiscount(
+                  item.productDetail.product,
+                  item.productDetail.product.productDiscountPeriods,
+                );
+                return (
+                  <Grid item md={6} key={index} sx={index % 2 != 0 ? { borderLeft: '1px solid #ccc', pl: 2 } : null}>
+                    <Container>
+                      <Box sx={{ display: 'flex', justifyContent: 'end', margin: '10px 10px 0 0' }}>
+                        <IconButton size="small" sx={{ p: 0 }}>
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
                       </Box>
 
-                      {/* Product Details */}
-                      <Box sx={{ width: '67%' }}>
-                        {/* Product Name */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <Typography variant="h8" fontWeight="500">
-                            {item.productDetail.product.name}
-                          </Typography>
-                        </Box>
-
-                        {/* Price */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <Typography sx={{ color: 'error.main', fontWeight: 500, fontSize: '1.1rem' }}>
-                            {item.productDetail.sellingPrice.toLocaleString()} đ
-                          </Typography>
-                          <Typography sx={{ ml: 2, color: 'text.disabled', textDecoration: 'line-through' }}>
-                            40,000
-                          </Typography>
-                        </Box>
-
-                        {/* Details Grid */}
-                        <Grid container spacing={1} sx={{ mb: 2 }}>
-                          {/* Quantity */}
-                          <Grid item xs={4}>
-                            <Typography sx={{ color: 'text.secondary' }}>Số Lượng</Typography>
-                          </Grid>
-                          <Grid item xs={4}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDecrement(item)}
-                                sx={{
-                                  border: '1px solid rgba(0,0,0,0.23)',
-                                  borderRadius: '50%',
-                                  p: 0.5,
-                                }}
-                              >
-                                <RemoveIcon sx={{ fontSize: 16 }} />
-                              </IconButton>
-                              <Typography sx={{ mx: 2 }}>{item.quantity}</Typography>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleIncrement(item)}
-                                sx={{
-                                  border: '1px solid rgba(0,0,0,0.23)',
-                                  borderRadius: '50%',
-                                  p: 0.5,
-                                }}
-                              >
-                                <AddIcon sx={{ fontSize: 16 }} />
-                              </IconButton>
+                      <Box sx={{ display: 'flex', gap: 3 }}>
+                        {/* Product Image */}
+                        <Box sx={{ width: '33%', position: 'relative' }}>
+                          <Paper
+                            component="img"
+                            src={
+                              item.productDetail.image.length > 0
+                                ? item.productDetail.image[0].imageUrl
+                                : 'https://via.placeholder.com/64'
+                            }
+                            alt={item.productDetail.product.name || 'Product Image'}
+                            sx={{
+                              width: '100%',
+                              height: 'auto',
+                              objectFit: 'cover',
+                              bgcolor: '#f5f5f5',
+                            }}
+                          />
+                          {percentageValue && (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 5,
+                                left: 5,
+                                backgroundColor: 'red',
+                                color: 'white',
+                                px: 1,
+                                py: 0.5,
+                                fontSize: '12px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                              }}
+                            >
+                              -{percentageValue}%
                             </Box>
-                          </Grid>
+                          )}
+                        </Box>
 
-                          <Grid item xs={4}></Grid>
-
-                          {/* Color */}
-                          <Grid item xs={4}>
-                            <Typography sx={{ color: 'text.secondary' }}>Màu</Typography>
-                          </Grid>
-                          <Grid item xs={4}>
-                            <Typography>{item.color.name}</Typography>
-                          </Grid>
-
-                          <Grid item xs={4}></Grid>
-
-                          {/* Size */}
-                          <Grid item xs={4}>
-                            <Typography sx={{ color: 'text.secondary' }}>Size</Typography>
-                          </Grid>
-                          <Grid item xs={4}>
-                            <Typography>{item.size.name}</Typography>
-                          </Grid>
-
-                          {/* Total Price */}
-                          <Grid item xs={4}>
-                            <Typography>
-                              {(item.productDetail.sellingPrice * item.quantity).toLocaleString()}
+                        {/* Product Details */}
+                        <Box sx={{ width: '67%' }}>
+                          {/* Product Name */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="h8" fontWeight="500">
+                              {item.productDetail.product.name}
                             </Typography>
+                          </Box>
+
+                          {/* Price */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Typography sx={{ color: 'error.main', fontWeight: 500, fontSize: '1.1rem' }}>
+                              {percentageValue
+                                ? finalPrice.toLocaleString()
+                                : item.productDetail.product.sellingPrice.toLocaleString()}{' '}
+                              đ
+                            </Typography>
+                            <Typography sx={{ ml: 2, color: 'text.disabled', textDecoration: 'line-through' }}>
+                              {percentageValue && <>{item.productDetail.product.sellingPrice.toLocaleString()} đ</>}
+                            </Typography>
+                          </Box>
+
+                          {/* Details Grid */}
+                          <Grid container spacing={1} sx={{ mb: 2 }}>
+                            {/* Quantity */}
+                            <Grid item xs={4}>
+                              <Typography sx={{ color: 'text.secondary' }}>Số Lượng</Typography>
+                            </Grid>
+                            <Grid item xs={4}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDecrement(item)}
+                                  sx={{
+                                    border: '1px solid rgba(0,0,0,0.23)',
+                                    borderRadius: '50%',
+                                    p: 0.5,
+                                  }}
+                                >
+                                  <RemoveIcon sx={{ fontSize: 16 }} />
+                                </IconButton>
+                                <Typography sx={{ mx: 2 }}>{item.quantity}</Typography>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleIncrement(item)}
+                                  sx={{
+                                    border: '1px solid rgba(0,0,0,0.23)',
+                                    borderRadius: '50%',
+                                    p: 0.5,
+                                  }}
+                                >
+                                  <AddIcon sx={{ fontSize: 16 }} />
+                                </IconButton>
+                              </Box>
+                            </Grid>
+
+                            <Grid item xs={4}></Grid>
+
+                            {/* Color */}
+                            <Grid item xs={4}>
+                              <Typography sx={{ color: 'text.secondary' }}>Màu</Typography>
+                            </Grid>
+                            <Grid item xs={4}>
+                              <Typography>{item.color.name}</Typography>
+                            </Grid>
+
+                            <Grid item xs={4}></Grid>
+
+                            {/* Size */}
+                            <Grid item xs={4}>
+                              <Typography sx={{ color: 'text.secondary' }}>Size</Typography>
+                            </Grid>
+                            <Grid item xs={4}>
+                              <Typography>{item.size.name}</Typography>
+                            </Grid>
+
+                            {/* Total Price */}
+                            <Grid item xs={4}>
+                              <Typography>
+                                {(percentageValue
+                                  ? finalPrice
+                                  : item.productDetail.product.sellingPrice * item.quantity
+                                ).toLocaleString()}
+                              </Typography>
+                            </Grid>
                           </Grid>
-                        </Grid>
+                        </Box>
                       </Box>
-                    </Box>
-                  </Container>
-                </Grid>
-              ))}
+                    </Container>
+                  </Grid>
+                );
+              })}
           </Grid>
 
           {/* <Divider sx={{ marginY: 2 }} /> */}
@@ -225,12 +310,30 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
           <Grid container>
             <Grid item md={6}></Grid>
             <Grid item md={6}>
-              <PayCheckout onSubmit={handleSubmit} cartQuery={cartQuery}></PayCheckout>
+              <PayCheckout setIsDialogOpen={setIsDialogOpen} cartQuery={cartQuery}></PayCheckout>
             </Grid>
           </Grid>
+          <ConfirmDialog
+            isOpen={isDialogOpen}
+            title="Xác nhận"
+            message="Xác nhận mua hàng?"
+            onConfirm={handleValidateAndSubmit}
+            onCancel={handleCancel}
+            isLoading={isLoading}
+            dialogType="info"
+          />
         </Paper>
       ) : (
-        <Loading></Loading>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h6" color="text.secondary">
+              Giỏ hàng của bạn đang trống
+            </Typography>
+            <Button variant="contained" color="primary" onClick={handleContinueShopping}>
+              Tiếp tục mua sắm
+            </Button>
+          </Box>
+        </Box>
       )}
     </>
   );

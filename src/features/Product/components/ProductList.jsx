@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Box, Container, Grid, Typography, Divider } from '@mui/material';
+import { Box, Grid, Typography, Zoom } from '@mui/material';
 import Product from './Product';
 import styled from 'styled-components';
 
@@ -48,9 +48,13 @@ function ProductList({ data = [], title = 'Featured Products' }) {
   return (
     <>
       <ProductGrid container spacing={2}>
-        {data.map((product) => (
+        {data.map((product, index) => (
           <ProductGridItem item key={product.id} xs={6} sm={4} md={3} lg={2.4}>
-            <Product product={product} />
+            <Zoom in style={{ transitionDelay: `${index * 100}ms` }}>
+              <div>
+                <Product product={product} />
+              </div>
+            </Zoom>
           </ProductGridItem>
         ))}
       </ProductGrid>

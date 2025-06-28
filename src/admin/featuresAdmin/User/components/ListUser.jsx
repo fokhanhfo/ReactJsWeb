@@ -1,13 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReusableTable from 'admin/components/Table/ReusableTable';
+import AddUser from './AddUser';
 
 ListUser.propTypes = {
   users: PropTypes.array.isRequired,
 };
 
 function ListUser({ users }) {
-  console.log(users);
+  const [openAdd, setOpenAdd] = useState(false);
+  const handleCloseAdd = () => setOpenAdd(false);
+  const handleSubmitSuccess = () => {
+    handleCloseAdd();
+  };
   const listHead = [
     { label: 'id', key: 'id', width: '10%' },
     { label: 'UserName', key: 'username', width: '30%' },
@@ -39,7 +44,12 @@ function ListUser({ users }) {
       ),
     },
   ];
-  return <ReusableTable listHead={listHead} rows={users} />;
+  return (
+    <>
+      <ReusableTable listHead={listHead} rows={users.users} />
+      {openAdd && <AddUser onClose={handleCloseAdd} onSubmitSuccess={handleSubmitSuccess} />}
+    </>
+  );
 }
 
 export default ListUser;

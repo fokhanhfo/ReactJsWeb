@@ -50,7 +50,7 @@ function ListPageCategory() {
           <Box sx={{ p: 3, backgroundColor: '#fff', borderRadius: 2 }}>
             {/* Search and Actions */}
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-              <TextField size="small" placeholder="Search Product" sx={{ width: 300 }} />
+              <TextField size="small" placeholder="Tìm kiếm danh mục" sx={{ width: 300 }} />
 
               <Box display="flex" alignItems="center" gap={1}>
                 <FormControl size="small">
@@ -60,10 +60,6 @@ function ListPageCategory() {
                     <MenuItem value={50}>50</MenuItem>
                   </Select>
                 </FormControl>
-
-                <Button variant="outlined" disabled>
-                  Export
-                </Button>
 
                 <Button
                   variant="contained"

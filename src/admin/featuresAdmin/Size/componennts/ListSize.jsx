@@ -1,75 +1,94 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, IconButton } from '@mui/material';
-import { useDispatch } from 'react-redux';
-import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
-import ReusableTable from 'admin/components/Table/ReusableTable';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, IconButton, TextField, Typography } from '@mui/material';
 import { Update } from '@mui/icons-material';
 import AddSize from './AddSize';
+import DataTable from 'admin/components/Table/DataTable';
+import Fuse from 'fuse.js';
+
 ListSize.propTypes = {
   sizes: PropTypes.array.isRequired,
-  actionsState: PropTypes.object.isRequired,
+  onRefresh: PropTypes.func.isRequired,
 };
 
-function ListSize({ sizes, actionsState }) {
+function ListSize({ sizes, onRefresh }) {
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogMode, setDialogMode] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
-  const listHead = [
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const fuse = new Fuse(sizes, {
+    keys: ['name'],
+    threshold: 0.3,
+    ignoreLocation: true,
+  });
+
+  const filteredSizes = searchTerm ? fuse.search(searchTerm).map((i) => i.item) : sizes;
+
+  const handleOpenDialog = (mode, size = null) => {
+    setDialogMode(mode);
+    setSelectedSize(size);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setDialogMode(null);
+    setSelectedSize(null);
+  };
+
+  const handleSuccessSubmit = () => {
+    handleCloseDialog();
+    onRefresh();
+  };
+
+  const columns = [
     {
-      label: 'Size',
-      width: '10%',
-      render: (row) => (
-        <>
-          <span
-            style={{ cursor: 'pointer', size: 'blue', textDecoration: 'underline' }}
-            onClick={() => handleActions('view', row)}
-          >
-            {row.name}
-          </span>
-        </>
-      ),
+      field: 'name',
+      headerName: 'Kích thước (mm)',
+      flex: 1.2,
+      minWidth: 120,
     },
     {
-      label: 'Trạng thái',
-      width: '30%',
-      render: (row) => {
-        console.log(row);
-        return <>{row.status === 0 ? 'Ngưng bán' : 'Đang bán'}</>;
-      },
+      field: 'status',
+      headerName: 'Trạng thái',
+      flex: 1,
+      minWidth: 100,
+      renderCell: (params) => (params.row.status === 0 ? 'Ngưng bán' : 'Đang bán'),
     },
     {
-      label: 'Thao tác',
-      key: 'actions',
-      width: '20%',
-      render: (row) => (
-        <>
-          <IconButton onClick={() => handleActions('edit', row)}>
-            <Update color="success" />
-          </IconButton>
-          <IconButton>
-            <DeleteIcon color="error" />
-          </IconButton>
-        </>
+      field: 'actions',
+      headerName: 'Thao tác',
+      flex: 0.6,
+      minWidth: 80,
+      sortable: false,
+      renderCell: (params) => (
+        <IconButton onClick={() => handleOpenDialog('edit', params.row)}>
+          <Update color="success" />
+        </IconButton>
       ),
     },
   ];
-  const dispatch = useDispatch();
-  const handleActions = (state, row) => {
-    if (state === 'edit' || state === 'view') {
-      setSelectedSize(row);
-    }
-    handleAction(state, dispatch, actionsState);
-  };
+
   return (
-    <>
-      <Box>
-        <Button onClick={() => handleActions('add')} sx={{ float: 'right' }} variant="contained">
-          Add
-        </Button>
+    <Box width="100%" display="flex" flexDirection="column" gap={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+        <Box display="flex" gap={1} alignItems="center">
+          <TextField
+            size="small"
+            placeholder="Tìm kiếm kích thước"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Typography variant="body2">({sizes.length} items)</Typography>
+        </Box>
       </Box>
-      <ReusableTable listHead={listHead} rows={sizes} />
-      {actionsState.edit === true && <AddSize actionsState={actionsState} initialValues={selectedSize} />}
-    </>
+      <DataTable rows={filteredSizes} columns={columns} height="450px" />
+
+      {openDialog && (
+        <AddSize initialValues={selectedSize} onClose={handleCloseDialog} onSubmitSuccess={handleSuccessSubmit} />
+      )}
+    </Box>
   );
 }
 

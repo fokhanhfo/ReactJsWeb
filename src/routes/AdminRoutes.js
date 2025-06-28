@@ -15,6 +15,8 @@ import ColorAdmin from 'admin/featuresAdmin/Color';
 import SizeAdmin from 'admin/featuresAdmin/Size';
 import DiscountAdmin from 'admin/featuresAdmin/Discount';
 import DiscountPeriodAdmin from 'admin/featuresAdmin/DiscountPeriod';
+import SizeAndColor from 'admin/featuresAdmin/SizeAndColor';
+import ClothingSalesDashboard from 'admin/featuresAdmin/Dashboard';
 
 function AdminRoutes() {
   const navigate = useNavigate();
@@ -31,7 +33,7 @@ function AdminRoutes() {
         <>
           <Route path="/" element={<Navigate to="home" replace />} />
           <Route path="/*" element={<Header />}>
-            <Route path="home" element={<HomeFeaturesAdmin/>} />
+            <Route path="home" element={<ClothingSalesDashboard/>} />
             <Route path="products/*" element={<ProductAdmin />} />
             <Route path="category/*" element={<CategoryAdmin />} />
             <Route path="bill/*" element={<BillFeature />} />
@@ -41,6 +43,7 @@ function AdminRoutes() {
             <Route path="sell" element={<FeatureSellAdmin />} />
             <Route path="color" element={<ColorAdmin />} />
             <Route path="size" element={<SizeAdmin />} />
+            <Route path="productAttributes" element={<SizeAndColor />} />
             <Route path="discount/*" element={<DiscountAdmin />} />
             <Route path="discountPeriod/*" element={<DiscountPeriodAdmin />} />
           </Route>

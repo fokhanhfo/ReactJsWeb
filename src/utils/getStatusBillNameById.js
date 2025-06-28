@@ -12,6 +12,8 @@ export const getStatusNameById = (id) => {
       return "Chờ giao hàng";
     case 5:
       return "Hoàn thành";
+    case 6:
+      return "Đơn hàng hủy";
     default:
       return "Không xác định";
   }

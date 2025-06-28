@@ -21,7 +21,7 @@ function AuthDialog(props) {
   const handleClose = () => {
     dispatch(loginWindow());
   };
-  const [mode, setMode] = React.useState(MODE.LOGIN);
+  const mode = useSelector((state) => state.user.settings.mode);
 
   return (
     <React.Fragment>
@@ -38,32 +38,22 @@ function AuthDialog(props) {
         </Box>
         <Container>
           <DialogContent sx={{ padding: '0' }}>
-            {mode === MODE.REGISTER && (
+            {mode === 'register' && (
               <>
                 <Register closeDialog={handleClose}></Register>
                 <Box>
-                  <Button
-                    sx={{ float: 'right', margin: '10px 0' }}
-                    onClick={() => {
-                      setMode(MODE.LOGIN);
-                    }}
-                  >
+                  <Button sx={{ float: 'right', margin: '10px 0' }} onClick={() => dispatch(loginWindow('login'))}>
                     Login
                   </Button>
                 </Box>
               </>
             )}
 
-            {mode === MODE.LOGIN && (
+            {mode === 'login' && (
               <>
                 <Login closeDialog={handleClose}></Login>
                 <Box>
-                  <Button
-                    onClick={() => {
-                      setMode(MODE.REGISTER);
-                    }}
-                    sx={{ float: 'right', margin: '10px 0' }}
-                  >
+                  <Button onClick={() => dispatch(loginWindow('register'))} sx={{ float: 'right', margin: '10px 0' }}>
                     Register
                   </Button>
                 </Box>

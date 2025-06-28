@@ -28,11 +28,19 @@ export const userApi = createApi({
             providesTags: (result) =>
                 result ? [{ type: 'User', id: 'LIST' }] : [{ type: 'User', id: 'LIST' }],
         }),
+        getMyInfo: builder.query({
+  query: () => ({
+    url: 'user/myInfo',
+    method: 'GET',
+  }),
+  providesTags: () => [{ type: 'User', id: 'LIST' }],
+}),
+
         addUser: builder.mutation({
             query: (newUser) => {
                 const isFormData = newUser instanceof FormData;
                 return {
-                    url: "user",
+                    url: "user/add",
                     method: "POST",
                     body: newUser,
                     formData: isFormData,
@@ -46,11 +54,52 @@ export const userApi = createApi({
                     url: "user",
                     method: "PUT",
                     body: User,
+                    formData: User instanceof FormData,
                 };
             },
             invalidatesTags: [{ type: 'User', id: 'LIST' }],
         }),
+        requestChangePassword: builder.mutation({
+            query: (query) => ({
+                url: 'user/change-password',
+                method: 'POST',
+                body: query,
+            }),
+        }),
+        verifyOtpChangePassword: builder.mutation({
+            query: (query) => ({
+                url: 'user/confirm-change-password',
+                method: 'POST',
+                body: query
+            }),
+        }),
+        forgotPassword: builder.mutation({
+                query: ({ email }) => ({
+                url: 'user/forgot-password',
+                method: 'POST',
+                body: { email },
+                }),
+            }),
+            confirmForgotPassword: builder.mutation({
+                query: ({ email, newPassword,confirmPassword, otp }) => ({
+                url: 'user/confirm-forgot-password',
+                method: 'POST',
+                body: { email, newPassword,confirmPassword, otp },
+                }),
+            }),
+
+
+
     }),
 });
 
-export const {useGetUsersQuery,useAddUserMutation,useUpdateUserMutation} = userApi;
+export const {
+    useGetUsersQuery,
+    useGetMyInfoQuery,
+    useAddUserMutation,
+    useUpdateUserMutation,
+    useRequestChangePasswordMutation,
+    useVerifyOtpChangePasswordMutation,
+    useForgotPasswordMutation,
+    useConfirmForgotPasswordMutation,
+} = userApi;

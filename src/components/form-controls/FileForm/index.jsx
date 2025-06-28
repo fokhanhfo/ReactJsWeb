@@ -33,7 +33,7 @@ function FileForm({ width, form, name, label, disabled, onFileChange, index }) {
   const message = get(errors, `${name}.message`);
 
   return (
-    <FormControl margin="normal" sx={{ width: width ? width : '100%' }} error={!!message}>
+    <FormControl sx={{ width: width ? width : '100%' }} error={!!message}>
       <Controller
         name={name}
         control={form.control}

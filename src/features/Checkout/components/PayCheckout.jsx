@@ -2,7 +2,7 @@
 
 import { useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { formatPrice } from 'utils';
+import { calculateDiscount, formatPrice } from 'utils';
 import { CheckoutContext } from './CheckoutProvider';
 import {
   Box,
@@ -27,20 +27,31 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useGetDiscountsByUserIdQuery } from 'hookApi/discountUserApi';
 import { useSnackbar } from 'notistack';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 PayCheckout.propTypes = {
   cartQuery: PropTypes.object.isRequired,
-  onSubmit: PropTypes.func.isRequired,
+  setIsDialogOpen: PropTypes.func,
 };
 
-function PayCheckout({ cartQuery, onSubmit }) {
+function PayCheckout({ cartQuery, setIsDialogOpen }) {
   const theme = useTheme();
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [voucherCode, setVoucherCode] = useState('');
 
   const listCart = cartQuery.data.data || [];
   const selectCartItem = listCart.filter((item) => item.status === 1);
-  const totalPrice = selectCartItem.reduce((sum, item) => sum + item.productDetail.sellingPrice * item.quantity, 0);
+  const calculateTotalPrice = (selectCartItem) => {
+    return selectCartItem.reduce((sum, item) => {
+      const { percentageValue, finalPrice } = calculateDiscount(
+        item.productDetail.product,
+        item.productDetail.product.productDiscountPeriods,
+      );
+      return sum + finalPrice * item.quantity;
+    }, 0);
+  };
+
+  const totalPrice = calculateTotalPrice(selectCartItem);
   const { moneyToPay, setmoneyToPay } = useContext(CheckoutContext);
   const { data, isLoading, error, refetch } = useGetDiscountsByUserIdQuery();
   const listDiscount = data?.data || [];
@@ -50,6 +61,8 @@ function PayCheckout({ cartQuery, onSubmit }) {
   const { discountFreeShip, setDiscountFreeShip } = useContext(CheckoutContext);
   const [selectedVoucherProduct, setSelectedVoucherProduct] = useState(null);
   const [selectedFreeShipVoucher, setSelectedFreeShipVoucher] = useState(null);
+  const { valueVoucherProduct, setValueVoucherProduct } = useContext(CheckoutContext);
+  const { valueDiscountFreeShip, setValueDiscountFreeShip } = useContext(CheckoutContext);
   const { enqueueSnackbar } = useSnackbar();
 
   // const handleCompleteOrder = async () => {
@@ -76,8 +89,6 @@ function PayCheckout({ cartQuery, onSubmit }) {
   //     onSubmit(newValue);
   //   }
   // };
-
-  const { handleSubmit } = useFormContext();
 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -331,18 +342,55 @@ function PayCheckout({ cartQuery, onSubmit }) {
                   Danh sách voucher:
                 </Typography> */}
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={12}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
                       Mã giảm giá vận chuyển
                     </Typography>
                   </Grid>
-                  {listDiscountFreeShip && listDiscountFreeShip.map((voucher) => discountType(voucher))}
-                  <Grid item xs={12} sm={12}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {Array.isArray(listDiscountFreeShip) && listDiscountFreeShip.length > 0 ? (
+                    listDiscountFreeShip.map((voucher) => discountType(voucher))
+                  ) : (
+                    <Grid item xs={12}>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        p={2}
+                        bgcolor="#f5f5f5"
+                        borderRadius={2}
+                      >
+                        <InfoOutlinedIcon sx={{ color: 'text.secondary', mr: 1 }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Không có mã giảm giá vận chuyển
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  )}
+
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
                       Mã giảm giá sản phẩm
                     </Typography>
                   </Grid>
-                  {listDiscountProduct && listDiscountProduct.map((voucher) => discountType(voucher))}
+                  {Array.isArray(listDiscountProduct) && listDiscountProduct.length > 0 ? (
+                    listDiscountProduct.map((voucher) => discountType(voucher))
+                  ) : (
+                    <Grid item xs={12}>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        p={2}
+                        bgcolor="#f5f5f5"
+                        borderRadius={2}
+                      >
+                        <InfoOutlinedIcon sx={{ color: 'text.secondary', mr: 1 }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Không có mã giảm giá sản phẩm
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  )}
                 </Grid>
               </Box>
 
@@ -373,6 +421,24 @@ function PayCheckout({ cartQuery, onSubmit }) {
                   }}
                   onClick={() => {
                     setvoucherProduct(selectedVoucherProduct);
+                    setValueVoucherProduct(
+                      selectedVoucherProduct && totalPrice >= selectedVoucherProduct?.discountCondition
+                        ? selectedVoucherProduct.type === 1
+                          ? totalPrice * (selectedVoucherProduct.value / 100) < selectedVoucherProduct.maxValue
+                            ? totalPrice * (selectedVoucherProduct.value / 100)
+                            : selectedVoucherProduct.maxValue
+                          : selectedVoucherProduct.value
+                        : 0,
+                    );
+                    setValueDiscountFreeShip(
+                      selectedFreeShipVoucher
+                        ? selectedFreeShipVoucher.type === 1
+                          ? 30000 * (selectedFreeShipVoucher.value / 100) < selectedFreeShipVoucher.maxValue
+                            ? 30000 * (selectedFreeShipVoucher.value / 100)
+                            : selectedFreeShipVoucher.maxValue
+                          : selectedFreeShipVoucher.value
+                        : 0,
+                    );
                     setDiscountFreeShip(selectedFreeShipVoucher);
                     setVoucherOpen(false);
                     enqueueSnackbar('Áp dụng thành công', { variant: 'success' });
@@ -406,16 +472,7 @@ function PayCheckout({ cartQuery, onSubmit }) {
                 Ưu đãi (voucher / thành viên):
               </Typography>
               <Typography variant="body1" color="error.main">
-                -
-                {formatPrice(
-                  voucherProduct && totalPrice >= voucherProduct?.discountCondition
-                    ? voucherProduct.type === 1
-                      ? totalPrice * (voucherProduct.value / 100) < voucherProduct.maxValue
-                        ? totalPrice * (voucherProduct.value / 100)
-                        : voucherProduct.maxValue
-                      : voucherProduct.value
-                    : 0,
-                )}
+                -{formatPrice(valueVoucherProduct)}
               </Typography>
             </Box>
 
@@ -431,18 +488,7 @@ function PayCheckout({ cartQuery, onSubmit }) {
                 <Typography variant="body2" color="text.secondary">
                   Giảm phí ship:
                 </Typography>
-                <Typography variant="body1">
-                  -
-                  {formatPrice(
-                    discountFreeShip
-                      ? discountFreeShip.type === 1
-                        ? 30000 * (discountFreeShip.value / 100) < discountFreeShip.maxValue
-                          ? 30000 * (discountFreeShip.value / 100)
-                          : discountFreeShip.maxValue
-                        : discountFreeShip.value
-                      : 0,
-                  )}
-                </Typography>
+                <Typography variant="body1">-{formatPrice(valueDiscountFreeShip)}</Typography>
               </Box>
             )}
 
@@ -475,7 +521,7 @@ function PayCheckout({ cartQuery, onSubmit }) {
         <Button
           fullWidth
           size="large"
-          onClick={handleSubmit(onSubmit)}
+          onClick={() => setIsDialogOpen(true)}
           sx={{
             py: 1.5,
             borderRadius: 0,

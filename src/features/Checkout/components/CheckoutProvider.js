@@ -8,6 +8,8 @@ export const CheckoutProvider = ({ children }) => {
     const [moneyToPay,setmoneyToPay] = useState(0);
     const [voucherProduct, setvoucherProduct] = useState(null);
       const [discountFreeShip, setDiscountFreeShip] = useState(null);
+      const [valueVoucherProduct, setValueVoucherProduct] = useState(0);
+      const [valueDiscountFreeShip, setValueDiscountFreeShip] = useState(0);
     const [submitForm] = useState(() => () => {
         console.log("Submit form from context");
     });
@@ -19,7 +21,9 @@ export const CheckoutProvider = ({ children }) => {
              submitForm,
              moneyToPay,setmoneyToPay,
              voucherProduct, setvoucherProduct,
-             discountFreeShip, setDiscountFreeShip}}>
+             discountFreeShip, setDiscountFreeShip,
+             valueVoucherProduct, setValueVoucherProduct,
+             valueDiscountFreeShip, setValueDiscountFreeShip}}>
             {children}
         </CheckoutContext.Provider>
     );

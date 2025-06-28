@@ -20,8 +20,20 @@ SelectFrom.propTypes = {
 };
 
 function SelectFrom(props) {
-  const { transmitId, form, name, label, disabled, options, onSubmit, isLoading, width, height, formSub, readOnly } =
-    props;
+  const {
+    transmitId = 'id',
+    form,
+    name,
+    label,
+    disabled,
+    options,
+    onSubmit,
+    isLoading,
+    width,
+    height,
+    formSub,
+    readOnly,
+  } = props;
 
   const {
     formState: { errors },
@@ -29,11 +41,9 @@ function SelectFrom(props) {
 
   const message = get(errors, name + '.message');
 
-  const handleChange = (event) => {
-    const value = event.target.value;
-    const selectedValue = value ? JSON.parse(value) : null;
+  const handleChange = (selectedOption) => {
     if (onSubmit) {
-      onSubmit(selectedValue);
+      onSubmit(selectedOption);
     }
   };
 
@@ -52,21 +62,21 @@ function SelectFrom(props) {
           <>
             <TextField
               {...field}
-              value={field.value ? JSON.stringify(field.value) : ''}
+              value={field.value ? field.value[transmitId] : ''}
               onChange={(e) => {
-                const value = e.target.value;
-                const selectedOption = value ? JSON.parse(value) : null;
-                field.onChange(selectedOption);
-                handleChange(e);
+                const selectedId = e.target.value;
+                const selectedOption = options.find((opt) => opt[transmitId] === selectedId);
+                field.onChange(selectedOption || null);
+                handleChange(selectedOption);
               }}
               variant="outlined"
               size="small"
               label={label}
               select
-              disabled={disabled || readOnly}
+              disabled={disabled || readOnly || isLoading}
             >
-              {options.map((option, index) => (
-                <MenuItem key={index} value={JSON.stringify(option)}>
+              {options.map((option) => (
+                <MenuItem key={option[transmitId]} value={option[transmitId]}>
                   {option.name}
                 </MenuItem>
               ))}

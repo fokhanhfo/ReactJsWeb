@@ -8,6 +8,7 @@ import { Route, Routes } from 'react-router-dom';
 import Profile from './page/Profile';
 import Address from './page/Address';
 import Voucher from './page/Voucher';
+import ChangePassword from './page/ChangePassword';
 
 UserDetail.propTypes = {};
 
@@ -30,6 +31,7 @@ function UserDetail(props) {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/address" element={<Address />} />
                 <Route path="/vouchers" element={<Voucher />} />
+                <Route path="/change-password" element={<ChangePassword />} />
               </Routes>
             </Grid>
           </Grid>

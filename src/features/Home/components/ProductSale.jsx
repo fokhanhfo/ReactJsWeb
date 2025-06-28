@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Typography, Divider, IconButton, Button, useTheme } from '@mui/material';
-import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { Box, Typography, Divider, IconButton, Button, useTheme, useMediaQuery } from '@mui/material';
+import { ChevronLeft, ChevronRight, Sort as SortIcon } from '@mui/icons-material';
 import ProductSkeletonList from 'features/Product/components/ProductSkeletonList';
 import Product from 'features/Product/components/Product';
+import { Link } from 'react-router-dom';
 
 ProductSale.propTypes = {
   productList: PropTypes.array.isRequired,
@@ -11,9 +12,10 @@ ProductSale.propTypes = {
 };
 
 function ProductSale({ productList, loading }) {
-  console.log(productList);
-  const scrollRef = useRef(null);
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const scrollRef = useRef(null);
 
   const [showLeftButton, setShowLeftButton] = useState(false);
   const [showRightButton, setShowRightButton] = useState(false);
@@ -44,7 +46,7 @@ function ProductSale({ productList, loading }) {
   };
 
   return (
-    <Box sx={{ py: 4 }}>
+    <Box sx={{ pb: 4 }}>
       {/* Header */}
       <Box
         sx={{
@@ -71,11 +73,21 @@ function ProductSale({ productList, loading }) {
             },
           }}
         >
-          Discounted Products
+          Sản Phẩm Giảm Giá
         </Typography>
 
-        <Button variant="text" color="primary">
-          View All
+        <Button
+          component={Link}
+          to="./products"
+          variant="outlined"
+          startIcon={<SortIcon />}
+          sx={{
+            borderRadius: 2,
+            display: { xs: 'none', sm: 'flex' },
+            textTransform: 'none',
+          }}
+        >
+          Xem tất cả
         </Button>
       </Box>
 
@@ -83,7 +95,7 @@ function ProductSale({ productList, loading }) {
 
       {/* Scrollable Product Section */}
       <Box position="relative">
-        {showLeftButton && (
+        {!isMobile && showLeftButton && (
           <IconButton
             onClick={scrollLeft}
             sx={{
@@ -133,14 +145,14 @@ function ProductSale({ productList, loading }) {
             <ProductSkeletonList />
           ) : (
             productList.map((product) => (
-              <Box key={product.id} sx={{ minWidth: 280 }}>
+              <Box key={product.id} sx={{ minWidth: 200 }}>
                 <Product product={product} />
               </Box>
             ))
           )}
         </Box>
 
-        {showRightButton && (
+        {!isMobile && showRightButton && (
           <IconButton
             onClick={scrollRight}
             sx={{

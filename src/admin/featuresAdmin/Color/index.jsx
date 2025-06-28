@@ -6,7 +6,8 @@ import { resetState } from 'admin/reduxAdmin/slices/actionsSlice';
 import Loading from 'components/Loading';
 import ListColor from './componennts/ListColor';
 import AddColor from './componennts/AddColor';
-import { Container } from '@mui/material';
+import { Box, Button, Container, Typography } from '@mui/material';
+import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 
 ColorAdmin.propTypes = {};
 
@@ -24,11 +25,23 @@ function ColorAdmin(props) {
       refetch();
     }
   };
+
+  const handleActions = (state, row) => {
+    handleAction(state, dispatch, actionsState);
+  };
   return (
-    <Container maxWidth={false}>
+    <Box p={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap">
+        <Typography variant="h6" fontWeight={600} color="primary.main">
+          Quản lý màu sắc
+        </Typography>
+        <Button onClick={() => handleActions('add')} variant="contained">
+          Thêm Màu Sắc
+        </Button>
+      </Box>
       {!isLoading ? <ListColor colors={data.data} actionsState={actionsState} /> : <Loading />}
       {actionsState.add && <AddColor actionsState={actionsState} onSubmit={onSubmit} />}
-    </Container>
+    </Box>
   );
 }
 

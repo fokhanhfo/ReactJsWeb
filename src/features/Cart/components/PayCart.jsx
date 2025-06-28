@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Checkbox, Divider, FormControlLabel, Paper, Typography } from '@mui/material';
+import { Box, Button, Checkbox, CircularProgress, Divider, FormControlLabel, Paper, Typography } from '@mui/material';
 import styled from 'styled-components';
-import { formatPrice } from 'utils';
+import { calculateDiscount, formatPrice } from 'utils';
 import { Link } from 'react-router-dom';
+import { useSnackbar } from 'notistack';
+import { cartApi, useDeleteAllMutation } from 'hookApi/cartApi';
 
 PayCart.propTypes = {
   listCart: PropTypes.array.isRequired,
@@ -12,14 +14,42 @@ PayCart.propTypes = {
 };
 
 function PayCart({ listCart = [], onAllCheckboxChange, setOpen }) {
+  const { enqueueSnackbar } = useSnackbar();
+  const [deleteAll, { isLoading, isSuccess, isError, error, data }] = useDeleteAllMutation();
   const selectCartItem = listCart.filter((item) => item.status === 1);
-  const totalPrice = selectCartItem.reduce((sum, item) => sum + item.productDetail.sellingPrice * item.quantity, 0);
+  const calculateTotalPrice = (selectCartItem) => {
+    return selectCartItem.reduce((sum, item) => {
+      const { percentageValue, finalPrice } = calculateDiscount(
+        item.productDetail.product,
+        item.productDetail.product.productDiscountPeriods,
+      );
+      return sum + finalPrice * item.quantity;
+    }, 0);
+  };
+
+  const totalPrice = calculateTotalPrice(selectCartItem);
+
   const [statusCheckBox, setStatusCheckBox] = useState(1);
 
   const handleCheckboxChange = (event) => {
     const newStatus = event.target.checked ? 1 : 0;
     setStatusCheckBox(newStatus);
     onAllCheckboxChange(newStatus);
+  };
+
+  const handleDeleteAll = async () => {
+    if (statusCheckBox !== 1) {
+      enqueueSnackbar('Vui lòng chọn tất cả sản phẩm trước khi xóa.', { variant: 'warning' });
+      return;
+    }
+
+    try {
+      await deleteAll().unwrap();
+      enqueueSnackbar('Xóa toàn bộ giỏ hàng thành công!', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar('Lỗi khi xóa toàn bộ giỏ hàng!', { variant: 'error' });
+      console.error('Lỗi khi xóa toàn bộ giỏ hàng:', err);
+    }
   };
 
   useEffect(() => {
@@ -52,8 +82,15 @@ function PayCart({ listCart = [], onAllCheckboxChange, setOpen }) {
             </Typography>
           }
         />
-        <Button variant="outlined" color="error" size="small" sx={{ minWidth: '60px' }}>
-          Xóa
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          sx={{ minWidth: '100px', position: 'relative' }}
+          onClick={handleDeleteAll}
+          disabled={isLoading || statusCheckBox !== 1}
+        >
+          {isLoading ? <CircularProgress size={20} color="inherit" /> : 'Xóa tất cả'}
         </Button>
       </Box>
 
@@ -77,12 +114,18 @@ function PayCart({ listCart = [], onAllCheckboxChange, setOpen }) {
         </Box>
 
         <Button
-          component={Link}
-          to="/checkout"
+          component={selectCartItem.length > 0 ? Link : 'button'}
+          to={selectCartItem.length > 0 ? '/checkout' : undefined}
           variant="contained"
           color="primary"
           fullWidth
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            if (selectCartItem.length === 0) {
+              enqueueSnackbar('Vui lòng chọn ít nhất một sản phẩm để thanh toán.', { variant: 'warning' });
+            } else {
+              setOpen(false); // Đóng giỏ hàng nếu cần
+            }
+          }}
           sx={{
             mt: 2,
             py: 1,

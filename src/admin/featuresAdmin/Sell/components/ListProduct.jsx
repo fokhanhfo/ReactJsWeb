@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid, Typography, Card, CardMedia, CardContent, IconButton } from '@mui/material';
 import { THUMBNAIL_PLACEHOLDER } from 'constants';
-import { formatPrice, imageMainProduct } from 'utils';
+import { calculateDiscount, formatPrice, imageMainProduct } from 'utils';
 import { useCart } from '../CartContext';
 import AddIcon from '@mui/icons-material/Add';
 import ProductDetail from './ProductDetail';
+import { discountStatus } from 'enum/discountStatus';
 
 ListProduct.propTypes = {
   products: PropTypes.array.isRequired,
@@ -23,7 +24,9 @@ function ListProduct({ products }) {
       <Grid container spacing={1.5}>
         {products?.map((product) => {
           const image = imageMainProduct(product.productDetails);
-          console.log('image', image?.imageUrl);
+          const sellingPrice = product.sellingPrice;
+
+          const { percentageValue, finalPrice } = calculateDiscount(product, product.productDiscountPeriods);
           return (
             <Grid item key={product.id} xs={12} sm={6} md={4} lg={3}>
               <Card
@@ -36,11 +39,35 @@ function ListProduct({ products }) {
               >
                 <CardMedia
                   component="img"
-                  height="150"
                   image={image ? image.imageUrl : THUMBNAIL_PLACEHOLDER}
                   alt={product.name}
-                  sx={{ objectFit: 'cover' }}
+                  sx={{
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    objectFit: 'cover',
+                    borderRadius: 2,
+                    position: 'relative',
+                  }}
                 />
+                {percentageValue && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      left: 8,
+                      backgroundColor: 'red',
+                      color: 'white',
+                      px: 1,
+                      py: 0.5,
+                      fontSize: '12px',
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    -{percentageValue}%
+                  </Box>
+                )}
+
                 {/* Dấu cộng để thêm sản phẩm */}
                 <Box
                   sx={{
@@ -70,9 +97,38 @@ function ListProduct({ products }) {
                   <Typography variant="body1" fontWeight={600} noWrap>
                     {product.name}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {formatPrice(product.price)}
-                  </Typography>
+                  {percentageValue ? (
+                    <Box display={'flex'} gap={1}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          color: 'red',
+                        }}
+                      >
+                        {formatPrice(finalPrice)}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 400,
+                          textDecoration: 'line-through',
+                          color: 'gray',
+                        }}
+                      >
+                        {formatPrice(sellingPrice)}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 400,
+                      }}
+                    >
+                      {formatPrice(sellingPrice)}
+                    </Typography>
+                  )}
                 </CardContent>
               </Card>
             </Grid>

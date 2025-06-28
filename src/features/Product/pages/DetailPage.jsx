@@ -10,19 +10,27 @@ import {
   CardMedia,
   CardContent,
   CardActions,
+  Chip,
 } from '@mui/material';
 import ProductThumbnail from '../components/ProductThumbnail';
-import { useMatch } from 'react-router-dom';
+import { Link, useMatch, useNavigate } from 'react-router-dom';
 import useProductDetail from '../hooks/useProductDetail';
 import ProductInfo from '../components/ProductInfo';
 import Banner from 'components/Banner/Banner';
 import { useState } from 'react';
+import { useGetProductsQuery } from 'hookApi/productApi';
+import { THUMBNAIL_PLACEHOLDER } from 'constants';
+import { calculateDiscount, formatPrice, imageMainProduct } from 'utils';
+import { Sort as SortIcon } from '@mui/icons-material';
 
 function DetailPage() {
+  const navigate = useNavigate();
   const match = useMatch('/products/:productId');
   const productId = match ? match.params.productId : null;
 
   const { product, loading } = useProductDetail(productId);
+
+  const { data, error, isLoading } = useGetProductsQuery({ page: 1, limit: 20, category: product?.category?.id });
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -137,69 +145,211 @@ function DetailPage() {
       </Box>
       <Box sx={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', mt: 4 }}>
         <Container maxWidth={false} sx={{ maxWidth: '1400px', padding: '20px' }}>
-          <Typography
-            variant="h6"
-            fontWeight="bold"
-            gutterBottom
+          <Box
             sx={{
-              color: '#333',
-              borderBottom: '2px solid #007bff',
-              display: 'inline-block',
-              paddingBottom: '4px',
-              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              mb: 2,
             }}
           >
-            Gợi ý sản phẩm
-          </Typography>
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              gutterBottom
+              sx={{
+                color: '#333',
+                borderBottom: '2px solid #007bff',
+                display: 'inline-block',
+                paddingBottom: '4px',
+                marginBottom: '16px',
+              }}
+            >
+              Gợi ý sản phẩm
+            </Typography>
+            <Button
+              component={Link}
+              to="../"
+              variant="outlined"
+              startIcon={<SortIcon />}
+              sx={{
+                borderRadius: 2,
+                display: { xs: 'none', sm: 'flex' },
+                textTransform: 'none',
+              }}
+            >
+              Xem tất cả
+            </Button>
+          </Box>
           <Grid container spacing={3}>
-            {suggestedProducts.map((product) => (
-              <Grid item xs={12} sm={6} md={3} key={product.id}>
-                <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={product.image}
-                    alt={product.name}
-                    sx={{ objectFit: 'cover' }}
-                  />
-                  <CardContent>
-                    <Typography variant="body1" fontWeight="bold" sx={{ textAlign: 'center' }}>
-                      {product.name}
-                    </Typography>
-                    <Box sx={{ textAlign: 'center', mt: 1 }}>
-                      {product.oldPrice && (
-                        <Typography variant="body2" sx={{ textDecoration: 'line-through', color: '#888', mr: 1 }}>
-                          {product.oldPrice.toLocaleString('vi-VN')}đ
-                        </Typography>
-                      )}
-                      {product.discount && (
-                        <Typography
-                          variant="body2"
+            {data?.data?.products && data.data.products.length > 0 ? (
+              data?.data?.products.map((product) => {
+                const image = product.productDetails
+                  .flatMap((productDetail) => productDetail.image)
+                  .find((image) => image.mainProduct === true);
+
+                const thumbnailUrl =
+                  image?.imageUrl || imageMainProduct(product.productDetails)?.imageUrl || THUMBNAIL_PLACEHOLDER;
+                const sellingPrice = product.sellingPrice;
+
+                const { percentageValue, finalPrice } = calculateDiscount(product, product.productDiscountPeriods);
+                return (
+                  <Grid item xs={12} sm={6} md={4} lg={2.4} key={product.id}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderRadius: 3,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        transition: 'all 0.3s ease-in-out',
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+                        },
+                        border: '1px solid #f0f0f0',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          '&:hover .slide-button': {
+                            transform: 'translate(-50%, -50%)',
+                            opacity: 1,
+                            pointerEvents: 'auto',
+                          },
+                        }}
+                      >
+                        <CardMedia
+                          component="img"
+                          image={thumbnailUrl}
+                          alt={product.name}
                           sx={{
-                            display: 'inline-block',
-                            backgroundColor: '#000',
-                            color: '#fff',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
+                            width: '100%',
+                            aspectRatio: '1 / 1',
+                            objectFit: 'cover',
+                            position: 'relative',
+                            transition: 'transform 0.3s ease-in-out',
+                            '&:hover': {
+                              transform: 'scale(1.05)',
+                            },
+                          }}
+                        />
+                        {percentageValue && (
+                          <Chip
+                            label={`-${percentageValue}%`}
+                            sx={{
+                              position: 'absolute',
+                              top: 12,
+                              right: 12,
+                              backgroundColor: '#000',
+                              color: '#fff',
+                              fontWeight: 'bold',
+                              fontSize: '0.75rem',
+                            }}
+                          />
+                        )}
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            window.scrollTo(0, 0);
+                            navigate(`/products/${product.id}`);
+                          }}
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, 100%)',
+                            opacity: 0,
+                            backgroundColor: '#fff',
+                            color: 'black',
+                            transition: 'transform 0.3s ease, opacity 0.3s ease',
+                            textTransform: 'none',
+                            pointerEvents: 'none',
+                          }}
+                          className="slide-button"
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </Box>
+
+                      <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+                        <Typography
+                          variant="h6"
+                          component="h3"
+                          sx={{
+                            fontWeight: 600,
+                            textAlign: 'center',
+                            mb: 2,
+                            color: '#1a1a1a',
+                            fontSize: '1rem',
+                            lineHeight: 1.4,
+                            minHeight: '2.8rem',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
                           }}
                         >
-                          {product.discount}
+                          {product.name}
                         </Typography>
-                      )}
-                    </Box>
-                    <Typography variant="h6" fontWeight="bold" sx={{ textAlign: 'center', color: '#007bff', mt: 1 }}>
-                      {product.price.toLocaleString('vi-VN')}đ
-                    </Typography>
-                  </CardContent>
-                  <CardActions sx={{ justifyContent: 'center' }}>
-                    <Button variant="contained" color="primary" size="small">
-                      Xem chi tiết
-                    </Button>
-                  </CardActions>
-                </Card>
+
+                        <Box sx={{ textAlign: 'center', mb: 2 }}>
+                          {percentageValue ? (
+                            <>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 400,
+                                  textDecoration: 'line-through',
+                                  color: 'gray',
+                                }}
+                              >
+                                {formatPrice(sellingPrice)}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 600,
+                                  color: 'red',
+                                }}
+                              >
+                                {formatPrice(finalPrice)}
+                              </Typography>
+                            </>
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 400,
+                              }}
+                            >
+                              {formatPrice(sellingPrice)}
+                            </Typography>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })
+            ) : (
+              <Grid item xs={12}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    textAlign: 'center',
+                    mt: 5,
+                    color: '#888',
+                    fontWeight: 500,
+                  }}
+                >
+                  Không có sản phẩm
+                </Typography>
               </Grid>
-            ))}
+            )}
           </Grid>
         </Container>
       </Box>

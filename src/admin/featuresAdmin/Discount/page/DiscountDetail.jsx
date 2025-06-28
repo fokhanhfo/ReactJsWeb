@@ -24,6 +24,7 @@ import { Dashboard as DashboardIcon } from '@mui/icons-material';
 import { LocalOffer as DiscountIcon } from '@mui/icons-material';
 import { useDeleteDiscountUserMutation } from 'hookApi/discountUserApi';
 import { useSnackbar } from 'notistack';
+import dayjs from 'dayjs';
 
 DiscountDetail.propTypes = {};
 
@@ -242,7 +243,8 @@ function DiscountDetail(props) {
                       Thời gian
                     </Typography>
                     <Typography variant="body2">
-                      {discount.startTime} → {discount.endTime}
+                      {dayjs(discount.startTime).format('DD/MM/YYYY HH:mm')} →{' '}
+                      {dayjs(discount.endTime).format('DD/MM/YYYY HH:mm')}
                     </Typography>
                   </Box>
                 </Box>

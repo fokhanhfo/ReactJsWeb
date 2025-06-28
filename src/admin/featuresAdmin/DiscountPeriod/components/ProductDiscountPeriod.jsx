@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   IconButton,
@@ -22,6 +22,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider,
 } from '@mui/material';
 import ReusableTable from 'admin/components/Table/ReusableTable';
 import { Edit, Delete, CheckCircle, Cancel, Search, Add, PersonAdd } from '@mui/icons-material';
@@ -42,6 +48,8 @@ import {
   useDeleteDiscountProductPeriodMutation,
 } from 'hookApi/discountProductPeriod';
 import { render } from '@testing-library/react';
+import queryString from 'query-string';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 ProductDiscountPeriod.propTypes = {
   discountsProduct: PropTypes.array.isRequired,
@@ -54,16 +62,35 @@ ProductDiscountPeriod.propTypes = {
 
 function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading, actionsState, discountPeriod }) {
   const [selectedDiscountUser, setSelectedDiscountUser] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [isOpenDiaLog, setIsOpenDiaLog] = useState(false);
   const [percentageValue, setPercentageValue] = useState(discountPeriod.minPercentageValue);
   const [percentageValueError, setPercentageValueError] = useState('');
+  const [category, setCategory] = React.useState('');
+  const [sortPrice, setSortPrice] = React.useState('');
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const categoryQuery = useSelector((state) => state.categoryApi.queries['getCategory(undefined)']);
+  const [countProducts, setCountProducts] = useState(0);
   const theme = useTheme();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const [deleteDiscountProductPeriod, { isLoading: isLoadingDiscountUser, isSuccess, isError }] =
     useDeleteDiscountProductPeriodMutation();
+
+  const queryParams = useMemo(() => {
+    const params = queryString.parse(location.search);
+    return {
+      page: Number.parseInt(params.page) || 1,
+      limit: rowsPerPage || 10,
+      idDiscountPeriod: idDiscount,
+      ...params,
+    };
+  }, [location.search, rowsPerPage]);
+
+  console.log('rowPerPage', rowsPerPage);
 
   const schema = yup
     .object({
@@ -78,7 +105,7 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
     resolver: yupResolver(schema),
   });
 
-  const { data, error, isLoading, refetch } = useGetProductsQuery({ idDiscountPeriod: idDiscount, page: 1 });
+  const { data, error, isLoading, refetch } = useGetProductsQuery(queryParams);
   const [addAllDiscountUser] = useAddAllDiscountUserMutation();
   const [addAllDiscountProductPeriod] = useAddAllDiscountProductPeriodMutation();
 
@@ -181,6 +208,50 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
     await handleAddUsers(percentageValue);
 
     data && setIsOpenDiaLog(false);
+  };
+
+  const handleCategory = (event) => {
+    const value = event.target.value;
+    setCategory(value);
+
+    const newFilter = { ...queryParams };
+
+    if (value === '') {
+      delete newFilter.category;
+    } else {
+      newFilter.category = value;
+      newFilter.page = 1;
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
+  };
+
+  const handleSortPrice = (event) => {
+    const value = event.target.value;
+    setSortPrice(value);
+
+    const newFilter = { ...queryParams };
+
+    if (value === '') {
+      delete newFilter.sort;
+    } else {
+      newFilter.sort = value;
+      newFilter.page = 1;
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
   };
 
   const listHead = [
@@ -362,6 +433,12 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
     },
   ];
 
+  useEffect(() => {
+    if (data?.data?.count) {
+      setCountProducts(data.data.count);
+    }
+  });
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* First Card: Users with discounts */}
@@ -412,22 +489,55 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
         />
         <CardContent>
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                placeholder="Tìm kiếm người dùng..."
+                placeholder="Tìm kiếm sản phẩm..."
                 InputProps={{
                   startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />,
                 }}
                 size="small"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Stack direction="row" spacing={2} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-                <form style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <InputField name="name" label="Tên người dùng" form={form} size="small" />
-                </form>
-              </Stack>
+            <Grid item xs={12} md={8}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                  Show:
+                </Typography>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <Select
+                    value={rowsPerPage}
+                    onChange={(e) => setRowsPerPage(e.target.value)}
+                    displayEmpty
+                    sx={{ borderRadius: 2 }}
+                  >
+                    <MenuItem value={countProducts}>Tất cả</MenuItem>
+                    <MenuItem value={10}>10 Items</MenuItem>
+                    <MenuItem value={20}>20 Items</MenuItem>
+                    <MenuItem value={50}>50 Items</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Danh mục</InputLabel>
+                  <Select value={category} label="Category" onChange={(e) => handleCategory(e)}>
+                    <MenuItem value="">All</MenuItem>
+                    {categoryQuery?.data?.data.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {category.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth size="small">
+                  <InputLabel>Giá</InputLabel>
+                  <Select value={sortPrice} label="Giá" onChange={(e) => handleSortPrice(e)}>
+                    <MenuItem value="">Bỏ chọn</MenuItem>
+                    <MenuItem value="sellingPrice:desc">Giảm dần</MenuItem>
+                    <MenuItem value="sellingPrice:asc">Tăng dần</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
             </Grid>
           </Grid>
 

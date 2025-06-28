@@ -16,7 +16,14 @@ export const discountApi = createApi({
     // }),
     endpoints: (builder)=>({
         getDiscount : builder.query({
-            query:()=>"discount",
+            query:(params)=>{
+                const queryParams = { ...params, page: params.page - 1 };
+                return {
+                    url: 'discount',
+                    method: 'GET',
+                    params: queryParams
+                }
+            },
             providesTags:(result)=>
               result ? [{ type: 'Discount', id: 'LIST' }] : [{ type: 'Discount', id: 'LIST' }],
         }),
@@ -34,7 +41,15 @@ export const discountApi = createApi({
         }),        
         updateDiscount: builder.mutation({
             query: (updatedItem) => ({
-                url: `discount/${updatedItem.id}`,
+                url: `discount`,
+                method: 'PUT',
+                body: updatedItem,
+            }),
+            invalidatesTags: [{ type: 'Discount', id: 'LIST' }],
+        }),
+        updateStatusDiscount: builder.mutation({
+            query: (updatedItem) => ({
+                url: `discount/update-status`,
                 method: 'PUT',
                 body: updatedItem,
             }),
@@ -60,4 +75,5 @@ export const {
     useUpdateDiscountMutation,
     useDeletediscountMutation,
     useClearDiscountMutation,
-    useGetIdDiscountQuery} = discountApi;
+    useGetIdDiscountQuery,
+    useUpdateStatusDiscountMutation} = discountApi;

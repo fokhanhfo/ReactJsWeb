@@ -65,20 +65,24 @@ function PayOrder({ cart, actionsState, onSubmit, initialValues, totalPrice }) {
       return;
     }
 
-    setIsSubmitting(!isSubmitting);
+    setIsSubmitting(true);
 
     const listCart = cart.map((item) => {
       const size = item.productDetail.productDetailSizes.find((i) => i.size.name === item.size);
+      console.log(item);
 
       return {
         quantity: item.quantity,
-        size,
+        size: { id: size.size.id },
         color: item.color,
         productDetail: item.productDetail,
       };
     });
 
     const newDataRequest = {
+      note: note,
+      paymentMethod: paymentMethod,
+      total_price: totalPrice,
       cartRequests: listCart,
     };
 
@@ -89,13 +93,16 @@ function PayOrder({ cart, actionsState, onSubmit, initialValues, totalPrice }) {
         handleAction(activeAction, dispatch, { add, edit, del, view });
       }
       enqueueSnackbar('Tạo hoá đơn thành công!', { variant: 'success' });
-      setIsSubmitting(!isSubmitting);
+      setIsSubmitting(true);
     } catch (error) {
       enqueueSnackbar('Tạo hoá đơn thất bại!', { variant: 'error' });
+      setIsSubmitting(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState(0);
   const [customerAmount, setCustomerAmount] = useState(totalPrice);
   const [note, setNote] = useState('');
   const [payments, setPayments] = useState({});
@@ -107,7 +114,7 @@ function PayOrder({ cart, actionsState, onSubmit, initialValues, totalPrice }) {
     }
     const newPayment = {
       amount: customerAmount,
-      method: paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
+      method: paymentMethod === '0' ? 'Tiền mặt' : 'Chuyển khoản',
       note: note,
     };
 
@@ -180,8 +187,8 @@ function PayOrder({ cart, actionsState, onSubmit, initialValues, totalPrice }) {
           </Typography>
           <FormControl>
             <RadioGroup row value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-              <FormControlLabel value="cash" control={<Radio />} label="Tiền mặt" />
-              <FormControlLabel value="transfer" control={<Radio />} label="Chuyển khoản" />
+              <FormControlLabel value={0} control={<Radio />} label="Tiền mặt" />
+              <FormControlLabel value={1} control={<Radio />} label="Chuyển khoản" />
             </RadioGroup>
           </FormControl>
         </Box>

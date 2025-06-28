@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import DataTable from 'admin/components/Table/DataTable';
-import { Box, Button, IconButton } from '@mui/material';
+import { Box, Button, Chip, IconButton } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 import { Update } from '@mui/icons-material';
@@ -50,13 +50,57 @@ function ListDiscountPeriod({ discounts, loading, actionsState }) {
     { field: 'minPercentageValue', headerName: 'Giá trị % tối thiểu', flex: 0.7 },
     { field: 'maxPercentageValue', headerName: 'Giá trị % tối đa', flex: 0.7 },
     {
-      field: 'startTime',
-      headerName: 'Bắt đầu',
-      flex: 1,
-      renderCell: (params) => formatDateTime(params.row.startTime),
+      field: 'durationDays',
+      headerName: 'Số ngày giảm',
+      flex: 0.5,
+      renderCell: (params) => {
+        const start = new Date(params.row.startTime);
+        const end = new Date(params.row.endTime);
+        const diffTime = end - start;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return `${diffDays} ngày`;
+      },
     },
-    { field: 'endTime', headerName: 'Kết thúc', flex: 1, renderCell: (params) => formatDateTime(params.row.endTime) },
-    { field: 'status', headerName: 'Trạng thái', flex: 0.5 },
+    {
+      field: 'remainingDays',
+      headerName: 'Số ngày còn lại',
+      flex: 0.5,
+      renderCell: (params) => {
+        const now = new Date();
+        const start = new Date(params.row.startTime);
+        const end = new Date(params.row.endTime);
+
+        if (now < start) {
+          // Chưa bắt đầu
+          return <Chip label="Chưa bắt đầu" color="info" size="small" />;
+        }
+
+        const diffTime = end - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 0) {
+          return <Chip label={`${diffDays} ngày`} color={diffDays <= 3 ? 'warning' : 'success'} size="small" />;
+        } else {
+          return <Chip label="Hết hạn" color="error" size="small" />;
+        }
+      },
+    },
+    {
+      field: 'status',
+      headerName: 'Trạng thái',
+      flex: 0.5,
+      renderCell: (params) => {
+        const isActive = params.value === 1;
+
+        return (
+          <Chip
+            label={isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
+            color={isActive ? 'success' : 'default'} // 'success' = xanh lá, 'default' = xám
+            size="small"
+          />
+        );
+      },
+    },
     {
       field: 'actions',
       headerName: 'Thao tác',

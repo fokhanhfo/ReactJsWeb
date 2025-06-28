@@ -20,25 +20,40 @@ const ColorlibStepIconRoot = styled('div')(({ theme, ownerState }) => ({
   backgroundColor: '#ccc',
   zIndex: 1,
   color: '#fff',
-  width: 50,
-  height: 50,
   display: 'flex',
   borderRadius: '50%',
   justifyContent: 'center',
   alignItems: 'center',
+
+  // Kích thước mặc định
+  width: 50,
+  height: 50,
+
+  // Responsive kích thước
+  [theme.breakpoints.down('md')]: {
+    width: 40,
+    height: 40,
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: 32,
+    height: 32,
+    '& svg': {
+      fontSize: 16,
+    },
+  },
+
   ...(ownerState.active && {
-    backgroundColor: '#ff9800', // Màu cam cho trạng thái active
+    backgroundColor: '#ff9800',
     boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
   }),
   ...(ownerState.completed && {
-    backgroundColor: '#4caf50', // Màu xanh cho trạng thái completed
+    backgroundColor: '#4caf50',
   }),
 }));
 
 function ColorlibStepIcon(props) {
+  const { active, completed, icon } = props;
   const theme = useTheme();
-
-  const { active, completed, className } = props;
 
   const icons = {
     1: <PendingActionsIcon />,
@@ -49,11 +64,9 @@ function ColorlibStepIcon(props) {
     6: <CheckCircleIcon />,
   };
 
-  console.log('Icon value:', props.icon);
-
   return (
-    <ColorlibStepIconRoot ownerState={{ completed, active }} className={className}>
-      {icons[String(props.icon)]}
+    <ColorlibStepIconRoot ownerState={{ completed, active }} theme={theme}>
+      {icons[String(icon)]}
     </ColorlibStepIconRoot>
   );
 }

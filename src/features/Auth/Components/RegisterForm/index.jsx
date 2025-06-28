@@ -1,7 +1,6 @@
-import styled from '@emotion/styled';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LockOutlined } from '@mui/icons-material';
-import { Avatar, Button, Typography } from '@mui/material';
+import { Avatar, Button, Typography, Paper, Box, Stack, Grid } from '@mui/material';
 import InputField from 'components/form-controls/InputForm';
 import PasswordField from 'components/form-controls/PassworField';
 import PropTypes from 'prop-types';
@@ -10,38 +9,36 @@ import { useForm } from 'react-hook-form';
 import { useSelector } from 'react-redux';
 import * as yup from 'yup';
 
-const StyledAvatar = styled(Avatar)`
-  margin: 0 auto;
-  background: red;
-`;
-
-const StyledTypography = styled(Typography)`
-  text-align: center;
-`;
-
-const StyledButton = styled(Button)`
-  margi-top: 10px;
-`;
-
 RegisterForm.propTypes = {
   onSubmit: PropTypes.func,
 };
 
 function RegisterForm(props) {
-  // .test('hai từ','Họ tên phải có 2 từ trở lên',(value)=>{
-  //   return value.trim().split(' ').length >=2;
-  // }),
-  const schema = yup
-    .object({
-      username: yup.string().required('please enter fullname'),
-      email: yup.string().required('Bắt buộc').email('Nhập đúng đinh dạng email'),
-      password: yup.string().required('Bắt buộc').min(8, 'Mật khẩu phải có 8 chữ số'),
-      retypePassword: yup
-        .string()
-        .required('Băt buộc')
-        .oneOf([yup.ref('password')], 'Nhập lại sai'),
-    })
-    .required();
+  const schema = yup.object({
+    username: yup
+      .string()
+      .required('Vui lòng nhập tên đăng nhập')
+      .min(4, 'Tên đăng nhập tối thiểu 4 ký tự')
+      .max(20, 'Tên đăng nhập tối đa 20 ký tự')
+      .matches(/^[a-zA-Z0-9_]+$/, 'Tên đăng nhập chỉ chứa chữ cái, số và dấu gạch dưới'),
+
+    email: yup.string().required('Bắt buộc').email('Nhập đúng định dạng email'),
+
+    password: yup
+      .string()
+      .required('Bắt buộc')
+      .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+      .max(32, 'Mật khẩu tối đa 32 ký tự')
+      .matches(/[A-Z]/, 'Mật khẩu phải có ít nhất một chữ in hoa')
+      .matches(/[a-z]/, 'Mật khẩu phải có ít nhất một chữ thường')
+      .matches(/[0-9]/, 'Mật khẩu phải có ít nhất một chữ số')
+      .matches(/[@$!%*?&]/, 'Mật khẩu phải có ít nhất một ký tự đặc biệt'),
+
+    retypePassword: yup
+      .string()
+      .required('Bắt buộc')
+      .oneOf([yup.ref('password')], 'Nhập lại mật khẩu không khớp'),
+  });
 
   const form = useForm({
     defaultValues: {
@@ -64,27 +61,53 @@ function RegisterForm(props) {
   const errorMessage = useSelector((state) => state.user.error?.message || '');
 
   return (
-    <div>
-      <StyledAvatar>
-        <LockOutlined />
-      </StyledAvatar>
+    <Box>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          mb: 2,
+        }}
+      >
+        <Avatar sx={{ bgcolor: 'red' }}>
+          <LockOutlined />
+        </Avatar>
+      </Box>
 
-      <StyledTypography component="h3" variant="h5">
-        Create An Account
-      </StyledTypography>
+      <Typography component="h3" variant="h5" sx={{ textAlign: 'center', fontWeight: '600', mb: 3 }}>
+        Tạo Tài Khoản
+      </Typography>
 
-      <p>{errorMessage}</p>
+      {errorMessage && (
+        <Typography sx={{ color: 'error.main', textAlign: 'center', mb: 2 }} variant="body2">
+          {errorMessage}
+        </Typography>
+      )}
 
-      <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <InputField name="username" label="User Name" form={form} />
-        <InputField name="email" label="Email" form={form} />
-        <PasswordField name="password" label="Password" form={form} />
-        <PasswordField name="retypePassword" label="Retype Password" form={form} />
-        <StyledButton type="submit" fullWidth variant="contained">
-          Sign Up
-        </StyledButton>
+      <form onSubmit={form.handleSubmit(handleSubmit)} noValidate style={{ width: '100%' }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <InputField name="username" label="Tên đăng nhập" form={form} />
+          </Grid>
+          <Grid item xs={12}>
+            <InputField name="email" label="Email" form={form} />
+          </Grid>
+          <Grid item xs={12}>
+            <PasswordField name="password" label="Mật khẩu" form={form} />
+          </Grid>
+          <Grid item xs={12}>
+            <PasswordField name="retypePassword" label="Nhập lại mật khẩu" form={form} />
+            <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, ml: 1 }}>
+              Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
+            </Typography>
+          </Grid>
+        </Grid>
+
+        <Button type="submit" fullWidth variant="contained" sx={{ mt: '10px' }}>
+          Đăng Ký
+        </Button>
       </form>
-    </div>
+    </Box>
   );
 }
 

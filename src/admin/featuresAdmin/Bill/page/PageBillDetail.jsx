@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import billApi from 'api/billApi';
 import { useSnackbar } from 'notistack';
@@ -175,11 +173,11 @@ function PageBillDetail() {
       id: item.id,
       image: imageUrl,
       name: product.name,
-      price: item.productDetail.sellingPrice,
+      price: item.productDetail.product.sellingPrice,
       quantity: item.quantity,
       size: item.size,
       color: item.color,
-      total: item.productDetail.sellingPrice * item.quantity,
+      total: item.productDetail.product.sellingPrice * item.quantity,
     };
   });
 
@@ -205,7 +203,7 @@ function PageBillDetail() {
       field: 'price',
       headerName: 'Giá bán',
       flex: 1,
-      valueFormatter: (params) => formatPrice(params.value),
+      valueFormatter: (params) => formatPrice(params),
     },
     { field: 'size', headerName: 'Size', flex: 0.5 },
     { field: 'color', headerName: 'Màu', flex: 0.5 },
@@ -214,10 +212,7 @@ function PageBillDetail() {
       field: 'total',
       headerName: 'Tổng',
       flex: 1,
-      valueFormatter: (params) => {
-        console.log('params', params);
-        return formatPrice(params.value);
-      },
+      valueFormatter: (params) => formatPrice(params),
     },
   ];
 
@@ -234,7 +229,7 @@ function PageBillDetail() {
   };
 
   const handleClickCancel = async () => {
-    const data = { status: 5, id: billId };
+    const data = { status: 6, id: billId };
     const response = await updateStatusBill(data);
     if (response) {
       enqueueSnackbar('Update trạng thái thành công', { variant: 'success' });

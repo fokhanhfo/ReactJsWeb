@@ -120,11 +120,11 @@ function ListProduct({ products, actionsState }) {
   //   },
   // ];
   const columns = [
-    // { field: 'id', headerName: 'ID', flex: 0.5 },
+    { field: 'id', headerName: 'ID', flex: 0.3 },
     {
       field: 'name',
       headerName: 'Name',
-      flex: 1,
+      flex: 1.5,
       renderCell: (params) => {
         const imageURL = imageMainProduct(params.row.productDetails);
         return (
@@ -133,8 +133,8 @@ function ListProduct({ products, actionsState }) {
               src={imageURL?.imageUrl}
               alt=""
               style={{
-                width: 40,
-                height: 40,
+                width: 50,
+                height: 50,
                 objectFit: 'cover',
                 borderRadius: 4,
               }}
@@ -147,12 +147,19 @@ function ListProduct({ products, actionsState }) {
       },
     },
     {
-      field: 'productDetails',
-      headerName: 'Price',
-      flex: 1,
+      field: 'importPrice',
+      headerName: 'Giá nhập',
+      flex: 0.5,
       valueGetter: (params) => {
-        const listPrice = params?.map((pd) => pd.sellingPrice).sort((a, b) => a - b);
-        return `${formatPrice(listPrice[0])} - ${formatPrice(listPrice[listPrice.length - 1])}`;
+        return `${formatPrice(params)}`;
+      },
+    },
+    {
+      field: 'sellingPrice',
+      headerName: 'Giá bán',
+      flex: 0.5,
+      valueGetter: (params) => {
+        return `${formatPrice(params)}`;
       },
     },
     // {
@@ -177,8 +184,8 @@ function ListProduct({ products, actionsState }) {
         const status = params.row.status;
         const label = status === 1 ? 'On' : 'Off';
 
-        const bgColor = status === 1 ? 'rgba(113, 221, 55, 0.16)' : 'rgba(145, 158, 171, 0.16)';
-        const textColor = status === 1 ? '#71dd37' : '#919eab';
+        const bgColor = status === 1 ? '#e6f4ea' : '#f9e6e6'; // Xanh nhạt / Đỏ nhạt
+        const textColor = status === 1 ? '#2e7d32' : '#c62828'; // Xanh đậm / Đỏ đậm
 
         return (
           <Chip
@@ -186,7 +193,7 @@ function ListProduct({ products, actionsState }) {
             size="small"
             onClick={() => handleClickStatus(params.row.status)}
             sx={{
-              fontWeight: 500,
+              fontWeight: 600,
               borderRadius: '8px',
               px: 1.5,
               py: 0.5,
@@ -194,6 +201,7 @@ function ListProduct({ products, actionsState }) {
               bgcolor: bgColor,
               color: textColor,
               cursor: 'pointer',
+              border: `1px solid ${textColor}`,
             }}
           />
         );
@@ -233,7 +241,6 @@ function ListProduct({ products, actionsState }) {
       enqueueSnackbar(`Update trạng thái không thành công: ${e.message}`, { variant: 'error' });
     }
   };
-  console.log('products', products);
 
   return (
     <>

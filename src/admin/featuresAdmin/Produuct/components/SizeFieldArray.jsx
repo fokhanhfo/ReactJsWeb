@@ -26,7 +26,7 @@ function SizeFieldArray({ actionsState, readOnly, control, index, form, listSize
   });
 
   return (
-    <>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {productDetailSizes.map((size, sizeIndex) => (
         <Box display={'flex'} gap={1} key={size.id}>
           <SelectFrom
@@ -63,7 +63,7 @@ function SizeFieldArray({ actionsState, readOnly, control, index, form, listSize
           </Button>
         </FormControl>
       )}
-    </>
+    </Box>
   );
 }
 

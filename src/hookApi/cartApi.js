@@ -43,6 +43,13 @@ export const cartApi = createApi({
             }),
             invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
         }),
+        deleteAll: builder.mutation({
+            query: () => ({
+                url: 'cart',
+                method: 'DELETE',
+            }),
+            invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
+        }),
         clearCart: builder.mutation({  // Đổi tên thành clearCart
             queryFn: () => ({ data: null }), // Không cần request, chỉ cần xóa state
             invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
@@ -50,4 +57,4 @@ export const cartApi = createApi({
     }),
 });
 
-export const { useGetCartQuery,useAddToCartMutation,useUpdateCartMutation,useDeletecartMutation,useClearCartMutation} = cartApi;
+export const { useGetCartQuery,useAddToCartMutation,useUpdateCartMutation,useDeletecartMutation,useDeleteAllMutation,useClearCartMutation} = cartApi;

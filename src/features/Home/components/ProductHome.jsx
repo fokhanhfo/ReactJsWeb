@@ -24,7 +24,7 @@ import productApi from 'api/productApi';
 import Loading from 'components/Loading';
 import { formatPrice, imageMainProduct } from 'utils';
 import InfiniteScroll from 'components/InfiniteScroll';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { THUMBNAIL_PLACEHOLDER } from 'constants';
 import { useGetProductsQuery } from 'hookApi/productApi';
 import {
@@ -42,6 +42,7 @@ import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Product from 'features/Product/components/Product';
 import ProductSale from './ProductSale';
+import ImageHome from './ImageHome';
 
 ProductHome.propTypes = {};
 
@@ -165,12 +166,27 @@ function ProductHome(props) {
             mb: 1,
           }}
         >
-          <Typography variant="h5" color="text.primary">
-            Featured Products
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              position: 'relative',
+              '&:after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -5,
+                left: 0,
+                width: 60,
+                height: 3,
+                backgroundColor: theme.palette.primary.main,
+              },
+            }}
+          >
+            Sản Phẩm Nổi Bật
           </Typography>
 
           <Box width={'50%'} display="flex" justifyContent={'end'} gap={1}>
-            <FormControl fullWidth size="small">
+            {/* <FormControl fullWidth size="small">
               <Select
                 value=""
                 // value={rowsPerPage} onChange={(e) => setRowsPerPage(e.target.value)}
@@ -191,11 +207,12 @@ function ProductHome(props) {
                   </MenuItem>
                 ))}
               </Select>
-            </FormControl>
+            </FormControl> */}
             <Button
+              component={Link}
+              to="./products"
               variant="outlined"
               startIcon={<SortIcon />}
-              fullWidth
               sx={{
                 borderRadius: 2,
                 display: { xs: 'none', sm: 'flex' },
@@ -381,6 +398,7 @@ function ProductHome(props) {
           })}
         </Grid>
       </InfiniteScroll> */}
+      <ImageHome />
     </>
   );
 }

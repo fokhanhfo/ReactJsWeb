@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetState } from 'admin/reduxAdmin/slices/actionsSlice';
@@ -22,25 +22,29 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 import { optionCategoryDiscount, optionStatusDiscount } from 'utils';
+import queryString from 'query-string';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 Discount.propTypes = {};
 
 function Discount(props) {
-  const { data, error, isLoading } = useGetDiscountQuery();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [rowsPerPage, setRowsPerPage] = React.useState(20);
+  const queryParams = useMemo(() => {
+    const params = queryString.parse(location.search);
+    return {
+      page: Number.parseInt(params.page) || 1,
+      limit: rowsPerPage || 20,
+      sort: 'enable:DESC',
+      ...params,
+    };
+  }, [location.search, rowsPerPage]);
+  const { data, error, isLoading } = useGetDiscountQuery(queryParams);
   const dispatch = useDispatch();
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [status, setStatus] = React.useState('');
   const [category, setCategory] = React.useState('');
-  const [stock, setStock] = React.useState('');
-
-  // const queryParams = useMemo(() => {
-  //     const params = queryString.parse(location.search);
-  //     return {
-  //       page: Number.parseInt(params.page) || 1,
-  //       limit: Number.parseInt(params.limit) || rowsPerPage,
-  //       ...params,
-  //     };
-  //   }, [location.search]);
+  const [istype, setIsType] = React.useState('');
 
   useEffect(() => {
     return () => {
@@ -48,10 +52,45 @@ function Discount(props) {
     };
   }, [dispatch]);
   const actionsState = useSelector((state) => state.actions);
-  const onSubmit = (status) => {
-    // if (status) {
-    //   refetch();
-    // }
+
+  const updateFilter = (key, value) => {
+    const newFilter = { ...queryParams };
+
+    if (value === '') {
+      delete newFilter[key];
+    } else {
+      newFilter[key] = value;
+      newFilter.page = 1;
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
+  };
+
+  const handleNextPage = (event, page) => {
+    const newFilter = {
+      ...queryParams,
+      page: page,
+    };
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
+  };
+
+  const handleRowsPerPage = (event) => {
+    const value = event.target.value;
+    setRowsPerPage(value);
+    updateFilter('limit', value);
   };
 
   const { setBreadcrumbs } = useBreadcrumb();
@@ -78,39 +117,78 @@ function Discount(props) {
   const handleActions = (state) => handleAction(state, dispatch, actionsState);
 
   const handleStatus = (event) => {
-    // const value = event.target.value;
-    // setStatus(value);
-    // const newFilter = { ...queryParams };
-    // if (value === '') {
-    //   delete newFilter.status;
-    // } else {
-    //   newFilter.status = value;
-    // }
-    // navigate(
-    //   {
-    //     pathname: location.pathname,
-    //     search: queryString.stringify(newFilter),
-    //   },
-    //   { replace: true },
-    // );
+    const value = event.target.value;
+    setStatus(value);
+    const newFilter = { ...queryParams };
+    if (value === '') {
+      delete newFilter.validity;
+    } else {
+      newFilter.validity = value;
+      newFilter.page = 1;
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
   };
 
   const handleCategory = (event) => {
-    // const value = event.target.value;
-    // setCategory(value);
-    // const newFilter = { ...queryParams };
-    // if (value === '') {
-    //   delete newFilter.category;
-    // } else {
-    //   newFilter.category = value;
-    // }
-    // navigate(
-    //   {
-    //     pathname: location.pathname,
-    //     search: queryString.stringify(newFilter),
-    //   },
-    //   { replace: true },
-    // );
+    const value = event.target.value;
+    setCategory(value);
+    const newFilter = { ...queryParams };
+    if (value === '') {
+      delete newFilter.category;
+    } else {
+      newFilter.category = value;
+    }
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
+  };
+
+  const handleType = (event) => {
+    const value = event.target.value;
+    setIsType(value);
+    const newFilter = { ...queryParams };
+    if (value === '') {
+      delete newFilter.type;
+    } else {
+      newFilter.type = value;
+    }
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
+  };
+
+  const handleSearchChange = (e) => {
+    const newName = e.target.value;
+
+    const currentParams = queryString.parse(location.search);
+    const updatedParams = {
+      ...currentParams,
+      page: 1,
+    };
+
+    if (newName) {
+      updatedParams.search = newName;
+    } else {
+      delete updatedParams.search;
+    }
+
+    const newSearch = queryString.stringify(updatedParams);
+    navigate(`?${newSearch}`);
   };
 
   return (
@@ -120,57 +198,69 @@ function Discount(props) {
           <Paper>
             <Box sx={{ p: 3, backgroundColor: '#fff', borderRadius: 2 }}>
               <Typography variant="h6" fontWeight="bold" mb={2}>
-                Filters
+                Bộ lọc
               </Typography>
 
               <Box display="flex" gap={2}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Status</InputLabel>
-                  <Select value={status} label="Status" onChange={(e) => handleStatus(e)}>
-                    <MenuItem value="">All</MenuItem>
-                    {optionStatusDiscount.map((option) => (
-                      <MenuItem key={option.id} value={option.id}>
-                        {option.name}
-                      </MenuItem>
-                    ))}
+                  <InputLabel>Hiệu lực</InputLabel>
+                  <Select
+                    value={queryParams.validity ? queryParams.validity : status}
+                    label="Hiệu lực"
+                    onChange={(e) => handleStatus(e)}
+                  >
+                    <MenuItem value="">Tất cả</MenuItem>
+                    <MenuItem value="ongoing">Đang diễn ra</MenuItem>
+                    <MenuItem value="upcoming">Chưa bắt đầu</MenuItem>
+                    <MenuItem value="ended">Đã kết thúc</MenuItem>
                   </Select>
                 </FormControl>
 
                 <FormControl fullWidth size="small">
                   <InputLabel>Category</InputLabel>
-                  <Select value={category} label="Category" onChange={(e) => handleCategory(e)}>
+                  <Select
+                    value={queryParams.category ? queryParams.category : category}
+                    label="Category"
+                    onChange={(e) => handleCategory(e)}
+                  >
                     <MenuItem value="">All</MenuItem>
-                    {optionCategoryDiscount.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="1">Sản phẩm</MenuItem>
+                    <MenuItem value="2">Vận chuyển</MenuItem>
                   </Select>
                 </FormControl>
 
                 <FormControl fullWidth size="small">
-                  <InputLabel>Stock</InputLabel>
-                  <Select value={stock} label="Stock" onChange={(e) => setStock(e.target.value)}>
+                  <InputLabel>Loại</InputLabel>
+                  <Select
+                    value={queryParams.type ? queryParams.type : istype}
+                    label="Loại"
+                    onChange={(e) => handleType(e)}
+                  >
                     <MenuItem value="">All</MenuItem>
-                    <MenuItem value="in">In Stock</MenuItem>
-                    <MenuItem value="out">Out of Stock</MenuItem>
+                    <MenuItem value="1">Phần trăm</MenuItem>
+                    <MenuItem value="2">Giá trị tiền</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
 
               <Divider sx={{ marginY: 2 }} />
               <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-                <TextField size="small" placeholder="Search Product" sx={{ width: 300 }} />
-
+                <TextField
+                  value={queryParams.search ? queryParams.search : ''}
+                  onChange={handleSearchChange}
+                  size="small"
+                  placeholder="Tìm kiếm theo ID/CODE giảm giá"
+                  sx={{ width: 300 }}
+                />
                 <Box display="flex" alignItems="center" gap={1}>
                   <FormControl size="small">
                     <Select
-                      value={rowsPerPage}
-                      // onChange={(e) => handleRowsPerPage(e)}
+                      value={queryParams.limit ? queryParams.limit : rowsPerPage}
+                      onChange={(e) => handleRowsPerPage(e)}
                     >
-                      <MenuItem value={10}>10</MenuItem>
-                      <MenuItem value={20}>20</MenuItem>
-                      <MenuItem value={50}>50</MenuItem>
+                      <MenuItem value={20}>20 thẻ</MenuItem>
+                      <MenuItem value={50}>50 thẻ</MenuItem>
+                      <MenuItem value={100}>100 thẻ</MenuItem>
                     </Select>
                   </FormControl>
 
@@ -190,13 +280,13 @@ function Discount(props) {
                 </Box>
               </Box>
             </Box>
-            <ListDiscount discounts={data.data} actionsState={actionsState} />
+            <ListDiscount discounts={data?.data?.discounts} actionsState={actionsState} />
           </Paper>
         </>
       ) : (
         <Loading />
       )}
-      {actionsState.add && <AddDiscount actionsState={actionsState} onSubmit={onSubmit} />}
+      {actionsState.add && <AddDiscount actionsState={actionsState} />}
     </>
   );
 }

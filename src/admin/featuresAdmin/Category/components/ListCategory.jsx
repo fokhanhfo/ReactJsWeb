@@ -10,6 +10,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 import AddCategory from './AddCategory';
 import { useDispatch } from 'react-redux';
+import { useDeletecategoryMutation } from 'hookApi/categoryApi';
+import { useSnackbar } from 'notistack';
+import ConfirmDialog from 'components/ConfirmDialog/ConfirmDialog';
 
 ListCategory.propTypes = {
   categorys: PropTypes.array.isRequired,
@@ -18,8 +21,30 @@ ListCategory.propTypes = {
 
 function ListCategory({ categorys, actionsState }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [deleteItem, { isLoading, isSuccess, error }] = useDeletecategoryMutation();
+  const { enqueueSnackbar } = useSnackbar();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [idCategory, setIdCategory] = useState();
+  const handleOpenDialog = (id) => {
+    setIdCategory(id);
+    setIsDialogOpen(true);
+  };
+  const handleDeleteCategory = async (id) => {
+    try {
+      await deleteItem(id).unwrap();
+      enqueueSnackbar('Xóa thành công', { variant: 'success' });
+    } catch (err) {
+      const errorMessage = err?.data?.message ?? err?.message ?? 'Đã xảy ra lỗi';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+    } finally {
+      setIsDialogOpen(false);
+    }
+  };
 
-  // Define the table headers
+  const handleCancel = () => {
+    setIsDialogOpen(false);
+  };
+
   const columns = [
     { field: 'name', headerName: 'Name', flex: 1 },
     {
@@ -41,8 +66,8 @@ function ListCategory({ categorys, actionsState }) {
           <IconButton onClick={() => handleActions('edit', params.row)}>
             <EditIcon color="success" />
           </IconButton>
-          {/* <IconButton>
-            <DeleteIcon />
+          {/* <IconButton onClick={() => handleOpenDialog(params.row.id)}>
+            <DeleteIcon color="error" />
           </IconButton> */}
         </>
       ),
@@ -60,6 +85,14 @@ function ListCategory({ categorys, actionsState }) {
       {' '}
       <DataTable rows={categorys} columns={columns} />
       {actionsState.edit === true && <AddCategory actionsState={actionsState} initialValues={selectedCategory} />}
+      <ConfirmDialog
+        isOpen={isDialogOpen}
+        title="Xác nhận"
+        message="Bạn có chắc chắn muốn thực hiện hành động này không?"
+        onConfirm={() => handleDeleteCategory(idCategory)}
+        onCancel={handleCancel}
+        isLoading={isLoading}
+      />
     </>
   );
 }

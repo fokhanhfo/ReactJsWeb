@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -11,6 +13,8 @@ import {
   DialogTitle,
   IconButton,
   Typography,
+  Chip,
+  Divider,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { AddShoppingCart, Remove, Add } from '@mui/icons-material';
@@ -25,22 +29,6 @@ ProductDetail.propTypes = {
   onSubmit: PropTypes.func,
   product: PropTypes.object,
 };
-
-// Component for quantity box styling
-const QuantityBox = ({ children, ...props }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      alignItems: 'center',
-      border: '1px solid #ddd',
-      borderRadius: '8px',
-      overflow: 'hidden',
-    }}
-    {...props}
-  >
-    {children}
-  </Box>
-);
 
 function ProductDetail({ isChoise, onSubmit, product }) {
   const { productDetails = [] } = product;
@@ -60,12 +48,10 @@ function ProductDetail({ isChoise, onSubmit, product }) {
   const selectedSize = watch('size');
   const amount = watch('amount');
 
-  // Close dialog handler
   const handleClose = () => {
     if (onSubmit) onSubmit();
   };
 
-  // Update size list when color changes
   useEffect(() => {
     if (selectedColor) handleChangeListSize(selectedColor);
 
@@ -73,7 +59,6 @@ function ProductDetail({ isChoise, onSubmit, product }) {
     setIsSize([...new Set(listSize)]);
   }, [selectedColor]);
 
-  // Handle adding product to cart
   const onSubmitCart = (data) => {
     if (!data.color) {
       enqueueSnackbar('Vui lòng chọn màu!', { variant: 'error' });
@@ -85,13 +70,18 @@ function ProductDetail({ isChoise, onSubmit, product }) {
     }
 
     const productDetail = productDetails.find((item) => item.color.id === data.color.id);
-    const newItem = { productDetail, quantity: data.amount, color: data.color, size: data.size };
+    const newItem = {
+      productDetail,
+      quantity: data.amount,
+      color: data.color,
+      size: data.size,
+      productDiscountPeriods: product.productDiscountPeriods,
+    };
 
     setProductChoise(newItem);
     addToCartContext(newItem);
   };
 
-  // Update available sizes based on selected color
   const handleChangeListSize = (color) => {
     const productDetail = productDetails.find((item) => item.color.id === color.id);
     if (!productDetail) return;
@@ -104,7 +94,6 @@ function ProductDetail({ isChoise, onSubmit, product }) {
     setSizesShow(availableSizes);
   };
 
-  // Update product choice when size changes
   const handleProductChoice = (size) => {
     const productDetail = productDetails.find((item) => item.color.id === selectedColor.id);
     const quantityProductDetail = productDetail.productDetailSizes.find((item) => item.size.name === size);
@@ -112,6 +101,7 @@ function ProductDetail({ isChoise, onSubmit, product }) {
     const newItem = {
       productDetail,
       quantity: amount,
+      sellingPrice: productDetail.product.sellingPrice,
       color: selectedColor,
       size,
       quantityProduct: quantityProductDetail?.quantity,
@@ -120,165 +110,232 @@ function ProductDetail({ isChoise, onSubmit, product }) {
     setProductChoise(newItem);
   };
 
+  console.log('productChoise', productChoise);
+
   return (
-    <Dialog aria-labelledby="customized-dialog-title" open={isChoise}>
-      <DialogTitle sx={{ m: 0, p: 2 }}>{product.name}</DialogTitle>
+    <Dialog
+      open={isChoise}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          bgcolor: 'white',
+          color: 'black',
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          p: 2,
+          pb: 1,
+          fontSize: '1.25rem',
+          fontWeight: 600,
+          color: 'black',
+        }}
+      >
+        {product.name}
+        <IconButton
+          onClick={handleClose}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: 'black',
+            '&:hover': { bgcolor: 'grey.100' },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-      <IconButton aria-label="close" onClick={handleClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
-        <CloseIcon />
-      </IconButton>
+      <DialogContent sx={{ p: 2, pt: 1 }}>
+        {/* Color Selection */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: 'black' }}>
+            Màu sắc
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {productDetails.map((value, index) => {
+              const mainImage = value.image.find((img) => img.mainColor);
+              const isSelected = selectedColor?.id === value.color.id;
 
-      <DialogContent dividers>
-        <Box>
-          {/* Color Selection */}
-          <Box sx={{ display: 'flex' }}>
-            <Box sx={{ width: '50%' }}>
-              <Typography sx={{ fontWeight: 600, mb: 1.5 }}>Chọn màu:</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                {productDetails.map((value, index) => {
-                  const mainImage = value.image.find((img) => img.mainColor);
-                  return (
-                    <Box key={index} sx={{ textAlign: 'center' }}>
-                      <Card
-                        sx={{
-                          maxWidth: 60,
-                          cursor: 'pointer',
-                          border: selectedColor?.id === value.color.id ? '2px solid #1976d2' : '1px solid #ddd',
-                          borderRadius: '8px',
-                          overflow: 'hidden',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                          },
-                        }}
-                        onClick={() => setValue('color', value.color)}
-                      >
-                        <CardMedia
-                          component="img"
-                          sx={{ width: 60, height: 60, objectFit: 'cover' }}
-                          image={mainImage?.imageUrl || ''}
-                          alt={value.color.name}
-                        />
-                      </Card>
-                      <Typography variant="body2" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                        {value.color.name}
-                      </Typography>
-                    </Box>
-                  );
-                })}
-              </Box>
-            </Box>
-
-            {/* Size Selection */}
-            <Box>
-              <Typography sx={{ fontWeight: 600, mb: 1.5 }}>Chọn size:</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {isSize.map((sizeObj, i) => {
-                  const isAvailable = sizesShow.map((size) => size?.name).includes(sizeObj);
-                  const isSelected = selectedSize === sizeObj;
-
-                  return (
-                    <Box
-                      key={i}
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: isSelected ? '2px solid #1976d2' : '1px solid #ddd',
-                        borderRadius: '4px',
-                        backgroundColor: isSelected ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
-                        opacity: isAvailable ? 1 : 0.5,
-                        cursor: isAvailable ? 'pointer' : 'not-allowed',
-                        transition: 'all 0.2s ease',
-                        '&:hover': isAvailable ? { transform: 'translateY(-2px)' } : {},
-                      }}
-                      onClick={() => {
-                        if (selectedColor) {
-                          isAvailable && setValue('size', sizeObj);
-                          handleProductChoice(sizeObj);
-                        }
-                      }}
-                    >
-                      <Typography variant="body2">{sizeObj}</Typography>
-                    </Box>
-                  );
-                })}
-              </Box>
-            </Box>
+              return (
+                <Box key={index} sx={{ textAlign: 'center' }}>
+                  <Card
+                    sx={{
+                      width: 100,
+                      height: 100,
+                      cursor: 'pointer',
+                      border: isSelected ? '2px solid black' : '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        borderColor: 'black',
+                        transform: 'scale(1.05)',
+                      },
+                    }}
+                    onClick={() => setValue('color', value.color)}
+                  >
+                    <CardMedia
+                      component="img"
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      image={mainImage?.imageUrl || ''}
+                      alt={value.color.name}
+                    />
+                  </Card>
+                  <Typography variant="caption" sx={{ mt: 0.5, color: 'black', fontSize: '0.7rem' }}>
+                    {value.color.name}
+                  </Typography>
+                </Box>
+              );
+            })}
           </Box>
+        </Box>
 
-          {/* Quantity Selection */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography sx={{ fontWeight: 600, mb: 1.5 }}>Số lượng:</Typography>
-            <QuantityBox>
-              <Button
+        <Divider sx={{ my: 2, borderColor: 'grey.300' }} />
+
+        {/* Size Selection */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: 'black' }}>
+            Kích thước
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {isSize.map((sizeObj, i) => {
+              const isAvailable = sizesShow.map((size) => size?.name).includes(sizeObj);
+              const isSelected = selectedSize === sizeObj;
+
+              return (
+                <Chip
+                  key={i}
+                  label={sizeObj}
+                  variant={isSelected ? 'filled' : 'outlined'}
+                  sx={{
+                    minWidth: 40,
+                    height: 32,
+                    fontSize: '0.8rem',
+                    fontWeight: isSelected ? 600 : 400,
+                    bgcolor: isSelected ? 'black' : 'transparent',
+                    color: isSelected ? 'white' : 'black',
+                    borderColor: isSelected ? 'black' : 'grey.400',
+                    opacity: isAvailable ? 1 : 0.4,
+                    cursor: isAvailable ? 'pointer' : 'not-allowed',
+                    '&:hover': isAvailable
+                      ? {
+                          bgcolor: isSelected ? 'black' : 'grey.100',
+                          borderColor: 'black',
+                        }
+                      : {},
+                  }}
+                  onClick={() => {
+                    if (selectedColor && isAvailable) {
+                      setValue('size', sizeObj);
+                      handleProductChoice(sizeObj);
+                    }
+                  }}
+                />
+              );
+            })}
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 2, borderColor: 'grey.300' }} />
+
+        {/* Quantity and Price */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'black' }}>
+              Số lượng
+            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                border: '1px solid #e0e0e0',
+                borderRadius: 1,
+                overflow: 'hidden',
+              }}
+            >
+              <IconButton
                 size="small"
-                onClick={() => {
-                  setValue('amount', Math.max(1, amount - 1));
-                  handleProductChoice();
+                onClick={() => setValue('amount', Math.max(1, amount - 1))}
+                sx={{
+                  borderRadius: 0,
+                  color: 'black',
+                  '&:hover': { bgcolor: 'grey.100' },
                 }}
-                sx={{ minWidth: '40px' }}
               >
                 <Remove fontSize="small" />
-              </Button>
+              </IconButton>
               <Box
-                width={40}
-                textAlign="center"
-                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                {amount}
-              </Box>
-              <Button
-                size="small"
-                onClick={() => {
-                  setValue('amount', amount + 1);
-                  handleProductChoice();
+                sx={{
+                  px: 2,
+                  py: 1,
+                  minWidth: 40,
+                  textAlign: 'center',
+                  borderLeft: '1px solid #e0e0e0',
+                  borderRight: '1px solid #e0e0e0',
+                  bgcolor: 'grey.50',
                 }}
-                sx={{ minWidth: '40px' }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  {amount}
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                onClick={() => setValue('amount', amount + 1)}
+                sx={{
+                  borderRadius: 0,
+                  color: 'black',
+                  '&:hover': { bgcolor: 'grey.100' },
+                }}
               >
                 <Add fontSize="small" />
-              </Button>
-            </QuantityBox>
-            <Typography variant="body2" color="textSecondary">
-              {productChoise ? productChoise.quantityProduct : 0} sản phẩm có sẵn
+              </IconButton>
+            </Box>
+            <Typography variant="caption" sx={{ mt: 0.5, color: 'grey.600' }}>
+              {productChoise ? productChoise.quantityProduct : 0} có sẵn
             </Typography>
           </Box>
 
-          {/* Price Display */}
-          <Box sx={{ my: 1, float: 'right' }}>
-            <Typography variant="h5" color="error" fontWeight={700}>
-              {productChoise ? formatPrice(productChoise.productDetail.sellingPrice * amount) : 0}
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="caption" sx={{ color: 'grey.600' }}>
+              Tổng tiền
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'black' }}>
+              {productChoise ? formatPrice(productChoise.sellingPrice * amount) : '0₫'}
             </Typography>
           </Box>
         </Box>
       </DialogContent>
 
-      {/* Add to Cart Button */}
-      <DialogActions>
+      <DialogActions sx={{ p: 2, pt: 0 }}>
         <Button
           variant="contained"
-          color="secondary"
           startIcon={<AddShoppingCart />}
           fullWidth
+          onClick={handleSubmit(onSubmitCart)}
           sx={{
             py: 1.5,
-            fontSize: '1rem',
+            fontSize: '0.95rem',
             fontWeight: 600,
-            borderRadius: '8px',
+            bgcolor: 'black',
+            color: 'white',
+            borderRadius: 1,
             textTransform: 'none',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-            transition: 'all 0.3s ease',
             '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.15)',
+              bgcolor: 'grey.800',
+            },
+            '&:disabled': {
+              bgcolor: 'grey.300',
+              color: 'grey.500',
             },
           }}
-          onClick={handleSubmit(onSubmitCart)}
+          disabled={!selectedColor || !selectedSize}
         >
-          Add
+          Thêm vào giỏ hàng
         </Button>
       </DialogActions>
     </Dialog>

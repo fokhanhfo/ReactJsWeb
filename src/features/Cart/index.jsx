@@ -69,7 +69,7 @@ function CartFeature({ setOpen }) {
             <PayCart setOpen={setOpen} listCart={cartData.data} onAllCheckboxChange={handleAllCheckboxChange}></PayCart>
           </div>
         ) : (
-          <Box display="flex" alignItems="center" justifyContent="center" flex={1}>
+          <Box width={'400px'} display="flex" alignItems="center" justifyContent="center" flex={1}>
             <Typography variant="body1" color="text.secondary">
               Giỏ hàng trống.
             </Typography>

@@ -23,12 +23,11 @@ import {
   Typography,
 } from '@mui/material';
 import { ArrowLeft, ArrowRight } from '@mui/icons-material';
-import StoreIcon from '@mui/icons-material/Store';
-import LanguageIcon from '@mui/icons-material/Language';
-import DiscountIcon from '@mui/icons-material/Discount';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import AddIcon from '@mui/icons-material/Add';
-import { useGetBillQuery } from 'hookApi/billApi';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'; // Doanh thu
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'; // Đơn hàng
+import PaymentIcon from '@mui/icons-material/Payment'; // Phương thức thanh toán
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import { useGetBillQuery, useGetBillStatisticsQuery } from 'hookApi/billApi';
 
 ListPageBill.propTypes = {};
 
@@ -39,8 +38,6 @@ function ListPageBill(props) {
   const [bills, setBills] = useState([]);
   const [pagination, setPagination] = useState({});
   const [status, setStatus] = React.useState('');
-  const [category, setCategory] = React.useState('');
-  const [stock, setStock] = React.useState('');
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [selectedStatus, setSelectedStatus] = React.useState(null);
 
@@ -54,7 +51,11 @@ function ListPageBill(props) {
   }, [location.search]);
 
   const { data, isLoading, error, refetch } = useGetBillQuery(queryParams);
-  console.log(data);
+  const {
+    data: billStatistics,
+    isLoading: isLoadingBillStatistics,
+    error: errorBillStatistics,
+  } = useGetBillStatisticsQuery();
 
   useEffect(() => {
     if (data) {
@@ -62,6 +63,52 @@ function ListPageBill(props) {
     }
     setLoading(isLoading);
   }, [data, isLoading]);
+
+  if (isLoadingBillStatistics || !billStatistics?.data) {
+    return <Loading />;
+  }
+
+  const { monthlyRevenue, monthlyOrderCount, revenueByPaymentMethod, orderStatusRatio } = billStatistics?.data;
+
+  const salesData = [
+    {
+      title: 'Doanh thu tháng hiện tại',
+      amount: `${monthlyRevenue[0]?.revenue.toLocaleString()} đ`,
+      orders: `Tháng ${monthlyRevenue[0]?.month}`,
+      changeColor: 'green',
+      icon: <MonetizationOnIcon fontSize="large" sx={{ color: 'green' }} />,
+    },
+    {
+      title: 'Tổng đơn hàng tháng',
+      amount: `${monthlyOrderCount[0]?.orderCount} đơn`,
+      orders: `Tháng ${monthlyOrderCount[0]?.month}`,
+      changeColor: 'blue',
+      icon: <ShoppingCartIcon fontSize="large" sx={{ color: 'blue' }} />,
+    },
+    {
+      title: 'Doanh thu theo phương thức thanh toán',
+      amount: `${revenueByPaymentMethod[0]?.totalRevenue.toLocaleString()} đ`,
+      orders: `Phương thức: ${revenueByPaymentMethod[0]?.payMethod || 'Không xác định'}`,
+      changeColor: 'purple',
+      icon: <PaymentIcon fontSize="large" sx={{ color: 'purple' }} />,
+    },
+    {
+      title: 'Tỷ lệ trạng thái đơn hàng',
+      amount: `${orderStatusRatio.reduce((sum, item) => sum + item.count, 0)} đơn`,
+      orders: orderStatusRatio
+        .map((item) => {
+          const statusMap = {
+            0: 'Chờ xác nhận',
+            1: 'Đang xử lý',
+            5: 'Hoàn thành',
+          };
+          return `${statusMap[item.status] || 'Khác'}: ${item.count}`;
+        })
+        .join(', '),
+      changeColor: 'orange',
+      icon: <AssessmentIcon fontSize="large" sx={{ color: 'orange' }} />,
+    },
+  ];
 
   const handleChangeFilter = (newfilter) => {
     navigate(
@@ -105,40 +152,6 @@ function ListPageBill(props) {
     );
   };
 
-  const salesData = [
-    {
-      title: 'In-Store Sales',
-      amount: '$5,345',
-      orders: '5k orders',
-      change: '+5.7%',
-      changeColor: 'green',
-      icon: <StoreIcon fontSize="large" />,
-    },
-    {
-      title: 'Website Sales',
-      amount: '$74,347',
-      orders: '21k orders',
-      change: '+12.4%',
-      changeColor: 'green',
-      icon: <LanguageIcon fontSize="large" />,
-    },
-    {
-      title: 'Discount',
-      amount: '$14,235',
-      orders: '6k orders',
-      change: null,
-      icon: <DiscountIcon fontSize="large" />,
-    },
-    {
-      title: 'Affiliate',
-      amount: '$8,345',
-      orders: '150 orders',
-      change: '-3.5%',
-      changeColor: 'red',
-      icon: <CreditCardIcon fontSize="large" />,
-    },
-  ];
-
   const handleRowsPerPage = (e) => {
     setRowsPerPage(e.target.value);
     const newFilter = {
@@ -155,16 +168,30 @@ function ListPageBill(props) {
   };
 
   const billStatuses = [
-    { value: null, label: 'Tất cả', bgColor: 'rgba(0, 0, 0, 0.16)', textColor: '#000' },
-    { value: 0, label: 'Chờ phê duyệt', bgColor: 'rgba(255, 193, 7, 0.16)', textColor: '#ffc107' },
-    { value: 1, label: 'Chuẩn bị hàng', bgColor: 'rgba(255, 193, 7, 0.16)', textColor: '#ffc107' },
-    { value: 2, label: 'Vận chuyển', bgColor: 'rgba(255, 171, 0, 0.16)', textColor: '#ffab00' },
-    { value: 3, label: 'Chờ giao hàng', bgColor: 'rgba(54, 179, 126, 0.16)', textColor: '#36b37e' },
-    { value: 4, label: 'Xác nhận hoàn thành', bgColor: 'rgba(0, 184, 217, 0.16)', textColor: '#00b8d9' },
-    { value: 5, label: 'Đơn hoàn thành', bgColor: 'rgba(0, 184, 217, 0.16)', textColor: '#00b8d9' },
-    { value: 6, label: 'Đã hủy', bgColor: 'rgba(255, 0, 0, 0.16)', textColor: '#ff0000' },
-    { value: 7, label: 'Trả hàng/Hoàn tiền', bgColor: 'rgba(145, 158, 171, 0.16)', textColor: '#919eab' },
+    { value: null, label: 'Tất cả', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#000' },
+    { value: 0, label: 'Chờ phê duyệt', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#ffc107' },
+    { value: 1, label: 'Chuẩn bị hàng', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#ffc107' },
+    { value: 2, label: 'Vận chuyển', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#ffab00' },
+    { value: 3, label: 'Chờ giao hàng', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#36b37e' },
+    { value: 4, label: 'Xác nhận hoàn thành', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#00b8d9' },
+    { value: 5, label: 'Đơn hoàn thành', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#00b8d9' },
+    { value: 6, label: 'Đã hủy', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#ff0000' },
+    { value: 7, label: 'Trả hàng/Hoàn tiền', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#919eab' },
   ];
+
+  const handleSearchChange = (e) => {
+    const id = e.target.value;
+
+    const currentParams = queryString.parse(location.search);
+    const updatedParams = {
+      ...currentParams,
+      id: id,
+      page: 1,
+    };
+
+    const newSearch = queryString.stringify(updatedParams);
+    navigate(`?${newSearch}`);
+  };
 
   return (
     <>
@@ -175,56 +202,57 @@ function ListPageBill(props) {
             <Paper>
               <Box sx={{ padding: 2, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
                 <Grid container spacing={2}>
-                  {salesData.map((item, index) => (
-                    <Grid item xs={12} sm={6} md={3} key={index}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          height: '100%',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: 2,
-                          backgroundColor: '#fff',
-                          borderRadius: 2,
-                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="subtitle1" color="textSecondary">
-                            {item.title}
-                          </Typography>
-                          <Typography variant="h5" fontWeight="bold">
-                            {item.amount}
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            {item.orders}
-                          </Typography>
-                          {item.change && (
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: item.changeColor,
-                                fontWeight: 'bold',
-                                marginTop: 0.5,
-                              }}
-                            >
-                              {item.change}
-                            </Typography>
-                          )}
-                        </Box>
+                  {!isLoadingBillStatistics &&
+                    salesData.map((item, index) => (
+                      <Grid item xs={12} sm={6} md={3} key={index}>
                         <Box
                           sx={{
-                            width: 40,
-                            height: 40,
-                            backgroundColor: '#f5f5f5',
-                            borderRadius: '50%',
+                            display: 'flex',
+                            height: '100%',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: 2,
+                            backgroundColor: '#fff',
+                            borderRadius: 2,
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                           }}
                         >
-                          {item.icon}
+                          <Box>
+                            <Typography variant="subtitle1" color="textSecondary">
+                              {item.title}
+                            </Typography>
+                            <Typography variant="h5" fontWeight="bold">
+                              {item.amount}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              {item.orders}
+                            </Typography>
+                            {item.change && (
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: item.changeColor,
+                                  fontWeight: 'bold',
+                                  marginTop: 0.5,
+                                }}
+                              >
+                                {item.change}
+                              </Typography>
+                            )}
+                          </Box>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              backgroundColor: '#f5f5f5',
+                              borderRadius: '50%',
+                            }}
+                          >
+                            {item.icon}
+                          </Box>
                         </Box>
-                      </Box>
-                    </Grid>
-                  ))}
+                      </Grid>
+                    ))}
                 </Grid>
               </Box>
             </Paper>
@@ -277,7 +305,7 @@ function ListPageBill(props) {
                             width: '100%', // Đảm bảo Chip chiếm toàn bộ chiều rộng của cột
                             textAlign: 'center',
                             backgroundColor: selectedStatus === status.value ? status.bgColor : 'transparent',
-                            color: selectedStatus === status.value ? status.textColor : 'inherit',
+                            color: selectedStatus === status.value ? 'white' : 'inherit',
                             border: `1px solid ${status.textColor}`,
                             cursor: 'pointer',
                             fontWeight: 'bold',
@@ -298,8 +326,15 @@ function ListPageBill(props) {
 
                 {/* Search and Actions */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-                  <TextField size="small" placeholder="Search Product" sx={{ width: 300 }} />
-
+                  <Box>
+                    <TextField
+                      value={queryParams.id ? queryParams.id : ''}
+                      onChange={handleSearchChange}
+                      size="small"
+                      placeholder="Tìm kiếm ID hóa đơn"
+                      sx={{ width: 300 }}
+                    />
+                  </Box>
                   <Box display="flex" alignItems="center" gap={1}>
                     <FormControl size="small">
                       <Select value={rowsPerPage} onChange={(e) => handleRowsPerPage(e)}>

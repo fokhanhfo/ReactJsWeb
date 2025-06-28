@@ -39,7 +39,7 @@ export const login = createAsyncThunk(
         }
       }catch(e){
         console.error(e);
-        if(e.response.status === 400){
+        if(e.response.status === 400 || e.response.status === 403){
           return rejectWithValue(e.response.data);
         }
         return e.response.data;
@@ -79,7 +79,7 @@ const userSlice = createSlice({
   name: 'user',
   initialState: {
     current: JSON.parse(localStorage.getItem(StorageKeys.USER)) || {},
-    settings:{isLoginWindow : false},
+    settings:{isLoginWindow : false, mode: 'login'},
     error: null,
 
   },
@@ -89,9 +89,15 @@ const userSlice = createSlice({
         localStorage.removeItem(StorageKeys.TOKEN);
         localStorage.removeItem(StorageKeys.USER);
     },
-    loginWindow(state){
+    loginWindow(state, action) {
+      // Nếu có payload thì mở modal với mode đó, ngược lại toggle isLoginWindow
+      if (action.payload) {
+        state.settings.isLoginWindow = true;
+        state.settings.mode = action.payload; // 'login' hoặc 'register'
+      } else {
         state.settings.isLoginWindow = !state.settings.isLoginWindow;
-    }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder

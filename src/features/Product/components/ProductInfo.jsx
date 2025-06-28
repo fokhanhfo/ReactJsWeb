@@ -24,7 +24,7 @@ import {
 import { AddShoppingCart, Remove, Add } from '@mui/icons-material';
 import { useAddToCartMutation } from 'features/Cart/cartApi';
 import { useSnackbar } from 'notistack';
-import { formatPrice } from 'utils';
+import { calculateDiscount, formatPrice } from 'utils';
 import styled from '@emotion/styled';
 import * as yup from 'yup';
 import { useGetSizeQuery } from 'hookApi/sizeApi';
@@ -52,7 +52,7 @@ function ProductInfo({ product = {} }) {
   const [sizesShow, setSizesShow] = useState([sizes]);
   const [isSize, setIsSize] = useState([]);
   const [productChoise, setProductChoise] = useState();
-  const [valueStar, setValueStar] = React.useState(2);
+  const [valueStar, setValueStar] = React.useState(5);
 
   useEffect(() => {
     if (selectedColor) {
@@ -82,7 +82,6 @@ function ProductInfo({ product = {} }) {
       color: data.color,
       size: productDetail.productDetailSizes.find((item) => item.size.name === data.size).size,
     };
-    console.log(newItem);
     try {
       const response = await addToCart(newItem).unwrap();
       enqueueSnackbar(response?.message || 'Thêm vào giỏ hàng thành công!', { variant: 'success' });
@@ -90,6 +89,10 @@ function ProductInfo({ product = {} }) {
       enqueueSnackbar(error?.data?.message || 'Không thể thêm vào giỏ hàng', { variant: 'error' });
     }
   };
+
+  const sellingPrice = product.sellingPrice;
+
+  const { percentageValue, finalPrice } = calculateDiscount(product, product.productDiscountPeriods);
 
   const handleChangeListSize = (color) => {
     const productDetail = product.productDetails.find((item) => item.color.id === color.id);
@@ -135,9 +138,33 @@ function ProductInfo({ product = {} }) {
           mb: 2,
         }}
       />
-      <Typography variant="h5" fontWeight={500} mb={2}>
-        {formatPrice(productDetails[0]?.sellingPrice || price)}
-      </Typography>
+      {percentageValue ? (
+        <Box mb={2} display="flex" alignItems="center" gap={2}>
+          <Typography
+            variant="h5"
+            fontWeight={500}
+            sx={{
+              color: 'red',
+            }}
+          >
+            {formatPrice(finalPrice)}
+          </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 400,
+              textDecoration: 'line-through',
+              color: 'gray',
+            }}
+          >
+            {formatPrice(sellingPrice)}
+          </Typography>
+        </Box>
+      ) : (
+        <Typography variant="h5" fontWeight={500} mb={2}>
+          {formatPrice(sellingPrice)}
+        </Typography>
+      )}
       {/* <Typography variant="body1" color="textSecondary" mt={1} mb={2}>
         Hãng: {category?.name || 'Không rõ'}
       </Typography> */}
@@ -230,14 +257,29 @@ function ProductInfo({ product = {} }) {
             <Box width={40} textAlign="center">
               {amount}
             </Box>
-            <Button size="small" onClick={() => setValue('amount', amount + 1)}>
+            <Button
+              size="small"
+              onClick={() => {
+                if (!productChoise) {
+                  enqueueSnackbar('Vui lòng chọn màu và kích thước trước khi thêm số lượng.', { variant: 'warning' });
+                  return;
+                }
+
+                const maxAmount = productChoise.quantityProduct ?? 0;
+                if (amount >= maxAmount) {
+                  enqueueSnackbar(`Số lượng tối đa là ${maxAmount}`, { variant: 'warning' });
+                } else {
+                  setValue('amount', amount + 1);
+                }
+              }}
+            >
               <Add fontSize="small" />
             </Button>
           </QuantityBox>
         </Grid>
         <Grid item>
           <Typography variant="body2" color="textSecondary">
-            {quantity} sản phẩm có sẵn
+            {productChoise ? productChoise.quantityProduct : 0} sản phẩm có sẵn
           </Typography>
         </Grid>
       </Grid>

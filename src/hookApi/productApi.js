@@ -49,7 +49,21 @@ export const productApi = createApi({
             },
             invalidatesTags: [{ type: 'Product', id: 'LIST' }],
         }),
-    }),
+        getAllProductStatistics: builder.query({
+            query: () => ({
+                url: 'product/getAllProductStatistics',
+                method: 'GET',
+            }),
+            providesTags: (result) =>
+                result ? [{ type: 'Product', id: 'LIST' }] : [{ type: 'Product', id: 'LIST' }],
+            }),
+
+        }),
 });
 
-export const {useGetProductsQuery,useAddProductMutation,useUpdateProductMutation} = productApi;
+export const {
+    useGetProductsQuery,
+    useAddProductMutation,
+    useUpdateProductMutation,
+    useGetAllProductStatisticsQuery,
+} = productApi;

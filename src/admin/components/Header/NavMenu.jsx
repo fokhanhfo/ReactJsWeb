@@ -40,14 +40,15 @@ function NavMenu({ isMenu }) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', link: '../home', icon: <DashboardIcon /> },
     { id: 'sell', label: 'Tại quầy', link: '../sell', icon: <SellIcon /> },
-    { id: 'product', label: 'Sản phẩm', link: '../products', icon: <ProductIcon /> },
     { id: 'category', label: 'Danh mục', link: '../category', icon: <CategoryIcon /> },
+    { id: 'product', label: 'Sản phẩm', link: '../products', icon: <ProductIcon /> },
+    { id: 'color', label: 'Kích thước và Màu', link: '../productAttributes', icon: <ColorIcon /> },
     { id: 'bill', label: 'Hóa đơn', link: '../bill', icon: <BillIcon /> },
     { id: 'permission', label: 'Permission', link: '../permission', icon: <PermissionIcon /> },
-    { id: 'color', label: 'Màu', link: '../color', icon: <ColorIcon /> },
+    // { id: 'color', label: 'Màu', link: '../color', icon: <ColorIcon /> },
     { id: 'discount', label: 'Giảm giá khách hàng', link: '../discount', icon: <DiscountIcon /> },
     { id: 'discountPeriod', label: 'Giảm giá theo đợt', link: '../discountPeriod', icon: <EventIcon /> },
-    { id: 'size', label: 'Kích cỡ', link: '../size', icon: <SizeIcon /> },
+    // { id: 'size', label: 'Kích cỡ', link: '../size', icon: <SizeIcon /> },
     {
       id: 'permission_and_user',
       label: 'Quản lý người dùng',
@@ -116,38 +117,59 @@ function NavMenu({ isMenu }) {
     >
       <Box
         sx={{
-          height: 50,
+          height: '64px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: isMenu ? 'flex-start' : 'center',
-          padding: isMenu ? '0 16px' : '0',
-          borderBottom: '1px solid #f0f0f0',
-          backgroundColor: '#1976d2',
-          color: 'white',
+          px: isMenu ? 2 : 0,
+          borderBottom: '1px solid #ddd',
+          backgroundColor: '#f5f7fa', // Màu nền mới: xanh xám nhạt
+          color: '#333', // Màu chữ: đen xám dễ đọc
         }}
       >
         <Link
+          to="./home"
           style={{
-            textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
-            color: 'white',
+            textDecoration: 'none',
+            color: '#333', // đồng bộ với màu chữ
           }}
-          to="./home"
         >
-          <InboxIcon sx={{ fontSize: 28 }} />
+          <img
+            src="/images/logoAdmin.png"
+            alt="Admin Panel"
+            style={{
+              height: 40,
+              objectFit: 'contain',
+              marginRight: isMenu ? 12 : 0,
+            }}
+          />
           {isMenu && (
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{
-                ml: 2,
-                fontWeight: 'bold',
-                letterSpacing: '0.5px',
-              }}
-            >
-              ADMIN PANEL
-            </Typography>
+            <Box>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 'bold',
+                  letterSpacing: 1,
+                  lineHeight: 1.2,
+                  color: '#222', // đậm hơn một chút
+                }}
+              >
+                HOÀNG HẢI
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: 12,
+                  letterSpacing: 1,
+                  opacity: 0.7,
+                  color: '#666',
+                }}
+              >
+                FASHION
+              </Typography>
+            </Box>
           )}
         </Link>
       </Box>

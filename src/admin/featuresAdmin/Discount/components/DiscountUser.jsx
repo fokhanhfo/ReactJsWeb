@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 import { useDispatch } from 'react-redux';
@@ -18,6 +18,12 @@ import {
   Grid,
   Stack,
   alpha,
+  FormControl,
+  Select,
+  MenuItem,
+  Typography,
+  Pagination,
+  PaginationItem,
 } from '@mui/material';
 import ReusableTable from 'admin/components/Table/ReusableTable';
 import { Edit, Delete, CheckCircle, Cancel, Search, Add, PersonAdd } from '@mui/icons-material';
@@ -31,6 +37,7 @@ import { useGetUsersQuery } from 'hookApi/userApi';
 import { useAddAllDiscountUserMutation, useDeleteDiscountUserMutation } from 'hookApi/discountUserApi';
 import { handleGlobalError, handleGlobalSuccess } from 'utils';
 import { useSnackbar } from 'notistack';
+import { ArrowLeft, ArrowRight } from '@mui/icons-material';
 
 DiscountUser.propTypes = {
   discountsUser: PropTypes.array.isRequired,
@@ -44,6 +51,7 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
   const [selectedDiscountUser, setSelectedDiscountUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [page, setPage] = useState(1);
   const theme = useTheme();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -63,9 +71,21 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
     resolver: yupResolver(schema),
   });
 
-  const { data, error, isLoading, refetch } = useGetUsersQuery({ idDiscount: idDiscount, page: 1 });
-  const [addAllDiscountUser] = useAddAllDiscountUserMutation();
+  const handleRowsPerPage = (event) => {
+    const value = event.target.value;
+    setRowsPerPage(value);
+    setPage(1);
+  };
+  const [rowsPerPage, setRowsPerPage] = useState(30);
 
+  const { data, error, isLoading, refetch } = useGetUsersQuery({
+    idDiscount: idDiscount,
+    page: page,
+    limit: rowsPerPage,
+  });
+  const [addAllDiscountUser] = useAddAllDiscountUserMutation();
+  const count = data?.data?.count;
+  const pagination = data?.data || {};
   const handleActions = (state, row) => {
     if (state === 'edit' || state === 'view') {
       setSelectedDiscountUser(row);
@@ -91,7 +111,7 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
         users: selectedIds.map((id) => ({ id })),
       };
 
-      const response = await addAllDiscountUser(newData);
+      const response = await addAllDiscountUser(newData).unwrap();
       refetch();
       if (onSubmit) {
         onSubmit();
@@ -102,7 +122,7 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
         setSelectedUsers([]); // Reset selection after adding
       }, 1000);
     } catch (error) {
-      enqueueSnackbar('Update trạng thái không thành công', { variant: 'error' });
+      enqueueSnackbar(error?.data?.message, { variant: 'error' });
       setIsSubmitting(false);
     }
   };
@@ -118,6 +138,10 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
     } catch (error) {
       enqueueSnackbar('Xóa không thành công', { variant: 'success' });
     }
+  };
+
+  const handleNextPage = (event, page) => {
+    setPage(page);
   };
 
   const listHead = [
@@ -280,11 +304,17 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
               />
             </Grid>
             <Grid item xs={12} md={6}>
-              <Stack direction="row" spacing={2} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-                <form style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <InputField name="name" label="Tên người dùng" form={form} size="small" />
-                </form>
-              </Stack>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography>Tổng người dùng chưa áp dụng: {count}</Typography>
+                <FormControl size="small">
+                  <Select value={rowsPerPage} onChange={handleRowsPerPage}>
+                    <MenuItem value={30}>30 thẻ</MenuItem>
+                    <MenuItem value={50}>50 thẻ</MenuItem>
+                    <MenuItem value={100}>100 thẻ</MenuItem>
+                    <MenuItem value={count}>Tất cả</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
             </Grid>
           </Grid>
 
@@ -293,34 +323,55 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
               <Loading />
             </Box>
           ) : (
-            <DataGrid
-              rows={data?.data?.users || []}
-              columns={columns}
-              pageSizeOptions={[5, 10, 25]}
-              initialState={{
-                pagination: {
-                  paginationModel: { pageSize: 10 },
-                },
-              }}
-              checkboxSelection
-              onRowSelectionModelChange={handleSelectionChange}
-              rowSelectionModel={selectedUsers}
-              sx={{
-                border: 0,
-                overflowX: 'auto',
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                  borderRadius: 1,
-                },
-                '& .MuiDataGrid-cell:focus-within': {
-                  outline: 'none',
-                },
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                },
-                height: 400,
-              }}
-            />
+            <>
+              <DataGrid
+                rows={data?.data?.users || []}
+                columns={columns}
+                pageSizeOptions={[5, 10, 25]}
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 10 },
+                  },
+                }}
+                checkboxSelection
+                onRowSelectionModelChange={handleSelectionChange}
+                rowSelectionModel={selectedUsers}
+                sx={{
+                  border: 0,
+                  overflowX: 'auto',
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                    borderRadius: 1,
+                  },
+                  '& .MuiDataGrid-cell:focus-within': {
+                    outline: 'none',
+                  },
+                  '& .MuiDataGrid-row:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                  },
+                  height: 400,
+                }}
+              />
+              {rowsPerPage !== count && (
+                <Box sx={{ float: 'right', paddingBottom: 2 }}>
+                  <Pagination
+                    count={Math.ceil(count / rowsPerPage)}
+                    page={page}
+                    onChange={handleNextPage}
+                    shape="rounded"
+                    size="large"
+                    color="primary"
+                    siblingCount={1}
+                    boundaryCount={1}
+                    showFirstButton
+                    showLastButton
+                    renderItem={(item) => (
+                      <PaginationItem slots={{ previous: ArrowLeft, next: ArrowRight }} {...item} />
+                    )}
+                  />
+                </Box>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

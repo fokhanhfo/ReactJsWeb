@@ -2,14 +2,14 @@ import PropTypes from 'prop-types';
 import { Button, Card, CardActionArea, CardContent, CardMedia, Typography, Box } from '@mui/material';
 import { THUMBNAIL_PLACEHOLDER } from 'constants';
 import { useNavigate } from 'react-router-dom';
-import { formatPrice, imageMainProduct } from 'utils';
+import { calculateDiscount, formatPrice, imageMainProduct } from 'utils';
+import { discountStatus } from 'enum/discountStatus';
 
 Product.propTypes = {
   product: PropTypes.object.isRequired,
 };
 
 function Product({ product }) {
-  console.log(product);
   const navigate = useNavigate();
 
   const image = product.productDetails
@@ -18,14 +18,9 @@ function Product({ product }) {
 
   const thumbnailUrl = image?.imageUrl || imageMainProduct(product.productDetails)?.imageUrl || THUMBNAIL_PLACEHOLDER;
 
-  const sellingPrice = product.productDetails.flatMap((productDetail) => productDetail.sellingPrice);
+  const sellingPrice = product.sellingPrice;
 
-  const basePrice = sellingPrice[0];
-
-  // Discount info
-  const discount = product.productDiscountPeriods?.[0];
-  const percentageValue = discount?.percentageValue;
-  const finalPrice = percentageValue ? basePrice * (1 - percentageValue / 100) : basePrice;
+  const { percentageValue, finalPrice } = calculateDiscount(product, product.productDiscountPeriods);
 
   const handleClick = () => {
     navigate(`/products/${product.id}`);
@@ -147,7 +142,7 @@ function Product({ product }) {
                   color: 'gray',
                 }}
               >
-                {formatPrice(basePrice)}
+                {formatPrice(sellingPrice)}
               </Typography>
               <Typography
                 variant="body2"
@@ -166,7 +161,7 @@ function Product({ product }) {
                 fontWeight: 400,
               }}
             >
-              {formatPrice(basePrice)}
+              {formatPrice(sellingPrice)}
             </Typography>
           )}
         </CardContent>
