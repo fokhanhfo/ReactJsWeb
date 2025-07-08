@@ -31,6 +31,9 @@ import { useGetCartQuery } from 'hookApi/cartApi';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from 'components/ConfirmDialog/ConfirmDialog';
 import { useFormContext } from 'react-hook-form';
+import userApi from 'api/userApi';
+import { useGetMyInfoQuery } from 'hookApi/userApi';
+import OtpInputDialog from 'features/Auth/Components/Register/OtpInput';
 
 ListProdcut.propTypes = {
   cartQuery: PropTypes.object.isRequired,
@@ -54,9 +57,12 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
   const { refetch } = useGetCartQuery();
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoadingConfirm, setIsLoadingConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { handleSubmit, trigger } = useFormContext();
-
+  const { payMethod, setPayMethod } = useContext(CheckoutContext);
+  const [showOtpForm, setShowOtpForm] = useState(false);
+  const { data: dataUser, error, isLoading: isLoadingUser } = useGetMyInfoQuery();
   const handleIncrement = async (cartItem) => {
     const newQuantity = { ...cartItem, quantity: cartItem.quantity + 1, product: cartItem.productDetail.product.id };
     try {
@@ -80,23 +86,20 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
   const { discountFreeShip, voucherProduct, moneyToPay, valueVoucherProduct, valueDiscountFreeShip } =
     useContext(CheckoutContext);
 
-  const handleSubmitAddCart = async (value) => {
+  const { shipDetail } = useContext(CheckoutContext);
+
+  const handleSubmitAddCart = async (otp) => {
     const listIdVoucher = [voucherProduct?.id, discountFreeShip?.id].filter((id) => id !== undefined);
     console.log(listIdVoucher);
     console.log(voucherProduct);
     console.log(discountFreeShip);
 
-    setIsLoading(true); // Bắt đầu loading
+    setIsLoading(true);
     try {
-      const city = form.getValues('city').name;
-      const district = form.getValues('district').name;
-      const commune = form.getValues('commune').name;
-
       const newdata = {
-        fullName: form.getValues('fullname'),
-        email: form.getValues('email'),
-        address: `${form.getValues('addressDetail')} - ${commune} - ${district} - ${city}`,
-        phone: form.getValues('phone'),
+        fullName: shipDetail.recipientName,
+        address: shipDetail.addressDetail,
+        phone: shipDetail.phone,
         cartRequests: cartData
           .filter((item) => item.status === 1)
           .map((item) => {
@@ -115,23 +118,48 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
         paymentMethod: form.getValues('paymentMethod'),
         discountShip: valueDiscountFreeShip,
         discountUser: valueVoucherProduct,
+        otp: otp,
       };
 
       const res = await billApi.add(newdata);
       enqueueSnackbar(`Mua hàng thành công`, { variant: 'success' });
+      setShowOtpForm(false);
       if (res) {
         refetch();
-        navigate('/home');
+        navigate('/user/bill/all');
+        window.scrollTo({
+          top: 150,
+          behavior: 'smooth',
+        });
       }
     } catch (error) {
-      enqueueSnackbar(`Mua hàng thất bại`, { variant: 'error' });
+      console.error('Error during order submission:', error);
+      enqueueSnackbar(error?.response?.data?.message || `Mua hàng thất bại`, { variant: 'error' });
       setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleValidateAndSubmit = async () => {
+  const handleConfirm = async () => {
+    setIsLoadingConfirm(true);
+    try {
+      const response = await userApi.resendOtp(dataUser?.data?.email, 'ORDER');
+      enqueueSnackbar(response.message, {
+        variant: 'success',
+        autoHideDuration: 6000,
+      });
+
+      setIsDialogOpen(false);
+      setShowOtpForm(true);
+    } catch (error) {
+      enqueueSnackbar('Gửi lại mã OTP thất bại', { variant: 'error' });
+    } finally {
+      setIsLoadingConfirm(false);
+    }
+  };
+
+  const handleValidateAndSubmit = async (otp) => {
     const isValid = await trigger();
 
     if (!isValid) {
@@ -140,7 +168,7 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
       return;
     }
 
-    handleSubmit(handleSubmitAddCart)();
+    await handleSubmit(handleSubmitAddCart(otp));
   };
 
   const handleCancel = () => {
@@ -149,6 +177,14 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
 
   const handleContinueShopping = () => {
     navigate('/home');
+  };
+
+  const handleOtpComplete = async (otp) => {
+    await handleValidateAndSubmit(otp);
+  };
+
+  const handleOtpResend = async () => {
+    await handleConfirm();
   };
 
   return (
@@ -317,9 +353,9 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
             isOpen={isDialogOpen}
             title="Xác nhận"
             message="Xác nhận mua hàng?"
-            onConfirm={handleValidateAndSubmit}
+            onConfirm={handleConfirm}
             onCancel={handleCancel}
-            isLoading={isLoading}
+            isLoading={isLoadingConfirm}
             dialogType="info"
           />
         </Paper>
@@ -335,6 +371,16 @@ function ListProdcut({ cartQuery, onSubmit, form }) {
           </Box>
         </Box>
       )}
+
+      <OtpInputDialog
+        email={dataUser?.data?.email}
+        open={showOtpForm}
+        onClose={() => setShowOtpForm(false)}
+        onSubmit={handleOtpComplete}
+        onResend={handleOtpResend}
+        isLoading={isLoading}
+        // isResendLoading={loadingStates.resendOtp}
+      />
     </>
   );
 }

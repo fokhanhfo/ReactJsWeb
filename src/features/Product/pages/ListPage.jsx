@@ -36,6 +36,7 @@ import ProductSkeletonList from '../components/ProductSkeletonList';
 import ProductFilter from '../components/ProductFilter';
 import FilterViewer from '../components/FilterViewer';
 import { useSelector } from 'react-redux';
+import Banner from 'components/Banner/Banner';
 
 function ListPage() {
   const theme = useTheme();
@@ -48,6 +49,7 @@ function ListPage() {
   const [pagination, setPagination] = useState({ limit: 10, count: 10, page: 1 });
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [category, setCategory] = useState('');
+  const [sort, setSort] = useState();
 
   const categoryQuery = useSelector((state) => state.categoryApi.queries['getCategory(undefined)']);
 
@@ -55,6 +57,7 @@ function ListPage() {
     const params = queryString.parse(location.search);
 
     return {
+      name: params.name || '',
       page: Number.parseInt(params.page) || 1,
       limit: Number.parseInt(params.limit) || rowsPerPage || 10,
       sort: params.sort || 'hasDiscount',
@@ -87,6 +90,7 @@ function ListPage() {
   }, [queryParams]);
 
   const handlePageChange = (event, page) => {
+    window.scrollTo({ top: 300, behavior: 'smooth' });
     navigate({
       pathname: location.pathname,
       search: queryString.stringify({ ...queryParams, page }),
@@ -125,6 +129,24 @@ function ListPage() {
     );
   };
 
+  const handleSort = (event) => {
+    const value = event.target.value;
+    setSort(value);
+    const newFilter = { ...queryParams };
+    if (value === '') {
+      delete newFilter.sort;
+    } else {
+      newFilter.sort = value;
+    }
+    navigate(
+      {
+        pathname: location.pathname,
+        search: queryString.stringify(newFilter),
+      },
+      { replace: true },
+    );
+  };
+
   const handleRowsPerPageChange = (e) => {
     const newLimit = e.target.value;
     setRowsPerPage(newLimit);
@@ -144,35 +166,7 @@ function ListPage() {
 
   return (
     <Box>
-      <Box
-        sx={{
-          position: 'relative',
-          height: '167px',
-          backgroundImage: 'url(/images/banner.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          borderRadius: '8px',
-          overflow: 'hidden',
-        }}
-      >
-        <Container maxWidth={false} sx={{ height: '100%', display: 'flex', alignItems: 'center', maxWidth: '1400px' }}>
-          <Card elevation={0} sx={{ width: '100%', background: 'transparent', boxShadow: 'none' }}>
-            <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 1 }}>
-              <Link underline="hover" color="inherit" href="/">
-                Home
-              </Link>
-              <Typography color="text.primary">Shop</Typography>
-            </Breadcrumbs>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
-              Sản Phẩm Của Chúng Tôi
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Khám phá bộ sưu tập sản phẩm chất lượng cao của chúng tôi
-            </Typography>
-          </Card>
-        </Container>
-      </Box>
+      <Banner />
       <Paper>
         <Container
           maxWidth={false}
@@ -181,50 +175,6 @@ function ListPage() {
             paddingY: 2,
           }}
         >
-          {/* Filter Section */}
-          {/* <Card
-            elevation={0}
-            sx={{
-              mb: 3,
-              borderRadius: 2,
-              border: `1px solid ${theme.palette.divider}`,
-              width: '100%',
-              padding: 2,
-            }}
-          >
-            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
-              <Box sx={{ flex: 1 }}>
-                <FilterViewer filters={queryParams} onChange={handleFilterViewChange} />
-              </Box>
-
-              <Box display="flex" gap={1}>
-                <Button
-                  variant="outlined"
-                  startIcon={<SortIcon />}
-                  size="small"
-                  sx={{
-                    borderRadius: 2,
-                    display: { xs: 'none', sm: 'flex' },
-                  }}
-                >
-                  Sort
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<FilterListIcon />}
-                  onClick={() => setOpenDrawer(true)}
-                  size="small"
-                  sx={{
-                    display: { md: 'none' },
-                    borderRadius: 2,
-                  }}
-                >
-                  Filters
-                </Button>
-              </Box>
-            </Box>
-          </Card> */}
-
           <Grid container spacing={3}>
             {/* Desktop Filter Sidebar */}
             {/* <Grid item xs={12} md={3} sx={{ display: { xs: 'none', md: 'block' } }}>
@@ -248,12 +198,12 @@ function ListPage() {
                 <Box
                   sx={{
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    mb: 1,
+                    flexDirection: 'column',
+                    gap: 2,
+                    mb: 2,
                   }}
                 >
+                  {/* TITLE */}
                   <Box>
                     <Typography
                       variant="h5"
@@ -262,88 +212,16 @@ function ListPage() {
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        mb: 1,
                       }}
                     >
                       Sản Phẩm Nổi Bật
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      Discover our handpicked selection of premium products
+                    <Typography variant="body2" color="text.secondary">
+                      Khám phá các sản phẩm cao cấp được tuyển chọn
                     </Typography>
                   </Box>
 
-                  {/* <Box width="70%" display="flex" flexWrap="wrap" justifyContent="flex-end" gap={2} sx={{ mt: 2 }}>
-                    <FormControl
-                      size="small"
-                      sx={{
-                        width: {
-                          xs: '100%',
-                          sm: '120px',
-                          md: '140px',
-                        },
-                      }}
-                    >
-                      <Select value={rowsPerPage} onChange={(e) => setRowsPerPage(e.target.value)} displayEmpty>
-                        <MenuItem value={10}>10 Items</MenuItem>
-                        <MenuItem value={20}>20 Items</MenuItem>
-                        <MenuItem value={50}>50 Items</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl
-                      size="small"
-                      sx={{
-                        minWidth: {
-                          xs: '100%',
-                          sm: '160px',
-                          md: '180px',
-                        },
-                      }}
-                    >
-                      <InputLabel>Category</InputLabel>
-                      <Select value={category} label="Category" onChange={(e) => handleCategory(e)}>
-                        <MenuItem value="">All</MenuItem>
-                        {categoryQuery?.data?.data.map((category) => (
-                          <MenuItem key={category.id} value={category.id}>
-                            {category.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <Button
-                      variant="outlined"
-                      startIcon={<SortIcon />}
-                      sx={{
-                        display: {
-                          xs: 'none',
-                          sm: 'flex',
-                        },
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        minWidth: '120px',
-                      }}
-                    >
-                      Sort
-                    </Button>
-
-                    <Button
-                      variant="contained"
-                      startIcon={<FilterListIcon />}
-                      onClick={() => setOpenDrawer(true)}
-                      sx={{
-                        display: {
-                          xs: 'flex',
-                          md: 'none',
-                        },
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        minWidth: '120px',
-                      }}
-                    >
-                      Filters
-                    </Button>
-                  </Box> */}
+                  {/* CONTROL BAR */}
                   <Box
                     sx={{
                       display: 'flex',
@@ -351,49 +229,53 @@ function ListPage() {
                       alignItems: { xs: 'stretch', sm: 'center' },
                       justifyContent: 'space-between',
                       gap: 2,
-                      p: 2,
+                      p: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      backgroundColor: 'background.paper',
                     }}
                   >
-                    {/* Left side - Items per page */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                    {/* LEFT - Rows per page */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        flex: { xs: '1 1 auto', sm: '0 0 auto' },
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
                         Hiển thị:
                       </Typography>
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <FormControl size="small" sx={{ minWidth: 100 }}>
                         <Select
                           value={rowsPerPage}
-                          onChange={(e) => setRowsPerPage(e.target.value)}
-                          displayEmpty
+                          onChange={(e) => handleRowsPerPageChange(e)}
                           sx={{ borderRadius: 2 }}
                         >
-                          <MenuItem value={20}>20 Thẻ</MenuItem>
-                          <MenuItem value={30}>30 Thẻ</MenuItem>
-                          <MenuItem value={50}>50 Thẻ</MenuItem>
+                          <MenuItem value={20}>20</MenuItem>
+                          <MenuItem value={30}>30</MenuItem>
+                          <MenuItem value={50}>50</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
 
-                    {/* Right side - Filters and Sort */}
+                    {/* RIGHT - Filters */}
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
-                        gap: 2,
-                        alignItems: { xs: 'stretch', sm: 'center' },
-                        flex: 1,
-                        justifyContent: 'flex-end',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        alignItems: 'center',
+                        justifyContent: { xs: 'flex-start', sm: 'flex-end' },
                       }}
                     >
-                      {/* Category Filter */}
-                      <FormControl
-                        size="small"
-                        sx={{
-                          minWidth: { xs: '100%', sm: 180 },
-                        }}
-                      >
-                        <InputLabel>Danh Mục</InputLabel>
-                        <Select value={category} label="Category" onChange={handleCategory} sx={{ borderRadius: 2 }}>
-                          <MenuItem value="">All Categories</MenuItem>
+                      {/* CATEGORY */}
+                      <FormControl size="small" sx={{ minWidth: 140 }}>
+                        <InputLabel>Danh mục</InputLabel>
+                        <Select value={category} label="Danh mục" onChange={handleCategory} sx={{ borderRadius: 2 }}>
+                          <MenuItem value="">Tất cả</MenuItem>
                           {categoryQuery?.data?.data.map((cat) => (
                             <MenuItem key={cat.id} value={cat.id}>
                               {cat.name}
@@ -402,56 +284,35 @@ function ListPage() {
                         </Select>
                       </FormControl>
 
-                      {/* Sort - Desktop */}
-                      {!isMobile && (
-                        <FormControl size="small" sx={{ minWidth: 140 }}>
-                          <InputLabel>Sort By</InputLabel>
-                          <Select
-                            value={''}
-                            label="Giá"
-                            // onChange={handleSortChange}
-                            sx={{ borderRadius: 2 }}
-                          >
-                            <MenuItem value="">Default</MenuItem>
-                            <MenuItem value="price-low">Price: Low to High</MenuItem>
-                            <MenuItem value="price-high">Price: High to Low</MenuItem>
-                            <MenuItem value="rating">Highest Rated</MenuItem>
-                            <MenuItem value="newest">Newest First</MenuItem>
-                          </Select>
-                        </FormControl>
-                      )}
-
-                      {/* Sort Button - Mobile */}
-                      {isMobile && (
-                        <Button
-                          variant="outlined"
-                          startIcon={<SortIcon />}
-                          sx={{
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: 600,
-                          }}
+                      {/* SORT */}
+                      <FormControl size="small" sx={{ minWidth: 140 }}>
+                        <InputLabel>Giá tiền</InputLabel>
+                        <Select
+                          value={queryParams.sort === 'hasDiscount' ? '' : queryParams.sort}
+                          label="Giá tiền"
+                          onChange={(e) => handleSort(e)}
+                          sx={{ borderRadius: 2 }}
                         >
-                          Sort
-                        </Button>
-                      )}
+                          <MenuItem value="">Mặc định</MenuItem>
+                          <MenuItem value="sellingPrice:ASC">Giá thấp đến cao</MenuItem>
+                          <MenuItem value="sellingPrice:DESC">Giá cao đến thấp</MenuItem>
+                        </Select>
+                      </FormControl>
 
-                      {/* Filters Button - Mobile */}
-                      {isMobile && (
-                        <Button
-                          variant="contained"
-                          startIcon={<FilterListIcon />}
-                          onClick={() => setOpenDrawer(true)}
-                          sx={{
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                          }}
-                        >
-                          Filters
-                        </Button>
-                      )}
+                      {/* FILTER BUTTON - only mobile */}
+                      {/* <Button
+                        variant="contained"
+                        startIcon={<FilterListIcon />}
+                        onClick={() => setOpenDrawer(true)}
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          display: { xs: 'flex', sm: 'none' },
+                          background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                        }}
+                      >
+                        Bộ lọc
+                      </Button> */}
                     </Box>
                   </Box>
                 </Box>
@@ -491,7 +352,7 @@ function ListPage() {
           </Grid>
 
           {/* Mobile Filter Drawer */}
-          <Drawer
+          {/* <Drawer
             anchor="right"
             open={openDrawer}
             onClose={() => setOpenDrawer(false)}
@@ -519,7 +380,7 @@ function ListPage() {
                 Apply Filters
               </Button>
             </Box>
-          </Drawer>
+          </Drawer> */}
         </Container>
       </Paper>
     </Box>

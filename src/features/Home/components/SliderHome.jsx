@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
@@ -21,27 +21,53 @@ SliderHome.propTypes = {
   images: PropTypes.array.isRequired,
 };
 
-function SliderHome({ images }) {
+function SliderHome({ images, autoPlayInterval = 3000, pauseOnHover = true }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [index, setIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const handlePrev = () => {
-    setIndex((index) => {
-      if (index === 0) return images.length - 1;
-      return index - 1;
+  const handlePrev = useCallback(() => {
+    setIndex((prevIndex) => {
+      if (prevIndex === 0) return images.length - 1;
+      return prevIndex - 1;
     });
-  };
+  }, [images.length]);
 
-  const handleNext = () => {
-    setIndex((index) => {
-      if (index === images.length - 1) return 0;
-      return index + 1;
+  const handleNext = useCallback(() => {
+    setIndex((prevIndex) => {
+      if (prevIndex === images.length - 1) return 0;
+      return prevIndex + 1;
     });
-  };
+  }, [images.length]);
 
   const handleDotClick = (dotIndex) => {
     setIndex(dotIndex);
+  };
+
+  // Auto-play functionality
+  useEffect(() => {
+    if (!autoPlayInterval || (pauseOnHover && isHovered)) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      handleNext();
+    }, autoPlayInterval);
+
+    return () => clearInterval(interval);
+  }, [autoPlayInterval, pauseOnHover, isHovered, handleNext]);
+
+  const handleMouseEnter = () => {
+    if (pauseOnHover) {
+      setIsHovered(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (pauseOnHover) {
+      setIsHovered(false);
+    }
   };
 
   return (
@@ -92,6 +118,8 @@ function SliderHome({ images }) {
                 boxShadow: 3,
                 flex: 1,
               }}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             >
               <Box
                 sx={{
@@ -194,6 +222,33 @@ function SliderHome({ images }) {
                   />
                 ))}
               </Box>
+
+              {/* Auto-play indicator */}
+              {!isHovered && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(76, 175, 80, 0.8)',
+                    animation: 'pulse 2s infinite',
+                    '@keyframes pulse': {
+                      '0%': {
+                        opacity: 1,
+                      },
+                      '50%': {
+                        opacity: 0.5,
+                      },
+                      '100%': {
+                        opacity: 1,
+                      },
+                    },
+                  }}
+                />
+              )}
             </Box>
           </Paper>
         </Grid>

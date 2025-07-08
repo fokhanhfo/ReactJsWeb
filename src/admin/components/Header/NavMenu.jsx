@@ -13,7 +13,7 @@ import {
   Tooltip,
   alpha,
 } from '@mui/material';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, Navigate, NavLink, useLocation } from 'react-router-dom';
 import {
   MoveToInbox as InboxIcon,
   ShoppingCart as SellIcon,
@@ -31,20 +31,26 @@ import {
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import EventIcon from '@mui/icons-material/Event';
 import './styled.scss';
+import { useSelector } from 'react-redux';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
 
 NavMenu.propTypes = {
   isMenu: PropTypes.bool.isRequired,
 };
 
 function NavMenu({ isMenu }) {
+  const currentUser = useSelector((state) => state.user.current);
+  const listRoles = currentUser.scope.split(' ');
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', link: '../home', icon: <DashboardIcon /> },
     { id: 'sell', label: 'Tại quầy', link: '../sell', icon: <SellIcon /> },
     { id: 'category', label: 'Danh mục', link: '../category', icon: <CategoryIcon /> },
     { id: 'product', label: 'Sản phẩm', link: '../products', icon: <ProductIcon /> },
     { id: 'color', label: 'Kích thước và Màu', link: '../productAttributes', icon: <ColorIcon /> },
+    { id: 'blog', label: 'Tin tức', link: '../blog', icon: <NewspaperIcon /> },
     { id: 'bill', label: 'Hóa đơn', link: '../bill', icon: <BillIcon /> },
-    { id: 'permission', label: 'Permission', link: '../permission', icon: <PermissionIcon /> },
+    // { id: 'permission', label: 'Permission', link: '../permission', icon: <PermissionIcon /> },
     // { id: 'color', label: 'Màu', link: '../color', icon: <ColorIcon /> },
     { id: 'discount', label: 'Giảm giá khách hàng', link: '../discount', icon: <DiscountIcon /> },
     { id: 'discountPeriod', label: 'Giảm giá theo đợt', link: '../discountPeriod', icon: <EventIcon /> },
@@ -55,12 +61,13 @@ function NavMenu({ isMenu }) {
       icon: <PermissionIcon />,
       subItems: [
         { id: 'user', label: 'Người dùng', link: '../user', icon: <UserIcon /> },
-        {
-          id: 'role_and_permission',
-          label: 'Vai trò & Quyền',
-          link: '../role-and-permission',
-          icon: <RolePermissionIcon />,
-        },
+        // {
+        //   id: 'role_and_permission',
+        //   label: 'Vai trò & Quyền',
+        //   link: '../role-and-permission',
+        //   icon: <RolePermissionIcon />,
+        // },
+        { id: 'profile', label: 'Thông tin cá nhân', link: '../profile', icon: <UserIcon /> },
       ],
     },
   ];
@@ -101,6 +108,10 @@ function NavMenu({ isMenu }) {
       [menuId]: !prev[menuId],
     }));
   }, []);
+
+  if (!currentUser || Object.keys(currentUser).length === 0) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <Box
@@ -205,134 +216,142 @@ function NavMenu({ isMenu }) {
             },
           }}
         >
-          {menuItems.map((menu) => (
-            <React.Fragment key={menu.id}>
-              {menu.subItems ? (
-                <>
-                  <Tooltip title={!isMenu ? menu.label : ''} placement="right" arrow>
-                    <ListItemButton
-                      onClick={() => handleClick(menu.id)}
-                      sx={{
-                        py: 1,
-                        px: isMenu ? 2 : 1.5,
-                        backgroundColor: openMenus[menu.id] ? alpha('#1976d2', 0.08) : 'transparent',
-                        '&:hover': {
-                          backgroundColor: alpha('#1976d2', 0.12),
-                        },
-                      }}
-                    >
-                      <ListItemIcon
+          {menuItems.map((menu) => {
+            if (
+              (menu.id === 'permission_and_user' || menu.id === 'discount' || menu.id === 'discountPeriod') &&
+              !listRoles.includes('ROLE_ADMIN')
+            ) {
+              return null;
+            }
+            return (
+              <React.Fragment key={menu.id}>
+                {menu.subItems ? (
+                  <>
+                    <Tooltip title={!isMenu ? menu.label : ''} placement="right" arrow>
+                      <ListItemButton
+                        onClick={() => handleClick(menu.id)}
                         sx={{
-                          minWidth: isMenu ? 36 : 24,
-                          color: openMenus[menu.id] ? '#1976d2' : '#666',
+                          py: 1,
+                          px: isMenu ? 2 : 1.5,
+                          backgroundColor: openMenus[menu.id] ? alpha('#1976d2', 0.08) : 'transparent',
+                          '&:hover': {
+                            backgroundColor: alpha('#1976d2', 0.12),
+                          },
                         }}
                       >
-                        {menu.icon}
-                      </ListItemIcon>
-                      {isMenu && (
-                        <>
-                          <ListItemText
-                            primary={menu.label}
-                            primaryTypographyProps={{
-                              fontSize: 14,
-                              fontWeight: openMenus[menu.id] ? 600 : 400,
-                              color: openMenus[menu.id] ? '#1976d2' : '#333',
-                            }}
-                          />
-                          {openMenus[menu.id] ? <ExpandLess color="primary" /> : <ExpandMore />}
-                        </>
-                      )}
-                    </ListItemButton>
-                  </Tooltip>
-
-                  <Collapse in={openMenus[menu.id] && isMenu} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding>
-                      {menu.subItems.map((subItem) => (
-                        <NavLink
-                          to={subItem.link}
-                          key={subItem.id}
-                          className={({ isActive }) => (isActive ? 'active-link-nav' : '')}
-                          style={{ textDecoration: 'none' }}
+                        <ListItemIcon
+                          sx={{
+                            minWidth: isMenu ? 36 : 24,
+                            color: openMenus[menu.id] ? '#1976d2' : '#666',
+                          }}
                         >
-                          {({ isActive }) => (
-                            <ListItemButton
-                              sx={{
-                                pl: 4,
-                                py: 1,
-                                backgroundColor: isActive ? alpha('#1976d2', 0.08) : 'transparent',
-                                '&:hover': {
-                                  backgroundColor: alpha('#1976d2', 0.12),
-                                },
+                          {menu.icon}
+                        </ListItemIcon>
+                        {isMenu && (
+                          <>
+                            <ListItemText
+                              primary={menu.label}
+                              primaryTypographyProps={{
+                                fontSize: 14,
+                                fontWeight: openMenus[menu.id] ? 600 : 400,
+                                color: openMenus[menu.id] ? '#1976d2' : '#333',
                               }}
-                            >
-                              <ListItemIcon
+                            />
+                            {openMenus[menu.id] ? <ExpandLess color="primary" /> : <ExpandMore />}
+                          </>
+                        )}
+                      </ListItemButton>
+                    </Tooltip>
+
+                    <Collapse in={openMenus[menu.id] && isMenu} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        {menu.subItems.map((subItem) => (
+                          <NavLink
+                            to={subItem.link}
+                            key={subItem.id}
+                            className={({ isActive }) => (isActive ? 'active-link-nav' : '')}
+                            style={{ textDecoration: 'none' }}
+                          >
+                            {({ isActive }) => (
+                              <ListItemButton
                                 sx={{
-                                  minWidth: 36,
-                                  color: isActive ? '#1976d2' : '#666',
+                                  pl: 4,
+                                  py: 1,
+                                  backgroundColor: isActive ? alpha('#1976d2', 0.08) : 'transparent',
+                                  '&:hover': {
+                                    backgroundColor: alpha('#1976d2', 0.12),
+                                  },
                                 }}
                               >
-                                {subItem.icon}
-                              </ListItemIcon>
+                                <ListItemIcon
+                                  sx={{
+                                    minWidth: 36,
+                                    color: isActive ? '#1976d2' : '#666',
+                                  }}
+                                >
+                                  {subItem.icon}
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={subItem.label}
+                                  primaryTypographyProps={{
+                                    fontSize: 14,
+                                    fontWeight: isActive ? 600 : 400,
+                                    color: isActive ? '#1976d2' : '#333',
+                                  }}
+                                />
+                              </ListItemButton>
+                            )}
+                          </NavLink>
+                        ))}
+                      </List>
+                    </Collapse>
+                  </>
+                ) : (
+                  <Tooltip title={!isMenu ? menu.label : ''} placement="right" arrow>
+                    <Box sx={{ display: 'block' }}>
+                      <NavLink
+                        to={menu.link}
+                        className={({ isActive }) => (isActive ? 'active-link-nav' : '')}
+                        style={{ textDecoration: 'none' }}
+                      >
+                        {({ isActive }) => (
+                          <ListItemButton
+                            sx={{
+                              py: 1,
+                              px: isMenu ? 2 : 1.5,
+                              backgroundColor: isActive ? alpha('#1976d2', 0.08) : 'transparent',
+                              '&:hover': {
+                                backgroundColor: alpha('#1976d2', 0.12),
+                              },
+                            }}
+                          >
+                            <ListItemIcon
+                              sx={{
+                                minWidth: isMenu ? 36 : 24,
+                                color: isActive ? '#1976d2' : '#666',
+                              }}
+                            >
+                              {menu.icon}
+                            </ListItemIcon>
+                            {isMenu && (
                               <ListItemText
-                                primary={subItem.label}
+                                primary={menu.label}
                                 primaryTypographyProps={{
                                   fontSize: 14,
                                   fontWeight: isActive ? 600 : 400,
                                   color: isActive ? '#1976d2' : '#333',
                                 }}
                               />
-                            </ListItemButton>
-                          )}
-                        </NavLink>
-                      ))}
-                    </List>
-                  </Collapse>
-                </>
-              ) : (
-                <Tooltip title={!isMenu ? menu.label : ''} placement="right" arrow>
-                  <Box sx={{ display: 'block' }}>
-                    <NavLink
-                      to={menu.link}
-                      className={({ isActive }) => (isActive ? 'active-link-nav' : '')}
-                      style={{ textDecoration: 'none' }}
-                    >
-                      {({ isActive }) => (
-                        <ListItemButton
-                          sx={{
-                            py: 1,
-                            px: isMenu ? 2 : 1.5,
-                            backgroundColor: isActive ? alpha('#1976d2', 0.08) : 'transparent',
-                            '&:hover': {
-                              backgroundColor: alpha('#1976d2', 0.12),
-                            },
-                          }}
-                        >
-                          <ListItemIcon
-                            sx={{
-                              minWidth: isMenu ? 36 : 24,
-                              color: isActive ? '#1976d2' : '#666',
-                            }}
-                          >
-                            {menu.icon}
-                          </ListItemIcon>
-                          {isMenu && (
-                            <ListItemText
-                              primary={menu.label}
-                              primaryTypographyProps={{
-                                fontSize: 14,
-                                fontWeight: isActive ? 600 : 400,
-                                color: isActive ? '#1976d2' : '#333',
-                              }}
-                            />
-                          )}
-                        </ListItemButton>
-                      )}
-                    </NavLink>
-                  </Box>
-                </Tooltip>
-              )}
-            </React.Fragment>
-          ))}
+                            )}
+                          </ListItemButton>
+                        )}
+                      </NavLink>
+                    </Box>
+                  </Tooltip>
+                )}
+              </React.Fragment>
+            );
+          })}
         </List>
       </Box>
 

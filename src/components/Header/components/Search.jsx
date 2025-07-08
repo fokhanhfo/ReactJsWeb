@@ -1,58 +1,35 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { InputAdornment, TextField } from '@mui/material';
-import styled from 'styled-components';
-import SearchIcon from '@mui/icons-material/Search';
-import { useNavigate } from 'react-router-dom';
+import { Box, Typography } from '@mui/material';
+import { keyframes } from '@emotion/react';
 
-Search.propTypes = {
-    
-};
+const scroll = keyframes`
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+`;
 
-const StyledTextField = styled(TextField)`
-    margin-right:20px;
-    width:100%;
-    display: flex;
-    align-items: center;
-    background-color:white;
-    border-radius:10px;
-    div{
-        height:100%;
-        width:100%;
-        div{
-            width:10%
-        }
-    }
-    input{
-        padding:0px;
-    }
-`
-
-function Search(props) {
-    const navigate = useNavigate();
-
-    const handleSearch = (event) => {
-        event.preventDefault();
-        const searchQuery = event.target.searchInput.value; // Lấy giá trị input
-        navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
-      };
-
-    return (
-        <div className="nav-noti">
-            <p>Free shipping, 30-day return or refund guarantee.</p>
-            <form style={{width:'30%',marginRight:'20px'}} onSubmit={handleSearch}>
-                <StyledTextField name='searchInput'
-                    InputProps={{
-                        startAdornment:(
-                            <InputAdornment position="start">
-                                <SearchIcon/>
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-            </form>
-        </div>
-    );
+function Search() {
+  return (
+    <Box
+      sx={{
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        backgroundColor: '#000', // nền đen
+        py: 0.5, // padding nhỏ lại
+        height: '28px', // đảm bảo chiều cao gọn
+      }}
+    >
+      <Typography
+        sx={{
+          display: 'inline-block',
+          animation: `${scroll} 25s linear infinite`,
+          fontSize: 13,
+          color: '#fff', // chữ trắng
+        }}
+      >
+        Khám phá những sản phẩm thời trang cao cấp được tuyển chọn kỹ lưỡng! &nbsp;&nbsp;&nbsp; Hotline hỗ trợ:
+        0977.477.636 - Mua sắm an toàn cùng chúng tôi!
+      </Typography>
+    </Box>
+  );
 }
 
 export default Search;

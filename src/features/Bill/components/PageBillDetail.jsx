@@ -246,27 +246,44 @@ function PageBillDetail() {
       minWidth: 100,
       renderCell: (params) => {
         const { sellingPrice, discountPrice } = params.value || {};
+
+        const isSamePrice = sellingPrice === discountPrice;
+
         return (
           <Box width={'100%'} height={'100%'} display={'flex'} flexDirection={'column'} justifyContent={'center'}>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                color: 'red',
-              }}
-            >
-              {formatPrice(discountPrice)}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 400,
-                textDecoration: 'line-through',
-                color: 'gray',
-              }}
-            >
-              {formatPrice(sellingPrice)}
-            </Typography>
+            {isSamePrice ? (
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  color: 'black', // hoặc màu khác bạn muốn
+                }}
+              >
+                {formatPrice(sellingPrice)}
+              </Typography>
+            ) : (
+              <>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    color: 'red',
+                  }}
+                >
+                  {formatPrice(discountPrice)}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 400,
+                    textDecoration: 'line-through',
+                    color: 'gray',
+                  }}
+                >
+                  {formatPrice(sellingPrice)}
+                </Typography>
+              </>
+            )}
           </Box>
         );
       },

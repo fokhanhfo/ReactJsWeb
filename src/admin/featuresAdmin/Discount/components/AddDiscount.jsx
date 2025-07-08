@@ -23,7 +23,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import InputField from 'components/form-controls/InputForm';
 import { handleAction } from 'admin/ultilsAdmin/actionHandlers';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import NumericForm from 'components/form-controls/NumericFormat';
 import SelectFrom from 'components/form-controls/SelectFrom';
@@ -127,8 +127,8 @@ function AddDiscount({ actionsState, initialValues }) {
       maxValue: '',
       discountCondition: '',
       quantity: '',
-      startTime: '',
-      endTime: '',
+      startTime: null,
+      endTime: null,
       enable: 'false',
     },
     resolver: yupResolver(schema),
@@ -455,7 +455,14 @@ function AddDiscount({ actionsState, initialValues }) {
                           <DateTimePicker
                             label="Thời gian bắt đầu"
                             value={field.value ? dayjs(field.value) : null}
-                            onChange={(newValue) => field.onChange(newValue?.toISOString())}
+                            onChange={(newValue: Dayjs | null) => {
+                              // Kiểm tra xem newValue có hợp lệ không
+                              if (newValue && newValue.isValid()) {
+                                field.onChange(newValue.toISOString());
+                              } else {
+                                field.onChange(null);
+                              }
+                            }}
                             format="DD/MM/YYYY HH:mm"
                             slotProps={{
                               textField: {
@@ -484,7 +491,14 @@ function AddDiscount({ actionsState, initialValues }) {
                           <DateTimePicker
                             label="Thời gian kết thúc"
                             value={field.value ? dayjs(field.value) : null}
-                            onChange={(newValue) => field.onChange(newValue?.toISOString())}
+                            onChange={(newValue: Dayjs | null) => {
+                              // Kiểm tra xem newValue có hợp lệ không
+                              if (newValue && newValue.isValid()) {
+                                field.onChange(newValue.toISOString());
+                              } else {
+                                field.onChange(null);
+                              }
+                            }}
                             format="DD/MM/YYYY HH:mm"
                             slotProps={{
                               textField: {

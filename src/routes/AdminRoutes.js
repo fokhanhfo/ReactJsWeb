@@ -17,6 +17,9 @@ import DiscountAdmin from 'admin/featuresAdmin/Discount';
 import DiscountPeriodAdmin from 'admin/featuresAdmin/DiscountPeriod';
 import SizeAndColor from 'admin/featuresAdmin/SizeAndColor';
 import ClothingSalesDashboard from 'admin/featuresAdmin/Dashboard';
+import BlogManagement from 'admin/featuresAdmin/Blog';
+import NotFound from 'components/NotFound';
+import Profile from 'admin/featuresAdmin/Profile';
 
 function AdminRoutes() {
   const navigate = useNavigate();
@@ -26,10 +29,12 @@ function AdminRoutes() {
   }
   const listRoles = (currentUser.scope).split(' ');
 
+  console.log('listRoles', listRoles);
+
 
   return (
     <Routes>
-      {currentUser && listRoles[0]  === 'ROLE_ADMIN' ? (
+      {currentUser && (listRoles.includes('ROLE_ADMIN') || listRoles.includes('ROLE_STAFF')) ? (
         <>
           <Route path="/" element={<Navigate to="home" replace />} />
           <Route path="/*" element={<Header />}>
@@ -46,11 +51,16 @@ function AdminRoutes() {
             <Route path="productAttributes" element={<SizeAndColor />} />
             <Route path="discount/*" element={<DiscountAdmin />} />
             <Route path="discountPeriod/*" element={<DiscountPeriodAdmin />} />
+            <Route path="blog" element={<BlogManagement />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="admin/login" element={<Navigate to="/admin/products" />} />
         </>
       ) : (
+        <>
         <Route path="/*" element={<Navigate to="/" />} />
+        </>
       )}
     </Routes>
   );

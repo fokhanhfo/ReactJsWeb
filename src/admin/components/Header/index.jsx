@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   IconButton,
@@ -21,6 +21,8 @@ import {
   ListItem,
   Snackbar,
   Alert,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import { Outlet, useNavigate } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -45,17 +47,23 @@ import { Client } from '@stomp/stompjs';
 import { Email, Warning, CheckCircle, Info } from '@mui/icons-material';
 import { useGetNotificationQuery } from 'hookApi/notificationApi';
 import { useGetBillQuery } from 'hookApi/billApi';
+import { useDispatch } from 'react-redux';
+import { useSnackbar } from 'notistack';
+import { logout } from 'features/Auth/userSlice';
 
 const drawerWidth = 240;
 
 function Header() {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorElAvatar, setAnchorElAvatar] = useState(null);
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const dispatch = useDispatch();
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const { data, isLoding, error, isError } = useGetNotificationQuery({ limit: 8, page: 1 });
+  const { data, isLoding, error, isError, refetch: refetchNotifi } = useGetNotificationQuery({ limit: 8, page: 1 });
   const { data: bills, refetch } = useGetBillQuery({ limit: 20, page: 1 });
+  const { enqueueSnackbar } = useSnackbar();
   useEffect(() => {
     // Kết nối WebSocket
     const socket = new SockJS('http://localhost:8080/ws');
@@ -69,6 +77,7 @@ function Header() {
           console.log(data);
           setOpenSnackbar(true);
           refetch();
+          refetchNotifi();
         });
       },
     });
@@ -82,6 +91,19 @@ function Header() {
   const toggleDrawer = () => {
     setOpen(!open);
   };
+
+  const handleOpenMenu = (event) => {
+    setAnchorElAvatar(event.currentTarget);
+  };
+  const handleCloseMenu = () => {
+    setAnchorElAvatar(null);
+  };
+
+  const handleLogout = useCallback(async () => {
+    await dispatch(logout());
+    enqueueSnackbar('Đăng xuất thành công', { variant: 'success' });
+    handleCloseMenu();
+  }, [dispatch, enqueueSnackbar]);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -406,11 +428,12 @@ function Header() {
               </IconButton>
 
               <Avatar
+                onClick={handleOpenMenu}
                 sx={{
                   width: 32,
                   height: 32,
                   ml: 1,
-                  background: 'linear-gradient(to right, #8e2de2, #4a00e0)', // tím gradient
+                  background: 'linear-gradient(to right, #8e2de2, #4a00e0)',
                   color: 'white',
                   fontSize: '0.875rem',
                   fontWeight: 500,
@@ -423,6 +446,27 @@ function Header() {
               >
                 JD
               </Avatar>
+
+              <Menu
+                anchorEl={anchorElAvatar}
+                open={Boolean(anchorElAvatar)}
+                onClose={handleCloseMenu}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem disabled>
+                  <strong>John Doe</strong>
+                </MenuItem>
+                <MenuItem disabled>johndoe@example.com</MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
+              </Menu>
             </Box>
           </Paper>
         </Container>

@@ -17,9 +17,11 @@ import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import dayjs from 'dayjs';
 import { discountStatus } from 'enum/discountStatus';
-import { useUpdateStatusDiscountMutation } from 'hookApi/discountApi';
+import { useDeletediscountMutation, useUpdateStatusDiscountMutation } from 'hookApi/discountApi';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { useSnackbar } from 'notistack';
+import ConfirmDialog from 'components/ConfirmDialog/ConfirmDialog';
 
 ListDiscount.propTypes = {
   discounts: PropTypes.array.isRequired,
@@ -27,9 +29,15 @@ ListDiscount.propTypes = {
 };
 
 function ListDiscount({ discounts, loading, actionsState }) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDiscount, setSelectedDiscount] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
   const [updateDiscountStatus] = useUpdateStatusDiscountMutation();
+  const [deletediscount, { data, error, isLoading }] = useDeletediscountMutation();
+  const { enqueueSnackbar } = useSnackbar();
+  const handleCancel = () => {
+    setIsDialogOpen(false);
+  };
 
   const columns = [
     {
@@ -101,7 +109,14 @@ function ListDiscount({ discounts, loading, actionsState }) {
       headerName: 'Giá trị',
       flex: 0.5,
       minWidth: 100,
-      renderCell: (params) => <>{formatPrice(params.value)}</>,
+      renderCell: (params) => {
+        const discountType = optionTypeDiscount.find((item) => item.id === params.row.type);
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {discountType?.id === 1 ? params.value : discountType?.id === 2 ? formatPrice(params.value) : null}
+          </Box>
+        );
+      },
     },
     {
       field: 'maxValue',
@@ -216,13 +231,31 @@ function ListDiscount({ discounts, loading, actionsState }) {
           <IconButton onClick={() => handleActions('edit', params.row)}>
             <Update color="success" />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => handleOpenDialog(params.row)}>
             <DeleteIcon color="error" />
           </IconButton>
         </>
       ),
     },
   ];
+
+  const handleOpenDialog = (rows) => {
+    setIsDialogOpen(true);
+    setSelectedDiscount(rows);
+  };
+
+  const handleDelete = async (id) => {
+    console.log('Delete row:', id);
+    try {
+      await deletediscount(id).unwrap();
+      enqueueSnackbar('Xóa thành công', { variant: 'success' });
+      setIsDialogOpen(false);
+      setSelectedDiscount(null);
+    } catch (err) {
+      console.error('Lỗi khi xóa:', err);
+      enqueueSnackbar(err?.data?.message || 'Xóa không thành công', { variant: 'error' });
+    }
+  };
 
   const handleToggleStatus = async (row) => {
     try {
@@ -263,6 +296,14 @@ function ListDiscount({ discounts, loading, actionsState }) {
           handleSelectionChange={(selection) => console.log(selection)}
         />
       </Box>
+      <ConfirmDialog
+        isOpen={isDialogOpen}
+        title="Xác nhận"
+        message="Bạn có chắc chắn muốn thực hiện hành động này không?"
+        onConfirm={() => handleDelete(selectedDiscount.id)}
+        onCancel={handleCancel}
+        isLoading={isLoading}
+      />
       {actionsState.edit === true && selectedDiscount !== null ? (
         <AddDiscount actionsState={actionsState} initialValues={selectedDiscount} />
       ) : null}

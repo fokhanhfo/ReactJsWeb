@@ -7,105 +7,103 @@ const Footer = () => {
     <Container maxWidth={false} sx={{ maxWidth: '1400px', padding: '0 20px' }}>
       <Box sx={{ padding: '40px 20px' }}>
         <Grid container spacing={4}>
-          {/* Logo and Description */}
+          {/* Logo và Mô tả */}
           <Grid item xs={12} md={3}>
             <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-              ninico
+              Hoàng Hải
             </Typography>
             <Typography variant="body2" sx={{ marginTop: '10px', color: '#666' }}>
-              Elegant pink origami design three dimensional view and decoration co-exist. Great for adding a decorative
-              touch to any room’s decor.
+              Hoàng Hải - Thời trang phong cách, chất lượng cao. Mang đến sự tự tin và đẳng cấp cho mọi khách hàng.
             </Typography>
           </Grid>
 
-          {/* Information Links */}
+          {/* Thông tin */}
           <Grid item xs={12} md={2}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '10px' }}>
-              Information
+              Thông tin
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
-              Custom Service
+              Dịch vụ khách hàng
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
-              FAQs
+              Câu hỏi thường gặp
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
-              Ordering Tracking
+              Tra cứu đơn hàng
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
-              Contacts
+              Liên hệ
             </Typography>
             <Typography variant="body2" sx={{ color: '#666' }}>
-              Events
+              Tin tức & sự kiện
             </Typography>
           </Grid>
 
-          {/* My Account Links */}
+          {/* Tài khoản của tôi */}
           <Grid item xs={12} md={2}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '10px' }}>
-              My Account
+              Tài khoản
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
-              Delivery Information
+              Thông tin giao hàng
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
-              Privacy Policy
+              Chính sách bảo mật
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
-              Discount
+              Khuyến mãi
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
-              Custom Service
+              Hỗ trợ khách hàng
             </Typography>
             <Typography variant="body2" sx={{ color: '#666' }}>
-              Terms Condition
+              Điều khoản sử dụng
             </Typography>
           </Grid>
 
-          {/* Social Network */}
+          {/* Mạng xã hội */}
           <Grid item xs={12} md={2}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '10px' }}>
-              Social Network
+              Kết nối với chúng tôi
             </Typography>
+            <a
+              href="https://www.facebook.com/profile.php?id=100076397190388&locale=vi_VN"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconButton>
+                <Facebook sx={{ color: '#1877F2' }} />
+              </IconButton>
+            </a>
             <IconButton>
-              <Facebook />
+              <YouTube sx={{ color: '#FF0000' }} />
             </IconButton>
-            {/* <IconButton>
-            <Dribbble />
-          </IconButton> */}
             <IconButton>
-              <Twitter />
-            </IconButton>
-            <IconButton>
-              <YouTube />
-            </IconButton>
-            <IconButton>
-              <Instagram />
+              <Instagram sx={{ color: '#C13584' }} />
             </IconButton>
           </Grid>
 
-          {/* Newsletter */}
+          {/* Đăng ký nhận tin */}
           <Grid item xs={12} md={3}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '10px' }}>
-              Get Newsletter
+              Liên hệ
             </Typography>
-            <Typography variant="body2" sx={{ color: '#666', marginBottom: '10px' }}>
-              Get on the list and get 10% off your first order!
+            <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
+              Địa chỉ: 26 Hòa Sơn, TT. Chúc Sơn, Chương Mỹ, Hà Nội
             </Typography>
-            <TextField
-              variant="outlined"
-              size="small"
-              placeholder="Enter email address"
-              fullWidth
-              sx={{ marginBottom: '10px' }}
-            />
-            <Button variant="contained" color="secondary" fullWidth>
-              Subscribe Now
-            </Button>
+            <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
+              Điện thoại: 0977.477.636
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#666', marginBottom: '5px' }}>
+              Email: hoanghaifashion@gmail.com
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#666' }}>
+              Giờ mở cửa: 9:00 - 21:00 (T2 - CN)
+            </Typography>
           </Grid>
         </Grid>
 
-        {/* Footer Bottom */}
+        {/* Footer dưới cùng */}
         <Box
           sx={{
             marginTop: '40px',
@@ -115,7 +113,7 @@ const Footer = () => {
           }}
         >
           <Typography variant="body2" sx={{ color: '#666' }}>
-            Copyright 2025 © <strong>Ninico</strong>. All rights reserved. Developed by AliThemes.
+            © 2025 <strong>Hoàng Hải</strong>. Tất cả các quyền được bảo lưu. Phát triển bởi AliThemes.
           </Typography>
         </Box>
       </Box>

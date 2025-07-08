@@ -23,7 +23,7 @@ function BillList({ bills, onUpdateSuccess }) {
     { field: 'id', headerName: 'ID', flex: 0.5, renderCell: (params) => `#${params.row.id}` },
     { field: 'phone', headerName: 'Phone', flex: 1 },
     // { field: 'email', headerName: 'Email', flex: 1 },
-    { field: 'user_id', headerName: 'User Name', flex: 1 },
+    { field: 'fullName', headerName: 'Tên người nhận', flex: 1 },
     {
       field: 'createdDate',
       headerName: 'Created Date',

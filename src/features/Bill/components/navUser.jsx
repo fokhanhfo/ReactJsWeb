@@ -47,6 +47,8 @@ function NavUser() {
   return (
     <Box
       sx={{
+        position: 'sticky',
+        top: 160, // khoảng cách với đỉnh viewport
         backgroundColor: '#fff',
         borderRadius: '8px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -66,7 +68,7 @@ function NavUser() {
         }}
       >
         <Avatar
-          src={data?.data?.userImage.userImage}
+          src={data?.data?.userImage?.userImage || ''}
           sx={{
             width: { xs: 40, sm: 48 },
             height: { xs: 40, sm: 48 },
@@ -77,7 +79,7 @@ function NavUser() {
             {data?.data?.fullName}
           </Typography>
           <NavLink
-            to="/edit-profile"
+            to="./profile"
             style={{
               textDecoration: 'none',
               color: theme.palette.primary.main,

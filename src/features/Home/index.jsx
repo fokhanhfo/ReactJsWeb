@@ -8,18 +8,18 @@ HomeFeatures.propTypes = {};
 
 const images = [
   'https://dashboard.leanow.vn/upload/3-2024/1710751498751.webp',
+  'https://dashboard.leanow.vn/upload/6-2025/1749015250329.webp',
+  'https://dashboard.leanow.vn/upload/4-2025/1743559354911.webp',
+  'https://dashboard.leanow.vn/upload/3-2025/1742440519787.webp',
+  'https://dashboard.leanow.vn/upload/10-2024/1729789351911.webp',
   'https://dashboard.leanow.vn/upload/10-2023/1697646329905.webp',
-  'https://dashboard.leanow.vn/upload/9-2023/1695398469078.webp',
-  'https://dashboard.leanow.vn/upload/7-2023/1690294640922.webp',
-  'https://dashboard.leanow.vn/upload/8-2024/1723171967680.webp',
-  'https://dashboard.leanow.vn/upload/6-2024/1718965436093.webp',
 ];
 
 function HomeFeatures(props) {
   return (
     <>
       <Container maxWidth={false} sx={{ maxWidth: '1400px', padding: '20px 0' }}>
-        <SliderHome images={images} />
+        <SliderHome images={images} autoPlayInterval={3000} pauseOnHover={true} />
       </Container>
       <Paper>
         <Container maxWidth={false} sx={{ maxWidth: '1400px', padding: '20px 0' }}>

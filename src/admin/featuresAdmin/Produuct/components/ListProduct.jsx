@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import productApi from 'api/productApi';
 import { Link } from 'react-router-dom';
 import './styled.scss';
-import { Box, Button, Chip, IconButton } from '@mui/material';
+import { Box, Button, Chip, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Update } from '@mui/icons-material';
 import FormControl from '@mui/material/FormControl';
@@ -19,19 +19,24 @@ import { useGetColorQuery } from 'hookApi/colorApi';
 import { useGetSizeQuery } from 'hookApi/sizeApi';
 import DataTable from 'admin/components/Table/DataTable';
 import EditIcon from '@mui/icons-material/Edit';
+import { useUpdateStatusProductMutation } from 'hookApi/productApi';
+import ToggleOffIcon from '@mui/icons-material/ToggleOff';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 
 ListProduct.propTypes = {
   products: PropTypes.array.isRequired,
   actionsState: PropTypes.object.isRequired,
+  refetch: PropTypes.func,
 };
 
-function ListProduct({ products, actionsState }) {
+function ListProduct({ products, actionsState, refetch }) {
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
+  const [hoveredRow, setHoveredRow] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { data: colors, error: colorsError, isLoading: colorsLoading } = useGetColorQuery();
   const { data: sizes, error: sizesError, isLoading: sizesLoading } = useGetSizeQuery();
-
+  const [updateStatusProduct] = useUpdateStatusProductMutation();
   // const listHead = [
   //   { label: 'ID', key: 'id', width: '5%' },
   //   {
@@ -120,11 +125,12 @@ function ListProduct({ products, actionsState }) {
   //   },
   // ];
   const columns = [
-    { field: 'id', headerName: 'ID', flex: 0.3 },
+    { field: 'id', headerName: 'ID', flex: 0.3, minWidth: 80 },
     {
       field: 'name',
       headerName: 'Name',
       flex: 1.5,
+      minWidth: 200,
       renderCell: (params) => {
         const imageURL = imageMainProduct(params.row.productDetails);
         return (
@@ -150,22 +156,21 @@ function ListProduct({ products, actionsState }) {
       field: 'importPrice',
       headerName: 'Giá nhập',
       flex: 0.5,
-      valueGetter: (params) => {
-        return `${formatPrice(params)}`;
-      },
+      minWidth: 120,
+      valueGetter: (params) => `${formatPrice(params)}`,
     },
     {
       field: 'sellingPrice',
       headerName: 'Giá bán',
       flex: 0.5,
-      valueGetter: (params) => {
-        return `${formatPrice(params)}`;
-      },
+      minWidth: 120,
+      valueGetter: (params) => `${formatPrice(params)}`,
     },
     // {
     //   field: 'quantity',
     //   headerName: 'Quantity',
-    //   width: 120,
+    //   flex: 0.5,
+    //   minWidth: 120,
     //   valueGetter: (params) => {
     //     return params.row.productDetails?.reduce((sum, pd) => sum + pd.quantity, 0);
     //   },
@@ -174,36 +179,66 @@ function ListProduct({ products, actionsState }) {
       field: 'category',
       headerName: 'Category',
       flex: 1,
+      minWidth: 150,
       valueGetter: (params) => params?.name,
     },
     {
-      field: 'status',
-      headerName: 'Status',
+      field: 'productDetails',
+      headerName: 'Số lượng',
       flex: 0.5,
+      minWidth: 120,
+      valueGetter: (params) => {
+        console.log('params', params);
+        const productDetails = params || [];
+        return productDetails.reduce((total, pd) => {
+          const sizes = pd?.productDetailSizes || [];
+          return total + sizes.reduce((sum, size) => sum + (size?.quantity || 0), 0);
+        }, 0);
+      },
+    },
+
+    {
+      field: 'status',
+      headerName: 'Trạng thái',
+      flex: 0.6,
+      minWidth: 140,
       renderCell: (params) => {
-        const status = params.row.status;
-        const label = status === 1 ? 'On' : 'Off';
-
-        const bgColor = status === 1 ? '#e6f4ea' : '#f9e6e6'; // Xanh nhạt / Đỏ nhạt
-        const textColor = status === 1 ? '#2e7d32' : '#c62828'; // Xanh đậm / Đỏ đậm
-
+        const isActive = params.value === 1;
+        const isHovered = hoveredRow === params.row.id;
         return (
-          <Chip
-            label={label}
-            size="small"
-            onClick={() => handleClickStatus(params.row.status)}
-            sx={{
-              fontWeight: 600,
-              borderRadius: '8px',
-              px: 1.5,
-              py: 0.5,
-              fontSize: '0.75rem',
-              bgcolor: bgColor,
-              color: textColor,
-              cursor: 'pointer',
-              border: `1px solid ${textColor}`,
-            }}
-          />
+          <Box
+            sx={{ position: 'relative' }}
+            onMouseEnter={() => setHoveredRow(params.row.id)}
+            onMouseLeave={() => setHoveredRow(null)}
+          >
+            <Chip
+              label={isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
+              color={isActive ? 'success' : 'default'}
+              size="small"
+              sx={{ opacity: isHovered ? 0.5 : 1, transition: 'opacity 0.2s' }}
+            />
+            {isHovered && (
+              <Tooltip title={isActive ? 'Ngừng hoạt động' : 'Kích hoạt'}>
+                <IconButton
+                  size="small"
+                  onClick={() => handleClickStatus(params.row.status, params.row)}
+                  sx={{
+                    position: 'absolute',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
+                  }}
+                >
+                  {isActive ? (
+                    <ToggleOnIcon className="text-green-500" fontSize="small" />
+                  ) : (
+                    <ToggleOffIcon className="text-gray-500" fontSize="small" />
+                  )}
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
         );
       },
     },
@@ -212,14 +247,15 @@ function ListProduct({ products, actionsState }) {
       headerName: 'Actions',
       sortable: false,
       flex: 0.5,
+      minWidth: 100,
       renderCell: (params) => (
         <>
           <IconButton onClick={() => handleActions('edit', params.row)}>
             <EditIcon />
           </IconButton>
-          <IconButton>
+          {/* <IconButton>
             <DeleteIcon color="error" />
-          </IconButton>
+          </IconButton> */}
         </>
       ),
     },
@@ -232,10 +268,10 @@ function ListProduct({ products, actionsState }) {
     handleAction(state, dispatch, actionsState);
   };
 
-  const handleClickStatus = async (event, product) => {
+  const handleClickStatus = async (value, product) => {
     try {
-      product.status = event.target.value;
-      await productApi.update(product);
+      const newStatus = value === 1 ? 0 : 1;
+      await updateStatusProduct({ id: product.id, status: newStatus }).unwrap();
       enqueueSnackbar('Update trạng thái thành công', { variant: 'success' });
     } catch (e) {
       enqueueSnackbar(`Update trạng thái không thành công: ${e.message}`, { variant: 'error' });
@@ -248,6 +284,7 @@ function ListProduct({ products, actionsState }) {
       <DataTable rows={products} columns={columns} />
       {actionsState.edit === true && (
         <AddProduct
+          refetch={refetch}
           actionsState={actionsState}
           initialValues={selectedProduct}
           listSize={sizes.data}

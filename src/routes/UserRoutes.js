@@ -14,17 +14,27 @@ import Bill from 'features/Bill';
 import Footer from 'components/Footer/Footer';
 import UserDetail from 'features/Bill';
 import HoangHaiFashionMUI from 'features/AboutUs';
+import { Box, useMediaQuery, useTheme } from '@mui/material';
+import BlogPage from 'features/Blog';
 
 function UserRoutes() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   return (
     <>
       <Navbar/>
+      {!isMobile ? (
+        <Box pt={'162.6px'}></Box>
+      ): (
+        <Box pt={'60px'}></Box>
+      )}
       <Routes>
         <Route path="/counttest" element={<CounterFeature/>} />
         <Route path="/" element={<HomeFeatures/>} />
         <Route path="/todos/*" element={<TodoFeature />} />
         <Route path="/contact" element={<AlbumFeature />} />
         <Route path="/ABOUT-US" element={<HoangHaiFashionMUI />} />
+        <Route path="/Blog" element={<BlogPage />} />
         <Route path="/products/*" element={<ProductFeatureCopy />} />
         
 

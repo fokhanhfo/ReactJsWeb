@@ -1,11 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container, IconButton, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
 import CartItem from './components/CartItem';
 import PayCart from './components/PayCart';
 import { useSelector } from 'react-redux';
 import { useUpdateCartMutation } from 'hookApi/cartApi';
+import CloseIcon from '@mui/icons-material/Close';
 
 CartFeature.propTypes = {
   setOpen: PropTypes.func.isRequired,
@@ -13,12 +14,11 @@ CartFeature.propTypes = {
 
 function CartFeature({ setOpen }) {
   const cartQuery = useSelector((state) => state.cartApi.queries['getCart(undefined)']);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const cartData = cartQuery?.data;
   const isFetching = cartQuery?.isFetching;
   const [updateCart] = useUpdateCartMutation();
-  if (isFetching) {
-    return <div>Đang tải dữ liệu...</div>;
-  }
 
   const handleCheckboxChange = async (cartItem) => {
     const updatedCartItem = { ...cartItem, status: cartItem.status === 1 ? 0 : 1 };
@@ -33,8 +33,11 @@ function CartFeature({ setOpen }) {
     });
   };
   return (
-    <Container>
+    <>
       <Box sx={{ mt: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.2)' }}>
+        <IconButton sx={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }} onClick={() => setOpen(false)}>
+          <CloseIcon />
+        </IconButton>
         <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
           🛒GIỎ HÀNG
         </Typography>
@@ -64,10 +67,18 @@ function CartFeature({ setOpen }) {
       </Box>
       <Box>
         {cartData?.data?.length > 0 ? (
-          <div style={{ width: '400px' }}>
+          <Box
+            sx={{
+              width: {
+                xs: '100%',
+                sm: '400px',
+              },
+              p: 2,
+            }}
+          >
             <CartItem listCart={cartData.data} onCheckboxChange={handleCheckboxChange}></CartItem>
             <PayCart setOpen={setOpen} listCart={cartData.data} onAllCheckboxChange={handleAllCheckboxChange}></PayCart>
-          </div>
+          </Box>
         ) : (
           <Box width={'400px'} display="flex" alignItems="center" justifyContent="center" flex={1}>
             <Typography variant="body1" color="text.secondary">
@@ -76,7 +87,7 @@ function CartFeature({ setOpen }) {
           </Box>
         )}
       </Box>
-    </Container>
+    </>
   );
 }
 

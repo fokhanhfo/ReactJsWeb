@@ -9,10 +9,10 @@ function ImageHome(props) {
   const images = [
     '/imagesHome/áo thun be.png',
     '/imagesHome/áo thun đen.png',
-    '/imagesHome/áo thun be.png',
-    '/imagesHome/áo thun đen.png',
-    '/imagesHome/áo thun be.png',
-    '/imagesHome/áo thun đen.png',
+    '/imagesHome/1746698300417.webp',
+    '/imagesHome/1721638803683.webp',
+    '/imagesHome/Untitled.png',
+    '/imagesHome/1746698300374.webp',
   ];
   return (
     <Box
@@ -38,7 +38,7 @@ function ImageHome(props) {
             fontSize: '18px',
           }}
         >
-          Follow On
+          Liên hệ
         </Typography>
 
         <Box
@@ -49,12 +49,6 @@ function ImageHome(props) {
             gap: 1,
           }}
         >
-          <InstagramIcon
-            sx={{
-              fontSize: 32,
-              color: '#000',
-            }}
-          />
           <Typography
             variant="h4"
             sx={{

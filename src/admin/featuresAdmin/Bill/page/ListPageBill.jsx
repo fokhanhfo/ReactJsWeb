@@ -176,7 +176,7 @@ function ListPageBill(props) {
     { value: 4, label: 'Xác nhận hoàn thành', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#00b8d9' },
     { value: 5, label: 'Đơn hoàn thành', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#00b8d9' },
     { value: 6, label: 'Đã hủy', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#ff0000' },
-    { value: 7, label: 'Trả hàng/Hoàn tiền', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#919eab' },
+    // { value: 7, label: 'Trả hàng/Hoàn tiền', bgColor: 'rgba(0, 0, 0, 1)', textColor: '#919eab' },
   ];
 
   const handleSearchChange = (e) => {
@@ -297,7 +297,7 @@ function ListPageBill(props) {
                 <Box>
                   <Grid container spacing={2}>
                     {billStatuses.map((status) => (
-                      <Grid item xs={12} sm={6} md={4} lg={1.3} key={status.value}>
+                      <Grid item xs={12} sm={6} md={4} lg={1.5} key={status.value}>
                         <Chip
                           label={status.label}
                           onClick={() => handleStatusChange(status.value)}

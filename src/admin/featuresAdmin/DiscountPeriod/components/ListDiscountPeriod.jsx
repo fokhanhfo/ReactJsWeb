@@ -13,6 +13,9 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PercentIcon from '@mui/icons-material/Percent';
 import MoneyIcon from '@mui/icons-material/Money';
+import { useDeletediscountPeriodMutation } from 'hookApi/discountPeriodApi';
+import ConfirmDialog from 'components/ConfirmDialog/ConfirmDialog';
+import { useSnackbar } from 'notistack';
 
 ListDiscountPeriod.propTypes = {
   discounts: PropTypes.array.isRequired,
@@ -21,7 +24,13 @@ ListDiscountPeriod.propTypes = {
 
 function ListDiscountPeriod({ discounts, loading, actionsState }) {
   const [selectedDiscount, setSelectedDiscount] = useState(null);
+  const [deletediscountPeriod, { isLoading }] = useDeletediscountPeriodMutation();
+  const { enqueueSnackbar } = useSnackbar();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const handleCancel = () => {
+    setIsDialogOpen(false);
+  };
   const columns = [
     {
       field: 'id',
@@ -110,13 +119,31 @@ function ListDiscountPeriod({ discounts, loading, actionsState }) {
           <IconButton onClick={() => handleActions('edit', params.row)}>
             <Update color="success" />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => handleOpenDialog(params.row)}>
             <DeleteIcon color="error" />
           </IconButton>
         </>
       ),
     },
   ];
+
+  const handleOpenDialog = (rows) => {
+    setIsDialogOpen(true);
+    setSelectedDiscount(rows);
+  };
+
+  const handleDelete = async (id) => {
+    console.log('Delete row:', id);
+    try {
+      await deletediscountPeriod(id).unwrap();
+      enqueueSnackbar('Xóa thành công', { variant: 'success' });
+      setIsDialogOpen(false);
+      setSelectedDiscount(null);
+    } catch (err) {
+      console.error('Lỗi khi xóa:', err);
+      enqueueSnackbar(err?.data?.message || 'Xóa không thành công', { variant: 'error' });
+    }
+  };
 
   const dispatch = useDispatch();
   const handleActions = (state, row) => {
@@ -141,6 +168,14 @@ function ListDiscountPeriod({ discounts, loading, actionsState }) {
           handleSelectionChange={(selection) => console.log(selection)}
         />
       </Box>
+      <ConfirmDialog
+        isOpen={isDialogOpen}
+        title="Xác nhận"
+        message="Bạn có chắc chắn muốn thực hiện hành động này không?"
+        onConfirm={() => handleDelete(selectedDiscount.id)}
+        onCancel={handleCancel}
+        isLoading={isLoading}
+      />
       {actionsState.edit === true && selectedDiscount !== null ? (
         <AddDiscount actionsState={actionsState} initialValues={selectedDiscount} />
       ) : null}

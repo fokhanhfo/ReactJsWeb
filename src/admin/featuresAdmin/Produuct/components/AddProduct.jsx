@@ -47,7 +47,7 @@ import { get } from 'lodash';
 import ClearIcon from '@mui/icons-material/Clear';
 import { useDeleteimageMutation, useGetImageAllPDIdQuery, useGetImageAllProductIdQuery } from 'hookApi/imageApi';
 import SizeFieldArray from './SizeFieldArray';
-import { useAddProductMutation, useUpdateProductMutation } from 'hookApi/productApi';
+import { useAddProductMutation, useGetProductsQuery, useUpdateProductMutation } from 'hookApi/productApi';
 import ConfirmDialog from 'components/ConfirmDialog/ConfirmDialog';
 
 AddProduct.propTypes = {
@@ -56,9 +56,10 @@ AddProduct.propTypes = {
   initialValues: PropTypes.object,
   listColor: PropTypes.array,
   listSize: PropTypes.array,
+  refetch: PropTypes.func,
 };
 
-function AddProduct({ actionsState, onSubmit, initialValues, listColor, listSize }) {
+function AddProduct({ actionsState, onSubmit, initialValues, listColor, listSize, refetch }) {
   console.log(initialValues);
   const categoryQuery = useSelector((state) => state.categoryApi.queries['getCategory(undefined)']);
   const { add, edit, del, view } = actionsState;
@@ -72,6 +73,7 @@ function AddProduct({ actionsState, onSubmit, initialValues, listColor, listSize
   const [selectedColors, setSelectedColors] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [indexProductDetail, setIndexProductDetail] = useState(null);
+  const [localProductDetails, setLocalProductDetails] = useState(initialValues?.productDetails);
 
   let schema;
   schema = yup.object().shape({
@@ -189,10 +191,12 @@ function AddProduct({ actionsState, onSubmit, initialValues, listColor, listSize
 
       form.setValue(name, newPreviews[index], { shouldDirty: true });
 
-      const isMainColorField = `productDetails[${index}].isMainIdNew`;
-      const currentMainColor = form.getValues(isMainColorField);
-      if (!currentMainColor && newPreviews[index].length > 0) {
-        form.setValue(isMainColorField, newPreviews[index][0].name); // Ảnh đầu tiên làm màu chính
+      if (localProductDetails[index]?.image?.length === 0) {
+        const isMainColorField = `productDetails[${index}].isMainIdNew`;
+        const currentMainColor = form.getValues(isMainColorField);
+        if (!currentMainColor && newPreviews[index].length > 0) {
+          form.setValue(isMainColorField, newPreviews[index][0].name); // Ảnh đầu tiên làm màu chính
+        }
       }
 
       if (add) {
@@ -315,11 +319,34 @@ function AddProduct({ actionsState, onSubmit, initialValues, listColor, listSize
   //   return <Loading></Loading>;
   // }
 
-  const removeFileImageOld = async (id) => {
+  const removeFileImageOld = async (imageId, productIndex, item) => {
     try {
-      await deleteImage(id).unwrap();
-      console.log(`Deleted image with id: ${id}`);
+      console.log('item', item);
+      if (item.mainColor) {
+        enqueueSnackbar('Không thể xóa ảnh chính của màu sắc', { variant: 'warning' });
+        return;
+      }
+      if (item.mainProduct) {
+        enqueueSnackbar('Không thể xóa ảnh chính của sản phẩm', { variant: 'warning' });
+        return;
+      }
+      await deleteImage(imageId).unwrap();
+      console.log(`Deleted image with id: ${imageId}`);
+
+      // Cập nhật state để loại bỏ ảnh vừa xóa
+      setLocalProductDetails((prev) => {
+        const newDetails = [...prev];
+        newDetails[productIndex] = {
+          ...newDetails[productIndex],
+          image: newDetails[productIndex].image.filter((img) => img.id !== imageId),
+        };
+        return newDetails;
+      });
+
+      enqueueSnackbar('Đã xóa hình ảnh', { variant: 'success' });
+      refetch();
     } catch (error) {
+      enqueueSnackbar(error?.data.message || 'Lỗi khi xóa ảnh', { variant: 'error' });
       console.error('Error deleting image:', error);
     }
   };
@@ -629,8 +656,9 @@ function AddProduct({ actionsState, onSubmit, initialValues, listColor, listSize
                   </Box>
                   {edit === true && (
                     <Grid marginBottom={2} container spacing={2} mt={2}>
-                      {initialValues?.productDetails[index]?.image &&
-                        initialValues?.productDetails[index]?.image.map((item, urlIndex) => (
+                      {localProductDetails[index]?.image?.map((item, urlIndex) => {
+                        console.log('item', item);
+                        return (
                           <Grid item xs={6} sm={4} md={2} key={urlIndex}>
                             <Card sx={{ position: 'relative' }}>
                               <CardMedia
@@ -642,7 +670,7 @@ function AddProduct({ actionsState, onSubmit, initialValues, listColor, listSize
                               />
                               <IconButton
                                 size="small"
-                                onClick={() => removeFileImageOld(item.id)}
+                                onClick={() => removeFileImageOld(item.id, index, item)}
                                 sx={{
                                   position: 'absolute',
                                   top: 5,
@@ -699,7 +727,8 @@ function AddProduct({ actionsState, onSubmit, initialValues, listColor, listSize
                               </CardActions>
                             </Card>
                           </Grid>
-                        ))}
+                        );
+                      })}
                     </Grid>
                   )}
                   {imagePreviews[index] && (

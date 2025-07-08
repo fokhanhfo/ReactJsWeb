@@ -18,6 +18,8 @@ import { discountProductPeriodApi } from "hookApi/discountProductPeriod";
 import { roleApi } from "hookApi/roleApi";
 import { notificationApi } from "hookApi/notificationApi";
 import { dashboardApi } from "hookApi/dashboard";
+import { shippingAddressApi } from "hookApi/shippingAddressApi";
+import { blogApi } from "hookApi/blogApi";
 // import {productApi} from "admin/featuresAdmin/Produuct/hook/productApi"
 // import { colorApi } from "admin/hookApi/colorApi";
 // import { sizeApi } from "admin/hookApi/sizeApi";
@@ -41,6 +43,8 @@ const rootReducer ={
     [roleApi.reducerPath]: roleApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
+    [shippingAddressApi.reducerPath]: shippingAddressApi.reducer,
+    [blogApi.reducerPath]: blogApi.reducer,
 
 }
 
@@ -63,7 +67,9 @@ const store = configureStore({
             discountProductPeriodApi.middleware,
             roleApi.middleware,
             notificationApi.middleware,
-            dashboardApi.middleware
+            dashboardApi.middleware,
+            shippingAddressApi.middleware,
+            blogApi.middleware,
         ),
 });
 

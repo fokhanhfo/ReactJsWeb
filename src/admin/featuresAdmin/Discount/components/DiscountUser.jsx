@@ -82,6 +82,7 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
     idDiscount: idDiscount,
     page: page,
     limit: rowsPerPage,
+    role: 'USER',
   });
   const [addAllDiscountUser] = useAddAllDiscountUserMutation();
   const count = data?.data?.count;
@@ -192,7 +193,7 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
       render: (row) => (
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
           <Tooltip title="Chỉnh sửa">
-            <IconButton
+            {/* <IconButton
               onClick={() => handleActions('edit', row)}
               size="small"
               sx={{
@@ -201,7 +202,7 @@ function DiscountUser({ onSubmit, idDiscount, discountsUser, loading, actionsSta
               }}
             >
               <Edit fontSize="small" />
-            </IconButton>
+            </IconButton> */}
           </Tooltip>
           <Tooltip title="Xóa">
             <IconButton

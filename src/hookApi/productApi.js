@@ -49,6 +49,17 @@ export const productApi = createApi({
             },
             invalidatesTags: [{ type: 'Product', id: 'LIST' }],
         }),
+        updateStatusProduct: builder.mutation({
+            query: ({ id, status }) => ({
+                url: `product/updateStatus/${id}`,
+                method: "PUT",
+                body: status,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }),
+            invalidatesTags: [{ type: 'Product', id: 'LIST' }],
+        }),
         getAllProductStatistics: builder.query({
             query: () => ({
                 url: 'product/getAllProductStatistics',
@@ -59,6 +70,7 @@ export const productApi = createApi({
             }),
 
         }),
+        
 });
 
 export const {
@@ -66,4 +78,5 @@ export const {
     useAddProductMutation,
     useUpdateProductMutation,
     useGetAllProductStatisticsQuery,
+    useUpdateStatusProductMutation,
 } = productApi;

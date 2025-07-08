@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Box, Typography, TextField, Button, Grid, Container, Paper, IconButton } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -8,10 +7,35 @@ import HeadsetMicIcon from '@mui/icons-material/HeadsetMic';
 import ExploreIcon from '@mui/icons-material/Explore';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 
-AlbumFeature.propTypes = {};
+const schema = yup.object().shape({
+  fullName: yup.string().required('Vui lòng nhập họ và tên'),
+  email: yup.string().email('Email không hợp lệ').required('Vui lòng nhập email'),
+  phone: yup.string().matches(/^[0-9]{9,15}$/, 'Số điện thoại không hợp lệ'),
+  subject: yup.string(),
+  message: yup.string().required('Vui lòng nhập nội dung'),
+});
 
-function AlbumFeature(props) {
+function AlbumFeature() {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
+
+  const onSubmit = (data) => {
+    console.log('Dữ liệu gửi cho admin:', data);
+
+    // Reset form sau khi gửi thành công
+    reset();
+  };
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -22,7 +46,7 @@ function AlbumFeature(props) {
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
       <Grid container spacing={4}>
-        {/* Left Section - Get In Touch */}
+        {/* Left Section */}
         <Grid item xs={12} md={5}>
           <Paper
             elevation={0}
@@ -34,22 +58,29 @@ function AlbumFeature(props) {
             }}
           >
             <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
-              Get In Touch
+              LIÊN HỆ
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'flex-start', mt: 4 }}>
               <LocationOnIcon sx={{ color: 'success.main', mr: 2, mt: 0.5 }} />
               <Typography variant="body1" color="text.secondary">
-                24/26 Strait Bargate, Boston, PE21,
-                <br />
-                United Kingdom
+                <a
+                  href="https://www.google.com/maps/place/Shop+Ho%C3%A0ng+H%E1%BA%A3i/@20.9239125,105.7012006,17z/data=!3m1!4b1!4m6!3m5!1s0x31344d9c251a4597:0xbd9e54a0390bf57b!8m2!3d20.9239075!4d105.7037755!16s%2Fg%2F11hf7zyk_c?hl=vi&entry=ttu"
+                  target="_blank"
+                  rel="noopener"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  26 Hòa Sơn, TT. Chúc Sơn, Chương Mỹ, Hà Nội
+                  <br />
+                  Việt Nam
+                </a>
               </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'flex-start', mt: 3 }}>
               <PhoneIcon sx={{ color: 'success.main', mr: 2, mt: 0.5 }} />
               <Typography variant="body1" color="text.secondary">
-                +098 (905) 786 897 8<br />6 - 146 - 389 - 5748
+                0977.477.636
               </Typography>
             </Box>
 
@@ -57,10 +88,10 @@ function AlbumFeature(props) {
               <AccessTimeIcon sx={{ color: 'success.main', mr: 2, mt: 0.5 }} />
               <Box>
                 <Typography variant="body1" color="text.secondary">
-                  Store Hours:
+                  Giờ mở cửa:
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                  10 am - 10 pm EST, 7 days a week
+                  9 giờ sáng – 10 giờ tối, mở cửa 7 ngày trong tuần
                 </Typography>
               </Box>
             </Box>
@@ -80,7 +111,7 @@ function AlbumFeature(props) {
                 },
               }}
             >
-              Get Support On Call
+              Hỗ trợ qua điện thoại
             </Button>
 
             <Button
@@ -98,41 +129,84 @@ function AlbumFeature(props) {
                 },
               }}
             >
-              Get Direction
+              Xem chỉ đường
             </Button>
           </Paper>
         </Grid>
 
-        {/* Right Section - Make Custom Request */}
+        {/* Right Section - Form */}
         <Grid item xs={12} md={7}>
-          <Box>
+          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
             <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
-              Make Custom Request
+              Gửi tin nhắn cho chúng tôi
             </Typography>
             <Typography variant="body1" color="text.secondary" paragraph>
-              Must-have pieces selected every month want style Ideas and Treats?
+              Chúng tôi sẽ phản hồi trong vòng 24 giờ{' '}
             </Typography>
 
             <Grid container spacing={2} sx={{ mt: 2 }}>
               <Grid item xs={12} md={6}>
-                <TextField fullWidth label="Full name" variant="outlined" sx={{ mb: 2 }} />
+                <TextField
+                  fullWidth
+                  label="Họ và tên"
+                  variant="outlined"
+                  {...register('fullName')}
+                  error={!!errors.fullName}
+                  helperText={errors.fullName?.message}
+                  sx={{ mb: 2 }}
+                />
               </Grid>
               <Grid item xs={12} md={6}>
-                <TextField fullWidth label="Email address" variant="outlined" sx={{ mb: 2 }} />
+                <TextField
+                  fullWidth
+                  label="Địa chỉ email"
+                  variant="outlined"
+                  {...register('email')}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                  sx={{ mb: 2 }}
+                />
               </Grid>
               <Grid item xs={12} md={6}>
-                <TextField fullWidth label="Phone number" variant="outlined" sx={{ mb: 2 }} />
+                <TextField
+                  fullWidth
+                  label="Số điện thoại"
+                  variant="outlined"
+                  {...register('phone')}
+                  error={!!errors.phone}
+                  helperText={errors.phone?.message}
+                  sx={{ mb: 2 }}
+                />
               </Grid>
               <Grid item xs={12} md={6}>
-                <TextField fullWidth label="Subject" variant="outlined" sx={{ mb: 2 }} />
+                <TextField
+                  fullWidth
+                  label="Chủ đề"
+                  variant="outlined"
+                  {...register('subject')}
+                  error={!!errors.subject}
+                  helperText={errors.subject?.message}
+                  sx={{ mb: 2 }}
+                />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth label="Enter message" variant="outlined" multiline rows={8} sx={{ mb: 2 }} />
+                <TextField
+                  fullWidth
+                  label="Nhập nội dung"
+                  variant="outlined"
+                  multiline
+                  rows={8}
+                  {...register('message')}
+                  error={!!errors.message}
+                  helperText={errors.message?.message}
+                  sx={{ mb: 2 }}
+                />
               </Grid>
             </Grid>
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2 }}>
               <Button
+                type="submit"
                 variant="contained"
                 endIcon={<ArrowForwardIcon />}
                 sx={{
@@ -144,7 +218,7 @@ function AlbumFeature(props) {
                   },
                 }}
               >
-                Get A Quote
+                Gửi Yêu Cầu
               </Button>
             </Box>
           </Box>

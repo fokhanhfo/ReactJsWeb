@@ -74,6 +74,7 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const categoryQuery = useSelector((state) => state.categoryApi.queries['getCategory(undefined)']);
   const [countProducts, setCountProducts] = useState(0);
+  const [selectValueProduct, setSelectValueProduct] = useState({});
   const theme = useTheme();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -117,16 +118,28 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
   };
 
   const handleSelectionChange = (newSelectionModel) => {
+    const selectedRows = data?.data?.products.filter((row) => newSelectionModel.includes(row.id));
+    setSelectValueProduct(selectedRows);
     setSelectedProducts(newSelectionModel);
-    console.log('Selected user IDs:', newSelectionModel);
   };
 
   const getSelectedProductIds = () => {
     return selectedProducts;
   };
 
-  const handleAddUsers = async (percentageValue) => {
+  const handleAddProduct = async (percentageValue) => {
     try {
+      const invalidProducts = selectValueProduct.filter((product) => {
+        const priceAfterDiscount = product.sellingPrice * (1 - percentageValue / 100);
+        return priceAfterDiscount < product.importPrice;
+      });
+
+      if (invalidProducts.length > 0) {
+        const productNames = invalidProducts.map((p) => p.name).join(', ');
+        enqueueSnackbar(`Không thể áp dụng vì giá sau giảm thấp hơn giá mua: ${productNames}`, { variant: 'warning' });
+        setIsSubmitting(false);
+        return;
+      }
       setIsSubmitting(true);
       const selectedIds = getSelectedProductIds();
       const newData = {
@@ -205,7 +218,7 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
       return;
     }
 
-    await handleAddUsers(percentageValue);
+    await handleAddProduct(percentageValue);
 
     data && setIsOpenDiaLog(false);
   };
@@ -314,15 +327,20 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
       // },
     },
     {
+      label: 'Giá nhập sản phẩm',
+      width: '5%',
+      render: (param) => <>{formatPrice(param.product.importPrice)}</>,
+    },
+    {
       label: 'Giá sản phẩm',
       width: '5%',
-      render: (param) => <>{param.product.productDetails[0].sellingPrice}</>,
+      render: (param) => <>{formatPrice(param.product.sellingPrice)}</>,
     },
     {
       label: 'Giá sau giảm',
       width: '5%',
       render: (param) => {
-        const price = param.product.productDetails[0].sellingPrice;
+        const price = param.product.sellingPrice;
         const discount = (price * param.percentageValue) / 100;
         return <>{formatPrice(price - discount)}</>;
       },
@@ -365,7 +383,8 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
     {
       field: 'name',
       headerName: 'Name',
-      flex: 1,
+      flex: 1.5,
+      minWidth: 200,
       renderCell: (params) => {
         const imageURL = imageMainProduct(params.row.productDetails);
         return (
@@ -391,12 +410,21 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
       },
     },
     {
-      field: 'productDetails',
-      headerName: 'Price',
+      field: 'importPrice',
+      headerName: 'Giá nhập',
       flex: 1,
+      minWidth: 120,
       valueGetter: (params) => {
-        const listPrice = params?.map((pd) => pd.sellingPrice).sort((a, b) => a - b);
-        return `${formatPrice(listPrice[0])} - ${formatPrice(listPrice[listPrice.length - 1])}`;
+        return formatPrice(params);
+      },
+    },
+    {
+      field: 'sellingPrice',
+      headerName: 'Giá bán',
+      flex: 1,
+      minWidth: 120,
+      valueGetter: (params) => {
+        return formatPrice(params);
       },
     },
     // {
@@ -411,12 +439,14 @@ function ProductDiscountPeriod({ onSubmit, idDiscount, discountsProduct, loading
       field: 'category',
       headerName: 'Category',
       flex: 1,
+      minWidth: 150,
       valueGetter: (params) => params?.name,
     },
     {
       field: 'actions',
       headerName: 'Thao tác',
       width: 100,
+      minWidth: 80,
       renderCell: (params) => (
         <Tooltip title="Thêm vào danh sách">
           <IconButton

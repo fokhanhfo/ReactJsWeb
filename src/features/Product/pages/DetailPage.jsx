@@ -11,6 +11,8 @@ import {
   CardContent,
   CardActions,
   Chip,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import ProductThumbnail from '../components/ProductThumbnail';
 import { Link, useMatch, useNavigate } from 'react-router-dom';
@@ -195,7 +197,7 @@ function DetailPage() {
 
                 const { percentageValue, finalPrice } = calculateDiscount(product, product.productDiscountPeriods);
                 return (
-                  <Grid item xs={12} sm={6} md={4} lg={2.4} key={product.id}>
+                  <Grid item xs={6} sm={6} md={4} lg={2.4} key={product.id}>
                     <Card
                       sx={{
                         height: '100%',

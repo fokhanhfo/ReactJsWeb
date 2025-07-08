@@ -41,23 +41,23 @@ function FilterViewer({ filters = {}, onChange = null }) {
   // }, [filters['category']]);
 
   const FILTER_LIST = [
-    {
-      id: 1,
-      getLabel: () => 'Giao hàng miễn phí',
-      isActive: (filter) => filter.isFreeShip,
-      isVisible: () => true,
-      isRemovable: false,
-      onRemove: () => {},
-      onToggle: (filter) => {
-        const newFilters = { ...filter };
-        if (newFilters.isFreeShip) {
-          delete newFilters.isFreeShip;
-        } else {
-          newFilters.isFreeShip = true;
-        }
-        return newFilters;
-      },
-    },
+    // {
+    //   id: 1,
+    //   getLabel: () => 'Giao hàng miễn phí',
+    //   isActive: (filter) => filter.isFreeShip,
+    //   isVisible: () => true,
+    //   isRemovable: false,
+    //   onRemove: () => {},
+    //   onToggle: (filter) => {
+    //     const newFilters = { ...filter };
+    //     if (newFilters.isFreeShip) {
+    //       delete newFilters.isFreeShip;
+    //     } else {
+    //       newFilters.isFreeShip = true;
+    //     }
+    //     return newFilters;
+    //   },
+    // },
     {
       id: 2,
       getLabel: (filter) => `${filter.price_gte}=>${filter.price_lte}`,
@@ -87,6 +87,36 @@ function FilterViewer({ filters = {}, onChange = null }) {
       onRemove: (filter) => {
         const newFilters = { ...filter };
         delete newFilters['category'];
+        return newFilters;
+      },
+      onToggle: () => {},
+    },
+    {
+      id: 4,
+      getLabel: (filter) => {
+        if (filter.sort === 'sellingPrice:ASC') return 'Giá tăng dần';
+        if (filter.sort === 'sellingPrice:DESC') return 'Giá giảm dần';
+        return filter.sort;
+      },
+      isActive: () => true,
+      isVisible: (filter) => Boolean(filter.sort) && filter.sort !== 'hasDiscount',
+      isRemovable: true,
+      onRemove: (filter) => {
+        const newFilters = { ...filter };
+        delete newFilters.sort;
+        return newFilters;
+      },
+      onToggle: () => {},
+    },
+    {
+      id: 5,
+      getLabel: (filter) => `Tìm kiếm: ${filter.name}`,
+      isActive: () => true,
+      isVisible: (filter) => Boolean(filter.name),
+      isRemovable: true,
+      onRemove: (filter) => {
+        const newFilters = { ...filter };
+        delete newFilters.name;
         return newFilters;
       },
       onToggle: () => {},

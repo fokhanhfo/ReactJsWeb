@@ -58,31 +58,34 @@ function SelectFrom(props) {
       <Controller
         name={name}
         control={form.control}
-        render={({ field }) => (
-          <>
-            <TextField
-              {...field}
-              value={field.value ? field.value[transmitId] : ''}
-              onChange={(e) => {
-                const selectedId = e.target.value;
-                const selectedOption = options.find((opt) => opt[transmitId] === selectedId);
-                field.onChange(selectedOption || null);
-                handleChange(selectedOption);
-              }}
-              variant="outlined"
-              size="small"
-              label={label}
-              select
-              disabled={disabled || readOnly || isLoading}
-            >
-              {options.map((option) => (
-                <MenuItem key={option[transmitId]} value={option[transmitId]}>
-                  {option.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </>
-        )}
+        render={({ field }) => {
+          console.log('field', field);
+          return (
+            <>
+              <TextField
+                {...field}
+                value={field.value ? field.value[transmitId] : ''}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const selectedOption = options.find((opt) => opt[transmitId] === selectedId);
+                  field.onChange(selectedOption || null);
+                  handleChange(selectedOption);
+                }}
+                variant="outlined"
+                size="small"
+                label={label}
+                select
+                disabled={disabled || readOnly || isLoading}
+              >
+                {options.map((option) => (
+                  <MenuItem key={option[transmitId]} value={option[transmitId]}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </>
+          );
+        }}
       />
       <FormHelperText>{message}</FormHelperText>
     </FormControl>

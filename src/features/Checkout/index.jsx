@@ -24,29 +24,29 @@ function CheckOutFeatures(props) {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
-  const schema = yup
-    .object({
-      fullname: yup.string().required('Họ và tên là bắt buộc'),
-      email: yup.string().email('Email không hợp lệ').required('Email là bắt buộc'),
-      phone: yup.string().required('Số điện thoại là bắt buộc'),
-      city: yup
-        .object()
-        .transform((value, originalValue) => (originalValue === '' ? null : value))
-        .nullable()
-        .required('Thành phố là bắt buộc'),
-      district: yup
-        .object()
-        .transform((value, originalValue) => (originalValue === '' ? null : value))
-        .nullable()
-        .required('Quận/Huyện là bắt buộc'),
-      commune: yup
-        .object()
-        .transform((value, originalValue) => (originalValue === '' ? null : value))
-        .nullable()
-        .required('Xã/Phường là bắt buộc'),
-      addressDetail: yup.string().required('Địa chỉ chi tiết là bắt buộc'),
-    })
-    .required();
+  // const schema = yup
+  //   .object({
+  //     fullname: yup.string().required('Họ và tên là bắt buộc'),
+  //     email: yup.string().email('Email không hợp lệ').required('Email là bắt buộc'),
+  //     phone: yup.string().required('Số điện thoại là bắt buộc'),
+  //     city: yup
+  //       .object()
+  //       .transform((value, originalValue) => (originalValue === '' ? null : value))
+  //       .nullable()
+  //       .required('Thành phố là bắt buộc'),
+  //     district: yup
+  //       .object()
+  //       .transform((value, originalValue) => (originalValue === '' ? null : value))
+  //       .nullable()
+  //       .required('Quận/Huyện là bắt buộc'),
+  //     commune: yup
+  //       .object()
+  //       .transform((value, originalValue) => (originalValue === '' ? null : value))
+  //       .nullable()
+  //       .required('Xã/Phường là bắt buộc'),
+  //     addressDetail: yup.string().required('Địa chỉ chi tiết là bắt buộc'),
+  //   })
+  //   .required();
 
   const form = useForm({
     defaultValues: {
@@ -58,14 +58,14 @@ function CheckOutFeatures(props) {
       commune: '',
       addressDetail: '',
     },
-    resolver: yupResolver(schema),
+    // resolver: yupResolver(schema),
   });
 
-  const listCart = cartQuery?.data?.data || [];
-  const selectCartItem = listCart.filter((item) => item.status === 1);
-  const totalPrice = selectCartItem.reduce((sum, item) => {
-    return sum + item.productDetail.sellingPrice * item.quantity;
-  }, 0);
+  // const listCart = cartQuery?.data?.data || [];
+  // const selectCartItem = listCart.filter((item) => item.status === 1);
+  // const totalPrice = selectCartItem.reduce((sum, item) => {
+  //   return sum + item.productDetail.sellingPrice * item.quantity;
+  // }, 0);
 
   const { refetch } = useGetCartQuery();
 

@@ -29,7 +29,6 @@ const Navbar = () => {
 
   return (
     <Box>
-      <Search />
       <Paper>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {/* {isMobile ? (

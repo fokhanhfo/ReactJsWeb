@@ -15,6 +15,7 @@ import {
   CardActions,
   useMediaQuery,
   useTheme,
+  Grow,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -23,129 +24,72 @@ import { Link } from 'react-router-dom';
 import InfiniteScroll from 'components/InfiniteScroll';
 import Loading from 'components/Loading';
 import StatusChip from '../StatusChip';
+import { useGetBillQuery } from 'hookApi/billApi';
 
-function BillAll({ listBill, filter, onSubmit, pagination, isLoading }) {
+function BillAll() {
+  const [filterBill, setFilter] = useState(() => ({
+    page: 1,
+    limit: 5,
+  }));
+  const { data, isLoading: isLoadingData, error } = useGetBillQuery(filterBill);
+  const paginationBill = data?.data?.count || 0;
+  const dataBill = data?.data?.bill || [];
   const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(filterBill.page || 1);
+  const [filterSearch, setFilterSearch] = useState(filterBill.search || '');
   const [isSearch, setIsSearch] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  // Refs để track state và tránh infinite loops
-  const prevFilterRef = useRef();
-  const isInitialized = useRef(false);
-  const searchTimeoutRef = useRef();
-
-  // Memoize filter values để tránh unnecessary re-renders
-  const filterStatus = useMemo(() => filter.status, [filter.status]);
-  const filterSearch = useMemo(() => filter.search, [filter.search]);
-  const currentPage = useMemo(() => filter.page || 1, [filter.page]);
-
-  // Optimized effect để handle list updates
+  const [visible, setVisible] = useState([]);
   useEffect(() => {
-    const prevFilter = prevFilterRef.current;
-
-    // Kiểm tra xem có phải là filter change hay page change
-    const isFilterChanged = !prevFilter || prevFilter.status !== filterStatus || prevFilter.search !== filterSearch;
-
-    const isPageChanged = prevFilter && prevFilter.page !== currentPage;
-
-    if (!isInitialized.current || isFilterChanged) {
-      // Reset posts khi filter thay đổi hoặc lần đầu
-      setPosts([...listBill]);
-      setIsSearch(!!filterSearch);
-      isInitialized.current = true;
-    } else if (isPageChanged && currentPage > 1) {
-      // Append posts khi load more
+    if (dataBill && dataBill.length > 0) {
       setPosts((prevPosts) => {
-        const existingIds = new Set(prevPosts.map((bill) => bill.id));
-        const newPosts = listBill.filter((bill) => !existingIds.has(bill.id));
+        // Tránh trùng lặp bài viết
+        const newPosts = dataBill.filter((bill) => !prevPosts.some((p) => p.id === bill.id));
         return [...prevPosts, ...newPosts];
       });
-    } else if (!isPageChanged && currentPage === 1) {
-      // Update posts nếu cùng page nhưng data thay đổi
-      setPosts([...listBill]);
     }
+  }, [dataBill]);
 
-    // Update previous filter reference
-    prevFilterRef.current = { ...filter };
-  }, [listBill, filterStatus, filterSearch, currentPage, filter]);
+  const handleSearch = (event) => {};
 
-  // Optimized search handler với debounce
-  const handleSearch = useCallback(
-    (event) => {
-      event.preventDefault();
-      const searchValue = event.target.search.value.trim();
-
-      // Clear previous timeout
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-
-      // Debounce search để tránh quá nhiều API calls
-      searchTimeoutRef.current = setTimeout(() => {
-        const newFilter = {
-          ...filter,
-          search: searchValue || undefined,
-          page: 1,
-        };
-
-        onSubmit(newFilter);
-      }, 300);
-    },
-    [filter, onSubmit],
-  );
-
-  // Optimized fetchMore function
   const fetchMore = useCallback(() => {
-    if (isLoading) return;
+    if (isLoadingData) return;
 
-    const nextPage = currentPage + 1;
-    onSubmit({ ...filter, page: nextPage });
-  }, [filter, currentPage, onSubmit, isLoading]);
+    setFilter((prevFilter) => {
+      const newPage = prevFilter.page + 1;
+      return { ...prevFilter, page: newPage };
+    });
+  }, [filterBill, currentPage, , isLoadingData]);
 
-  // Memoize hasMore calculation
-  const hasMore = useMemo(() => {
-    return posts.length < pagination.count && !isLoading;
-  }, [posts.length, pagination.count, isLoading]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
-
+  const hasMore = posts.length < paginationBill && !isLoadingData;
   return (
     <Box>
-      {!filterStatus && (
-        <Box sx={{ mb: 2 }}>
-          <form onSubmit={handleSearch}>
-            <TextField
-              name="search"
-              placeholder="Tìm kiếm hóa đơn..."
-              fullWidth
-              variant="outlined"
-              defaultValue={filterSearch || ''}
-              sx={{
-                backgroundColor: 'white',
+      {/* <Box sx={{ mb: 2 }}>
+        <form onSubmit={handleSearch}>
+          <TextField
+            name="search"
+            placeholder="Tìm kiếm hóa đơn..."
+            fullWidth
+            variant="outlined"
+            defaultValue={filterSearch || ''}
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </form>
-        </Box>
-      )}
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </form>
+      </Box> */}
 
       <InfiniteScroll
         loader={<Loading />}
@@ -160,7 +104,9 @@ function BillAll({ listBill, filter, onSubmit, pagination, isLoading }) {
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {posts.map((bill) => (
-            <BillCard key={bill.id} bill={bill} isMobile={isMobile} />
+            <div>
+              <BillCard bill={bill} isMobile={isMobile} />
+            </div>
           ))}
         </Box>
       </InfiniteScroll>
@@ -298,16 +244,6 @@ const BillCard = React.memo(({ bill, isMobile }) => {
   );
 });
 
-BillAll.propTypes = {
-  listBill: PropTypes.array.isRequired,
-  filter: PropTypes.object.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  pagination: PropTypes.object.isRequired,
-  isLoading: PropTypes.bool,
-};
-
-BillAll.defaultProps = {
-  isLoading: false,
-};
+BillAll.propTypes = {};
 
 export default BillAll;

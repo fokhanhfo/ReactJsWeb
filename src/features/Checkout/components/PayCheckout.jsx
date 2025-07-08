@@ -28,6 +28,9 @@ import { useFormContext } from 'react-hook-form';
 import { useGetDiscountsByUserIdQuery } from 'hookApi/discountUserApi';
 import { useSnackbar } from 'notistack';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import dayjs from 'dayjs';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
 PayCheckout.propTypes = {
   cartQuery: PropTypes.object.isRequired,
@@ -65,6 +68,52 @@ function PayCheckout({ cartQuery, setIsDialogOpen }) {
   const { valueDiscountFreeShip, setValueDiscountFreeShip } = useContext(CheckoutContext);
   const { enqueueSnackbar } = useSnackbar();
 
+  useEffect(() => {
+    let shouldRemoveProductVoucher = false;
+    let shouldRemoveFreeShipVoucher = false;
+    const removedVouchers = [];
+
+    // Check applied product voucher
+    if (voucherProduct && totalPrice < voucherProduct.discountCondition) {
+      shouldRemoveProductVoucher = true;
+      removedVouchers.push(`Voucher sản phẩm (${voucherProduct.discountCode})`);
+    }
+
+    // Check applied free ship voucher
+    if (discountFreeShip && totalPrice < discountFreeShip.discountCondition) {
+      shouldRemoveFreeShipVoucher = true;
+      removedVouchers.push(`Voucher miễn phí ship (${discountFreeShip.discountCode})`);
+    }
+
+    // Remove vouchers if conditions are not met
+    if (shouldRemoveProductVoucher || shouldRemoveFreeShipVoucher) {
+      if (shouldRemoveProductVoucher) {
+        setvoucherProduct(null);
+        setValueVoucherProduct(0);
+        setSelectedVoucherProduct(null);
+      }
+
+      if (shouldRemoveFreeShipVoucher) {
+        setDiscountFreeShip(null);
+        setValueDiscountFreeShip(0);
+        setSelectedFreeShipVoucher(null);
+      }
+
+      // Show notification about removed vouchers
+      const message =
+        removedVouchers.length > 1
+          ? `Các voucher sau đã bị hủy do đơn hàng không đạt điều kiện tối thiểu: ${removedVouchers.join(', ')}`
+          : `${removedVouchers[0]} đã bị hủy do đơn hàng không đạt điều kiện tối thiểu ${formatPrice(
+              shouldRemoveProductVoucher ? voucherProduct?.discountCondition : discountFreeShip?.discountCondition,
+            )}`;
+
+      enqueueSnackbar(message, {
+        variant: 'warning',
+        autoHideDuration: 5000,
+      });
+    }
+  }, [totalPrice, voucherProduct, discountFreeShip]);
+
   // const handleCompleteOrder = async () => {
   //   const cartRequests = cartQuery.data.data
   //     .filter((element) => element.status === 1)
@@ -94,6 +143,7 @@ function PayCheckout({ cartQuery, setIsDialogOpen }) {
 
   const discountType = (discount) => {
     const voucher = discount?.discount;
+    console.log('Voucher:', voucher);
     return (
       <Grid item xs={12} sm={6} key={voucher.id} sx={{ cursor: 'pointer' }}>
         <Paper
@@ -121,6 +171,16 @@ function PayCheckout({ cartQuery, setIsDialogOpen }) {
                 : '1.5px dashed #000',
           }}
           onClick={() => {
+            if (voucher.discountCondition > totalPrice) {
+              enqueueSnackbar(
+                `Đơn hàng chưa đạt điều kiện áp dụng voucher này (cần tối thiểu ${formatPrice(
+                  voucher.discountCondition,
+                )})`,
+                { variant: 'warning' },
+              );
+              return;
+            }
+
             if (voucher.category === 1) {
               setSelectedVoucherProduct(selectedVoucherProduct?.id === voucher.id ? null : voucher);
             } else {
@@ -167,7 +227,21 @@ function PayCheckout({ cartQuery, setIsDialogOpen }) {
                   lineHeight: 1,
                 }}
               >
-                {voucher.value || '40.000Đ'}
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <Typography>
+                    {voucher.type === 1
+                      ? `${voucher.value}%`
+                      : formatPrice(voucher.value) || 'Giảm 50K cho đơn từ 699K'}
+                  </Typography>
+
+                  {voucher.category === 1 ? (
+                    <ShoppingBagIcon sx={{ color: '#1976d2', fontSize: 20 }} /> // sản phẩm
+                  ) : voucher.category === 2 ? (
+                    <LocalShippingIcon sx={{ color: '#f57c00', fontSize: 20 }} /> // vận chuyển
+                  ) : (
+                    <Box sx={{ fontSize: 12, color: 'gray' }}>?</Box>
+                  )}
+                </Box>
               </Typography>
               <Typography
                 variant="caption"
@@ -178,7 +252,7 @@ function PayCheckout({ cartQuery, setIsDialogOpen }) {
                   fontSize: '0.75rem',
                 }}
               >
-                {voucher.discountName || 'Giảm cho đơn từ 699K'}
+                {`Tối đa: ${formatPrice(voucher.maxValue)}` || 'Giảm cho đơn từ 699K'}
               </Typography>
             </Box>
 
@@ -236,7 +310,10 @@ function PayCheckout({ cartQuery, setIsDialogOpen }) {
                 fontSize: '0.7rem',
               }}
             >
-              {voucher.expiry || 'Áp dụng đến 31/12/2024 • Không áp dụng tích điểm'}
+              {`Áp dụng đến ${dayjs(voucher.endTime).format(
+                'DD/MM/YYYY',
+              )} • Điều kiện áp dụng: đơn hàng lớn hơn hoặc bằng ${formatPrice(voucher.discountCondition)}` ||
+                'Áp dụng đến 31/12/2024 • Không áp dụng tích điểm'}
             </Typography>
           </Box>
         </Paper>

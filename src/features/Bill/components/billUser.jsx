@@ -1,192 +1,56 @@
 'use client';
-
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { Box, Paper } from '@mui/material';
-import { NavLink, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
-import billApi from 'api/billApi';
-import { handleGlobalError } from 'utils';
+import { useMemo, useCallback } from 'react';
+import { Box, Paper, Tab, Tabs, useTheme, useMediaQuery } from '@mui/material';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import queryString from 'query-string';
 import PageBillDetail from './PageBillDetail';
 import BillAll from './billStatus/billAll';
+import BillProcessing from './billStatus/billProcessing';
+import BillDelivering from './billStatus/billDelivering';
+import BillComplete from './billStatus/billComplete';
+import BillCancel from './billStatus/BillCancel';
+import BillRefund from './billStatus/billRefund';
 
-function BillUser(props) {
-  const [listBill, setListBill] = useState([]);
-  const [pagination, setPagination] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
+function BillUser() {
   const location = useLocation();
   const navigate = useNavigate();
+  const theme = useTheme();
 
-  // Cache để tránh load lại dữ liệu không cần thiết
-  const cacheRef = useRef(new Map());
-  const lastFetchRef = useRef(null);
-
-  // Theo dõi lần render cuối để tránh fetch trùng lặp
-  const lastRenderRef = useRef({
-    status: null,
-    page: null,
-    search: null,
-  });
+  // Responsive breakpoints
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
 
   // Memoize the parsed query params
   const queryParams = useMemo(() => {
     return queryString.parse(location.search);
   }, [location.search]);
 
-  const [filter, setFilter] = useState(() => ({
-    page: 1,
-    limit: 5,
-    status: queryParams.status || undefined,
-  }));
-
-  // Tạo cache key để kiểm tra xem đã fetch dữ liệu này chưa
-  const createCacheKey = useCallback((filterObj) => {
-    return JSON.stringify({
-      status: filterObj.status,
-      search: filterObj.search,
-      page: filterObj.page,
-      limit: filterObj.limit,
-    });
-  }, []);
-
-  // Optimized fetch function với caching
-  const fetchBills = useCallback(
-    async (currentFilter, forceRefresh = false) => {
-      const cacheKey = createCacheKey(currentFilter);
-
-      // Kiểm tra cache nếu không force refresh
-      if (!forceRefresh && cacheRef.current.has(cacheKey)) {
-        const cachedData = cacheRef.current.get(cacheKey);
-        setListBill(cachedData.data);
-        setPagination(cachedData.pagination);
-        return;
-      }
-
-      // Tránh duplicate requests
-      if (lastFetchRef.current === cacheKey && isLoading) {
-        return;
-      }
-
-      setIsLoading(true);
-      lastFetchRef.current = cacheKey;
-
-      try {
-        const res = await billApi.getAll(currentFilter);
-
-        // Cache kết quả
-        cacheRef.current.set(cacheKey, {
-          data: res.data,
-          pagination: res.pagination,
-        });
-
-        setListBill(res.data);
-        setPagination(res.pagination);
-      } catch (error) {
-        handleGlobalError(error, enqueueSnackbar);
-      } finally {
-        setIsLoading(false);
-        lastFetchRef.current = null;
-      }
-    },
-    [enqueueSnackbar, createCacheKey, isLoading],
-  );
-
-  // Update filter when URL changes - FIX: Sử dụng deep comparison cho status
-  useEffect(() => {
-    const urlStatus = queryParams.status;
-
-    setFilter((prev) => {
-      // Kiểm tra chính xác để tránh update không cần thiết
-      if (String(prev.status) !== String(urlStatus)) {
-        return {
-          ...prev,
-          status: urlStatus,
-          page: 1, // Reset page when status changes
-        };
-      }
-      return prev;
-    });
-  }, [queryParams.status]);
-
-  // Fetch bills when filter changes - FIX: Thêm kiểm tra để tránh fetch trùng lặp
-  useEffect(() => {
-    // Kiểm tra xem filter có thực sự thay đổi không
-    const currentStatus = String(filter.status || '');
-    const currentPage = filter.page;
-    const currentSearch = filter.search || '';
-
-    const lastStatus = String(lastRenderRef.current.status || '');
-    const lastPage = lastRenderRef.current.page;
-    const lastSearch = lastRenderRef.current.search || '';
-
-    // Chỉ fetch khi có thay đổi thực sự
-    if (currentStatus !== lastStatus || currentPage !== lastPage || currentSearch !== lastSearch) {
-      // Cập nhật giá trị cuối
-      lastRenderRef.current = {
-        status: filter.status,
-        page: filter.page,
-        search: filter.search,
-      };
-
-      // Kiểm tra cache
-      const cacheKey = createCacheKey(filter);
-      if (cacheRef.current.has(cacheKey)) {
-        const cachedData = cacheRef.current.get(cacheKey);
-        setListBill(cachedData.data);
-        setPagination(cachedData.pagination);
-      } else {
-        fetchBills(filter);
-      }
-    }
-  }, [filter, fetchBills, createCacheKey]);
-
-  // Optimized onSubmit function
-  const onSubmit = useCallback((newFilter) => {
-    setFilter((prev) => {
-      const updatedFilter = { ...prev, ...newFilter };
-
-      // Chỉ clear cache khi có thay đổi quan trọng
-      if (
-        (newFilter.search !== undefined && newFilter.search !== prev.search) ||
-        (newFilter.status !== undefined && String(newFilter.status) !== String(prev.status))
-      ) {
-        cacheRef.current.clear();
-      }
-
-      return updatedFilter;
-    });
-  }, []);
-
-  // Memoize tab active check - FIX: Cải thiện logic so sánh cho chuỗi chứa nhiều giá trị
-  const isTabActive = useCallback(
-    (path) => {
-      if (path === './all' && (!queryParams.status || queryParams.status === '')) {
-        return true;
-      }
-
-      // Xử lý đặc biệt cho path có chứa status
-      if (path.includes('?status=')) {
-        const pathStatus = path.split('?status=')[1];
-        return String(queryParams.status) === String(pathStatus);
-      }
-
-      return false;
-    },
-    [queryParams.status],
-  );
-
-  // Memoize tab items
   const tabItems = useMemo(
     () => [
       { label: 'Tất cả', path: './all' },
-      { label: 'Đang xử lý', path: './all?status=0,1' },
-      { label: 'Đang giao hàng', path: './all?status=2,3' },
-      { label: 'Hoàn thành', path: './all?status=5' },
-      { label: 'Đã hủy', path: './all?status=6' },
-      { label: 'Hoàn tiền', path: './all?status=7' },
+      { label: 'Đang xử lý', path: './processing' },
+      { label: 'Đang giao hàng', path: './delivering' },
+      { label: 'Hoàn thành', path: './complete' },
+      { label: 'Đã hủy', path: './cancel' },
+      { label: 'Hoàn tiền', path: './refund' },
     ],
     [],
+  );
+
+  const getCurrentTabIndex = useCallback(() => {
+    const currentPath = location.pathname;
+    const activeIndex = tabItems.findIndex((item) => currentPath.includes(item.path.replace('./', '')));
+    return activeIndex >= 0 ? activeIndex : 0;
+  }, [location.pathname, tabItems]);
+
+  const handleTabChange = useCallback(
+    (event, newValue) => {
+      const selectedTab = tabItems[newValue];
+      localStorage.setItem('bill_return_url', window.location.href);
+      navigate(selectedTab.path);
+    },
+    [navigate, tabItems],
   );
 
   // Handle back navigation với cache
@@ -201,73 +65,146 @@ function BillUser(props) {
     }
   }, [navigate]);
 
+  // Responsive tab styles
+  const getTabsStyles = () => ({
+    '& .MuiTabs-root': {
+      minHeight: isMobile ? 40 : 48,
+    },
+    '& .MuiTabs-indicator': {
+      backgroundColor: '#000',
+      height: isMobile ? 2 : 3,
+    },
+    '& .MuiTab-root': {
+      textTransform: 'none',
+      minWidth: isMobile ? 80 : 120,
+      minHeight: isMobile ? 40 : 48,
+      padding: isMobile ? '8px 12px' : '12px 20px',
+      fontSize: isMobile ? '0.75rem' : isTablet ? '0.8rem' : '0.875rem',
+      fontWeight: 500,
+      color: '#666',
+      '&.Mui-selected': {
+        color: '#000',
+        fontWeight: 700,
+      },
+      '&:hover': {
+        color: '#333',
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+      },
+    },
+    '& .MuiTabs-scrollButtons': {
+      '&.Mui-disabled': {
+        opacity: 0.3,
+      },
+    },
+  });
+
   return (
-    <Box>
-      <Box mb={2}>
-        <Paper elevation={3} sx={{ borderRadius: '8px', overflow: 'hidden' }}>
-          {/* Thêm thanh cuộn ngang cho mobile */}
+    <Box
+      sx={{
+        width: '100%',
+        maxWidth: '100vw',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Tab Navigation */}
+      <Box
+        mb={isMobile ? 1 : 2}
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          backgroundColor: 'background.default',
+        }}
+      >
+        <Paper
+          elevation={isMobile ? 1 : 3}
+          sx={{
+            borderRadius: isMobile ? '4px' : '8px',
+            overflow: 'hidden',
+            boxShadow: isMobile ? '0 1px 3px rgba(0,0,0,0.1)' : undefined,
+          }}
+        >
           <Box
             sx={{
               overflowX: 'auto',
-              scrollbarWidth: 'none' /* Ẩn scrollbar Firefox */,
-              '&::-webkit-scrollbar': { display: 'none' } /* Ẩn scrollbar Chrome/Safari */,
+              overflowY: 'hidden',
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
               borderBottom: '1px solid #ddd',
+              WebkitOverflowScrolling: 'touch',
             }}
           >
             <Box
               display="flex"
-              flexWrap="nowrap" /* Ngăn xuống dòng */
-              justifyContent={{ xs: 'flex-start', sm: 'space-between' }} /* Căn trái trên mobile */
+              flexWrap="nowrap"
+              justifyContent="flex-start"
               alignItems="center"
-              p={1} /* Giảm padding cho mobile */
-              minWidth="max-content" /* Giữ nguyên kích thước nội dung */
+              sx={{
+                minWidth: 'max-content',
+                px: isMobile ? 0.5 : 1,
+                py: isMobile ? 0.5 : 1,
+              }}
             >
-              {tabItems.map((item, index) => {
-                const active = isTabActive(item.path);
-                return (
-                  <NavLink
+              <Tabs
+                value={getCurrentTabIndex()}
+                onChange={handleTabChange}
+                variant={isMobile ? 'scrollable' : 'standard'}
+                scrollButtons={isMobile || isTablet ? 'auto' : false}
+                allowScrollButtonsMobile={true}
+                fullWidth={!isMobile}
+                sx={{
+                  ...getTabsStyles(),
+                  ...(isTablet || (!isMobile && !isTablet) ? { width: '100%' } : {}),
+                  display: 'flex', // thêm
+                  justifyContent: 'space-between', // chia đều
+                }}
+                TabIndicatorProps={{
+                  style: {
+                    transition: 'all 0.3s ease',
+                  },
+                }}
+              >
+                {tabItems.map((item, index) => (
+                  <Tab
                     key={index}
-                    to={item.path}
-                    style={{
-                      textDecoration: 'none',
-                      color: active ? '#fff' : '#555',
-                      fontWeight: active ? 'bold' : 'normal',
-                      padding: '10px 20px',
-                      borderRadius: '4px',
-                      backgroundColor: active ? '#000' : 'transparent',
-                      transition: 'all 0.3s ease',
-                      whiteSpace: 'nowrap' /* Ngăn chữ xuống dòng */,
-                      fontSize: '0.875rem' /* Giảm cỡ chữ */,
-                      flexShrink: 0 /* Ngăn co lại */,
-                      margin: '0 4px' /* Khoảng cách giữa các tab */,
+                    label={item.label}
+                    id={`tab-${index}`}
+                    aria-controls={`tabpanel-${index}`}
+                    sx={{
+                      flex: 1, // thêm: mỗi tab chiếm đều không gian
+                      ...(isMobile && {
+                        '&:first-of-type': {
+                          marginLeft: '4px',
+                        },
+                        '&:last-of-type': {
+                          marginRight: '4px',
+                        },
+                      }),
                     }}
-                    onClick={() => {
-                      localStorage.setItem('bill_return_url', window.location.href);
-                    }}
-                  >
-                    {item.label}
-                  </NavLink>
-                );
-              })}
+                  />
+                ))}
+              </Tabs>
             </Box>
           </Box>
         </Paper>
       </Box>
 
-      <Box>
+      {/* Content Area */}
+      <Box
+        sx={{
+          pb: isMobile ? 2 : 3,
+          minHeight: 'calc(100vh - 200px)',
+        }}
+      >
         <Routes>
-          <Route
-            path="/all"
-            element={
-              <BillAll
-                listBill={listBill}
-                onSubmit={onSubmit}
-                filter={filter}
-                pagination={pagination}
-                isLoading={isLoading}
-              />
-            }
-          />
+          <Route path="/all" element={<BillAll />} />
+          <Route path="/processing" element={<BillProcessing />} />
+          <Route path="/delivering" element={<BillDelivering />} />
+          <Route path="/complete" element={<BillComplete />} />
+          <Route path="/cancel" element={<BillCancel />} />
+          <Route path="/refund" element={<BillRefund />} />
           <Route path="/:billId" element={<PageBillDetail onBack={handleBack} />} />
         </Routes>
       </Box>

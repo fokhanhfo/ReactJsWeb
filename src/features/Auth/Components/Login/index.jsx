@@ -104,7 +104,7 @@ function Login(props) {
       if (closeDialog) closeDialog();
       setIsLoggedIn(true);
 
-      if (listRoles[0] === 'ROLE_ADMIN') {
+      if (listRoles[0] === 'ROLE_ADMIN' || listRoles.includes('ROLE_STAFF')) {
         navigate('/admin/home');
       }
 

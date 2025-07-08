@@ -19,6 +19,9 @@ import {
   ThemeProvider,
   Button,
   Avatar,
+  Dialog,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Receipt, Person, LocalShipping, CreditCard } from '@mui/icons-material';
@@ -30,12 +33,20 @@ import StepLabel from '@mui/material/StepLabel';
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
 import { styled } from '@mui/material/styles';
 import DataTable from 'admin/components/Table/DataTable';
+import { Download, Print } from '@mui/icons-material';
+import jsPDF from 'jspdf';
 import EditIcon from '@mui/icons-material/Edit';
 import { optionStatusBill } from 'utils/status';
 import ConfirmDialog from 'components/ConfirmDialog/ConfirmDialog';
 import { useGetBillByIdQuery, useUpdateBillMutation } from 'hookApi/billApi';
 import ColorlibStepIcon from 'components/billDetail/ColorlibStepIcon';
 import BillCancelDialog from '../components/BillCancelDialog';
+import {
+  ShoppingCart as ShoppingCartIcon,
+  LocalShipping as LocalShippingIcon,
+  Payment as PaymentIcon,
+} from '@mui/icons-material';
+import InvoiceGenerator from '../components/InvoiceGenerator';
 // Create a black and white theme
 const blackAndWhiteTheme = createTheme({
   palette: {
@@ -133,6 +144,8 @@ function PageBillDetail() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCancelBillOpen, setIsCancelBillOpen] = useState(false);
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
+
   const navigate = useNavigate();
 
   // useEffect(() => {
@@ -163,6 +176,24 @@ function PageBillDetail() {
       </Container>
     );
 
+  // Hàm tải PDF
+  const downloadPDF = () => {
+    const doc = generatePDF();
+    doc.save(`hoa-don-${billData.id}.pdf`);
+  };
+
+  // Hàm in PDF
+  const printPDF = () => {
+    const doc = generatePDF();
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    const printWindow = window.open(pdfUrl);
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  };
+
   const steps = ['Đã đặt hàng', 'Chờ phê duyệt', 'Chuẩn bị hàng', 'Vận chuyển', 'Chờ giao hàng', 'Xác nhận Hoàn thành'];
 
   const rows = billData.billDetail.map((item) => {
@@ -173,11 +204,11 @@ function PageBillDetail() {
       id: item.id,
       image: imageUrl,
       name: product.name,
-      price: item.productDetail.product.sellingPrice,
+      price: { sellingPrice: item.sellingPrice, discountPrice: item.discountPrice },
       quantity: item.quantity,
       size: item.size,
       color: item.color,
-      total: item.productDetail.product.sellingPrice * item.quantity,
+      total: item.discountPrice ? item.discountPrice * item.quantity : item.sellingPrice * item.quantity,
     };
   });
 
@@ -222,6 +253,9 @@ function PageBillDetail() {
     if (response) {
       enqueueSnackbar('Update trạng thái thành công', { variant: 'success' });
       refetch();
+      if (billData.status === 1) {
+        setIsInvoiceDialogOpen(true);
+      }
     } else {
       enqueueSnackbar('Update trạng thái không thành công', { variant: 'error' });
     }
@@ -277,6 +311,266 @@ function PageBillDetail() {
   };
 
   const countProductDetail = billData.billDetail.reduce((sum, item) => sum + item.quantity, 0);
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+
+    const normalizeProductName = (str) => {
+      return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D');
+    };
+
+    // Sử dụng font Times hỗ trợ Unicode tốt hơn
+    doc.setFont('times');
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('times', 'bold');
+    doc.text('HOA DON BAN HANG', 105, 20, { align: 'center' });
+
+    // Thông tin công ty (tùy chọn)
+    doc.setFontSize(10);
+    doc.setFont('times', 'normal');
+    doc.text('SHOP THOI TRANG HOANG HAI', 105, 30, { align: 'center' });
+    doc.text('Dia chi: 26 Hoa Son, TT. Chuc Son, Chuong My, Ha Noi, Viet Nam', 105, 35, { align: 'center' });
+
+    // Thông tin đơn hàng
+    doc.setFontSize(12);
+    doc.setFont('times', 'normal');
+
+    let yPosition = 50;
+
+    // Ngày đặt hàng
+    doc.setFont('times', 'bold');
+    doc.text('Ngay dat:', 105, yPosition);
+    doc.text('Ma don hang:', 20, yPosition);
+    doc.setFont('times', 'normal');
+    doc.text(new Date(billData.createdDate).toLocaleDateString('vi-VN'), 155, yPosition);
+    doc.text(`#${billData.id}`, 70, yPosition);
+
+    yPosition += 8;
+
+    // Mã đơn hàng
+    doc.setFont('times', 'bold');
+    doc.text('Ten khach hàng:', 20, yPosition);
+    doc.text('So dien thoai:', 105, yPosition);
+    doc.setFont('times', 'normal');
+    doc.text(`#${billData.phone}`, 155, yPosition);
+    doc.text(`${normalizeProductName(billData.fullName)}`, 70, yPosition);
+
+    yPosition += 8;
+
+    // Phương thức thanh toán
+    doc.setFont('times', 'bold');
+    doc.text('Thanh toan:', 20, yPosition);
+    doc.setFont('times', 'normal');
+    const paymentText = billData.payMethod === null ? 'Thanh toan khi nhan hang' : billData.payMethod;
+    doc.text(paymentText, 70, yPosition);
+
+    yPosition += 8;
+
+    // Địa chỉ giao hàng
+    doc.setFont('times', 'bold');
+    doc.text('Dia chi:', 20, yPosition);
+    doc.setFont('times', 'normal');
+
+    // Chuyển đổi ký tự có dấu thành không dấu cho địa chỉ
+    const normalizeAddress = (str) => {
+      return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D');
+    };
+
+    const addressLines = doc.splitTextToSize(normalizeAddress(billData.address), 120);
+    doc.text(addressLines, 70, yPosition);
+    yPosition += addressLines.length * 5;
+
+    yPosition += 10;
+
+    // Đường kẻ phân cách
+    doc.setLineWidth(0.5);
+    doc.line(20, yPosition, 190, yPosition);
+    yPosition += 8;
+
+    // Header bảng sản phẩm
+    doc.setFont('times', 'bold');
+    doc.setFontSize(10);
+    doc.text('STT', 25, yPosition);
+    doc.text('San pham', 40, yPosition);
+    doc.text('Size', 90, yPosition);
+    doc.text('Mau', 105, yPosition);
+    doc.text('SL', 125, yPosition);
+    doc.text('Don gia', 140, yPosition);
+    doc.text('Thanh tien', 170, yPosition);
+
+    yPosition += 3;
+    doc.line(20, yPosition, 190, yPosition);
+    yPosition += 8;
+
+    // Danh sách sản phẩm
+    doc.setFont('times', 'normal');
+    doc.setFontSize(9);
+
+    rows.forEach((item, index) => {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+
+        // Vẽ lại header bảng trên trang mới
+        doc.setFont('times', 'bold');
+        doc.setFontSize(10);
+        doc.text('STT', 25, yPosition);
+        doc.text('San pham', 40, yPosition);
+        doc.text('Size', 90, yPosition);
+        doc.text('Mau', 105, yPosition);
+        doc.text('SL', 125, yPosition);
+        doc.text('Don gia', 140, yPosition);
+        doc.text('Thanh tien', 170, yPosition);
+        yPosition += 3;
+        doc.line(20, yPosition, 190, yPosition);
+        yPosition += 8;
+        doc.setFont('times', 'normal');
+        doc.setFontSize(9);
+      }
+
+      const { sellingPrice, discountPrice } = item.price;
+      const quantity = item.quantity;
+      const totalSelling = sellingPrice * quantity;
+      const totalDiscount = discountPrice * quantity;
+      const format = (value) => new Intl.NumberFormat('vi-VN').format(value) + ' VND';
+
+      // STT
+      doc.text((index + 1).toString(), 25, yPosition);
+
+      const productLines = doc.splitTextToSize(normalizeProductName(item.name), 60);
+      doc.text(productLines, 40, yPosition);
+
+      // Size, màu, số lượng
+      doc.text(item.size || '-', 90, yPosition);
+      doc.text(item.color || '-', 105, yPosition);
+      doc.text(item.quantity.toString(), 125, yPosition);
+
+      // Đơn giá và thành tiền (chỉ hiển thị số)
+      const formatPriceForPDF = (price) => {
+        const { sellingPrice, discountPrice } = item.price;
+        return new Intl.NumberFormat('vi-VN').format(price) + ' VND';
+      };
+
+      if (sellingPrice === discountPrice) {
+        // không giảm giá
+        doc.text(format(sellingPrice), 140, yPosition);
+        doc.text(format(totalSelling), 170, yPosition);
+      } else {
+        // có giảm giá
+        const discountText = format(discountPrice);
+        const originalText = format(sellingPrice);
+
+        // dòng giá giảm
+        doc.text(discountText, 140, yPosition);
+
+        // dòng giá gốc bên dưới
+        const originalY = yPosition + 4;
+        doc.text(originalText, 140, originalY);
+
+        // vẽ gạch giữa giá gốc
+        const textMiddleY = originalY - 1; // giữa chiều cao chữ
+        const textWidth = doc.getTextWidth(originalText);
+        doc.setLineWidth(0.2);
+        doc.setDrawColor(0, 0, 0, 50);
+        doc.line(140, textMiddleY, 140 + textWidth, textMiddleY);
+        // thành tiền
+        doc.text(format(totalDiscount), 170, yPosition);
+      }
+
+      yPosition += Math.max(productLines.length * 4, 8);
+    });
+
+    yPosition += 5;
+    doc.setLineWidth(0.5);
+    doc.line(20, yPosition, 190, yPosition);
+    yPosition += 10;
+
+    // Tổng tiền
+    doc.setFont('times', 'normal');
+    doc.setFontSize(10);
+
+    // Tong san pham
+    doc.text('Tong san pham:', 140, yPosition);
+    doc.text(`${countProductDetail}`, 175, yPosition);
+
+    // Cập nhật yPosition để xuống dòng
+    yPosition += 8;
+
+    // Tong tien
+    doc.text('Tong tien:', 140, yPosition);
+    const formatPriceForPDF = (price) => {
+      return new Intl.NumberFormat('vi-VN').format(price) + ' VND';
+    };
+    doc.text(formatPriceForPDF(billData.total_price), 175, yPosition);
+
+    // Cập nhật yPosition để xuống dòng
+    yPosition += 8;
+
+    // Voucher
+    doc.text('Voucher:', 140, yPosition);
+    doc.text(formatPriceForPDF(billData.discountUser), 175, yPosition);
+
+    // Cập nhật yPosition để xuống dòng
+    yPosition += 8;
+
+    // Phi giao hang
+    doc.text('Phi giao hang:', 140, yPosition);
+    doc.text(formatPriceForPDF(30000), 175, yPosition);
+
+    // Cập nhật yPosition để xuống dòng
+    yPosition += 8;
+
+    doc.setFont('times', 'bold');
+    // Tong thanh toan
+    doc.text('Tong thanh toan:', 140, yPosition);
+    doc.text(
+      formatPriceForPDF(billData.total_price + 30000 - (billData.discountShip + billData.discountUser)),
+      175,
+      yPosition,
+    );
+
+    yPosition += 15;
+
+    // Ghi chú
+    if (billData.note) {
+      doc.setFont('times', 'bold');
+      doc.setFontSize(10);
+      doc.text('Ghi chu:', 20, yPosition);
+      yPosition += 8;
+
+      doc.setFont('times', 'normal');
+      // Chuyển đổi ghi chú
+      const normalizeNote = (str) => {
+        return str
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'D');
+      };
+      const noteLines = doc.splitTextToSize(normalizeNote(billData.note), 170);
+      doc.text(noteLines, 20, yPosition);
+      yPosition += noteLines.length * 5;
+    }
+
+    // Footer
+    yPosition += 20;
+    doc.setFont('times', 'italic');
+    doc.setFontSize(8);
+    doc.text('Cam on quy khach da mua hang!', 105, yPosition, { align: 'center' });
+    doc.text('Hotline: 0977.477.636 | Email: HoangHaiFashion@gmail.com', 105, yPosition + 5, { align: 'center' });
+
+    return doc;
+  };
 
   return (
     <Box display="flex" flexDirection="column" gap={2}>
@@ -364,20 +658,36 @@ function PageBillDetail() {
               <Box>
                 <Grid container>
                   <Grid item xs={6}>
-                    <Typography variant="body2">Phí giao hàng:</Typography>
+                    <Typography variant="body2">Voucher:</Typography>
                   </Grid>
                   <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2">{formatPrice(billData.total_price)}</Typography>
+                    <Typography variant="body2">{`- ${formatPrice(billData.discountUser)}`}</Typography>
                   </Grid>
                 </Grid>
               </Box>
               <Box>
                 <Grid container>
                   <Grid item xs={6}>
-                    <Typography variant="body2">Phải trả:</Typography>
+                    <Typography variant="body2">
+                      <LocalShippingIcon fontSize="small" /> Phí giao hàng:
+                    </Typography>
                   </Grid>
                   <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2">{formatPrice(billData.total_price)}</Typography>
+                    <Typography variant="body2">{formatPrice(30000)}</Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+              <Box>
+                <Grid container>
+                  <Grid item xs={6}>
+                    <Typography variant="body2">
+                      <PaymentIcon fontSize="small" /> Tổng thanh toán:
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2">
+                      {formatPrice(billData.total_price + 30000 - (billData.discountShip + billData.discountUser))}
+                    </Typography>
                   </Grid>
                 </Grid>
               </Box>
@@ -438,126 +748,155 @@ function PageBillDetail() {
         </Grid> */}
 
         <Grid item xs={12} md={5}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* Customer Details */}
-            <Box
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 3 },
+              borderRadius: 3,
+              border: '1px solid #e0e0e0',
+              backgroundColor: '#fff',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              height: '100%',
+            }}
+          >
+            <Typography
+              variant="h6"
               sx={{
-                p: 2,
-                border: '1px solid #e0e0e0',
-                borderRadius: 2,
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                backgroundColor: '#fff',
+                fontWeight: 700,
+                mb: 3,
+                fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                pb: 2,
+                borderBottom: '1px solid #eee',
               }}
             >
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  Thông tin khách hàng
-                </Typography>
-                {billData.status === 0 && (
-                  <Button startIcon={<EditIcon />} size="small" sx={{ textTransform: 'none' }}>
-                    Edit
-                  </Button>
-                )}
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 2 }}>
-                <Avatar src="https://via.placeholder.com/150" alt="Customer Avatar" />
-                <Box>
-                  <Typography sx={{ fontWeight: 'bold' }}>
-                    {billData.user.fullName ? billData.user.fullName : 'admin'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Customer ID: #{billData.user.id}
-                  </Typography>
-                </Box>
-              </Stack>
-              <Typography sx={{ mt: 2, fontWeight: 'bold', color: '#1976d2' }}>{countProductDetail} Orders</Typography>
-              <Divider sx={{ my: 2 }} />
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                  Contact info
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Email: {billData.email ? billData.email : 'khanhkomonny@gmail.com'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Mobile: (+84) {billData.phone}
-                </Typography>
-              </Box>
+              Thông tin đơn hàng
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                Mã đơn hàng
+              </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                #{billData.id}
+              </Typography>
             </Box>
 
-            {/* Shipping Address */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                Ngày đặt hàng
+              </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                {new Date(billData.createdDate).toLocaleString('vi-VN')}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                Phương thức thanh toán
+              </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                {billData.payMethod === null && 'Thanh toán khi nhận hàng'}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                Địa chỉ giao hàng
+              </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                {billData.address}
+              </Typography>
+            </Box>
+
             <Box
               sx={{
+                mt: 4,
                 p: 2,
-                border: '1px solid #e0e0e0',
+                backgroundColor: '#f0f7ff',
                 borderRadius: 2,
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                backgroundColor: '#fff',
+                borderLeft: '3px solid #1976d2',
               }}
             >
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  Địa chỉ giao hàng
-                </Typography>
-                {billData.status === 0 && (
-                  <Button startIcon={<EditIcon />} size="small" sx={{ textTransform: 'none' }}>
-                    Edit
-                  </Button>
-                )}
-              </Stack>
-              <Box sx={{ mt: 2 }}>
-                {billData.address
-                  ? billData.address.split(' - ').map((item, index) => (
-                      <Typography key={index} color="text.secondary">
-                        {item}
-                      </Typography>
-                    ))
-                  : 'Chưa có địa chỉ'}
-              </Box>
-              <Box
-                sx={{
-                  position: 'fixed',
-                  bottom: 50,
-                  right: 50,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2, // Khoảng cách giữa các nút
-                  alignItems: 'center', // Căn giữa các nút theo chiều ngang
-                }}
-              >
-                {billData.status === 0 && (
-                  <Button
-                    variant="contained"
-                    color="error"
-                    sx={{
-                      textTransform: 'none',
-                      backgroundColor: '#ff6f61',
-                      '&:hover': { backgroundColor: '#ff5a4d' },
-                      width: 150,
-                    }}
-                    onClick={handleUpdateCancelBill}
-                  >
-                    Từ chối đơn hàng
-                  </Button>
-                )}
-                {billData.status < 5 && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{
-                      textTransform: 'none',
-                      backgroundColor: '#1976d2',
-                      '&:hover': { backgroundColor: '#1565c0' },
-                      width: 150,
-                    }}
-                    onClick={handleUpdateStatus}
-                  >
-                    {getButtonLabel(billData.status)}
-                  </Button>
-                )}
-              </Box>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                Ghi chú đơn hàng
+              </Typography>
+              <Typography variant="body2">{billData.note ? billData.note : 'Không có ghi chú'}</Typography>
             </Box>
-          </Box>
+          </Paper>
+          {(billData.status === 0 || billData.status < 5) && (
+            <Box
+              sx={{
+                position: 'fixed',
+                bottom: 16,
+                right: 16,
+                display: 'flex',
+                gap: 2, // khoảng cách giữa hai nút
+                zIndex: 1000, // đảm bảo nút nổi lên trên
+              }}
+            >
+              {billData.status > 1 && (
+                <>
+                  <Button
+                    variant="contained"
+                    startIcon={<Download />}
+                    onClick={downloadPDF}
+                    sx={{
+                      backgroundColor: '#1976d2',
+                      '&:hover': {
+                        backgroundColor: '#1565c0',
+                      },
+                    }}
+                  >
+                    Tải xuống PDF
+                  </Button>
+
+                  <Button
+                    variant="contained"
+                    startIcon={<Print />}
+                    onClick={printPDF}
+                    sx={{
+                      backgroundColor: '#1976d2',
+                      '&:hover': {
+                        backgroundColor: '#1565c0',
+                      },
+                    }}
+                  >
+                    In hóa đơn
+                  </Button>
+                </>
+              )}
+              {billData.status === 0 && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  sx={{
+                    textTransform: 'none',
+                    backgroundColor: '#ff6f61',
+                    '&:hover': { backgroundColor: '#ff5a4d' },
+                    width: 150,
+                  }}
+                  onClick={handleUpdateCancelBill}
+                >
+                  Từ chối đơn hàng
+                </Button>
+              )}
+              {billData.status < 5 && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    textTransform: 'none',
+                    backgroundColor: '#1976d2',
+                    '&:hover': { backgroundColor: '#1565c0' },
+                    width: 150,
+                  }}
+                  onClick={handleUpdateStatus}
+                >
+                  {getButtonLabel(billData.status)}
+                </Button>
+              )}
+            </Box>
+          )}
         </Grid>
       </Grid>
       <ConfirmDialog
@@ -576,6 +915,29 @@ function PageBillDetail() {
         onCancel={handleCancelBill}
         isLoading={isLoadingUpdate}
       />
+      <Dialog open={isInvoiceDialogOpen} onClose={() => setIsInvoiceDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogContent>
+          <Box sx={{ py: 4 }}>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
+                fontWeight: 700,
+                mb: 4,
+                textAlign: 'center',
+                color: '#1976d2',
+              }}
+            >
+              Quản lý hóa đơn
+            </Typography>
+
+            <InvoiceGenerator billData={billData} rows={rows} />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsInvoiceDialogOpen(false)}>Đóng</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

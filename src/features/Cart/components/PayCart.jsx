@@ -125,6 +125,10 @@ function PayCart({ listCart = [], onAllCheckboxChange, setOpen }) {
             } else {
               setOpen(false); // Đóng giỏ hàng nếu cần
             }
+            window.scrollTo({
+              top: 150,
+              behavior: 'smooth',
+            });
           }}
           sx={{
             mt: 2,
@@ -133,7 +137,7 @@ function PayCart({ listCart = [], onAllCheckboxChange, setOpen }) {
             fontWeight: 'bold',
           }}
         >
-          Thanh Toán
+          Mua hàng
         </Button>
       </Box>
     </Paper>

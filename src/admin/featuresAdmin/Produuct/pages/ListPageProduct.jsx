@@ -72,7 +72,7 @@ function ListPageProduct({ actionsState }) {
     };
   }, [location.search, rowsPerPage]);
 
-  const { data, error, isLoading } = useGetProductsQuery(queryParams);
+  const { data, error, isLoading, refetch } = useGetProductsQuery(queryParams);
   const { data: colors, error: colorsError, isLoading: colorsLoading } = useGetColorQuery();
   const { data: sizes, error: sizesError, isLoading: sizesLoading } = useGetSizeQuery();
   const {
@@ -383,7 +383,7 @@ function ListPageProduct({ actionsState }) {
                   </Box>
                 </Box>
               </Box>
-              <ListProduct actionsState={actionsState} products={products} />
+              <ListProduct refetch={refetch} actionsState={actionsState} products={products} />
               <Box sx={{ float: 'right', paddingBottom: 2 }}>
                 <Pagination
                   count={Math.ceil(pagination.count / queryParams.limit)}

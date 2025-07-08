@@ -43,6 +43,10 @@ import {
   Twitter,
   Close,
 } from '@mui/icons-material';
+import { useGetProductsQuery } from 'hookApi/productApi';
+import { calculateDiscount, formatPrice, imageMainProduct } from 'utils';
+import { THUMBNAIL_PLACEHOLDER } from 'constants';
+import { useNavigate } from 'react-router-dom';
 
 function HoangHaiFashionApp() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -74,7 +78,12 @@ function HoangHaiFashionApp() {
   };
 
   const navItems = ['Trang chủ', 'Giới thiệu', 'Sản phẩm', 'Dịch vụ', 'Liên hệ'];
-
+  const queryParams = {
+    page: 1,
+    limit: 4,
+    status: 1,
+  };
+  const { data, error, isLoading, refetch } = useGetProductsQuery(queryParams);
   const products = [
     {
       title: 'Áo sơ mi cao cấp',
@@ -109,25 +118,34 @@ function HoangHaiFashionApp() {
   const services = [
     {
       icon: <LocalShipping sx={{ fontSize: 40, color: '#000000' }} />,
-      title: 'Giao hàng miễn phí',
-      description: 'Miễn phí giao hàng cho đơn hàng trên 500.000đ',
+      title: 'Giao hàng nội thành',
+      description: 'Hỗ trợ giao hàng nhanh trong khu vực Chương Mỹ và lân cận',
     },
     {
       icon: <Security sx={{ fontSize: 40, color: '#000000' }} />,
-      title: 'Bảo hành chất lượng',
-      description: 'Cam kết chất lượng sản phẩm và dịch vụ hậu mãi',
+      title: 'Chất lượng đảm bảo',
+      description: 'Sản phẩm chính hãng, kiểm tra kỹ trước khi giao',
     },
     {
       icon: <Refresh sx={{ fontSize: 40, color: '#000000' }} />,
-      title: 'Đổi trả dễ dàng',
-      description: 'Chính sách đổi trả trong vòng 30 ngày',
+      title: 'Đổi trả thuận tiện',
+      description: 'Đổi trả trong 7 ngày nếu lỗi sản xuất',
     },
     {
       icon: <Star sx={{ fontSize: 40, color: '#000000' }} />,
-      title: 'Tư vấn chuyên nghiệp',
-      description: 'Đội ngũ stylist giàu kinh nghiệm tư vấn 24/7',
+      title: 'Hỗ trợ tận tâm',
+      description: 'Tư vấn nhiệt tình, phục vụ khách hàng tận nơi',
     },
   ];
+
+  const navigate = useNavigate();
+  const handleClick = (id) => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+    navigate(`/products/${id}`);
+  };
 
   return (
     <Box sx={{ flexGrow: 1, bgcolor: 'white', px: isMobile ? 2 : 0 }}>
@@ -165,10 +183,32 @@ function HoangHaiFashionApp() {
               </Box>
 
               <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mb: 4 }}>
-                <Button variant="contained" size="large" sx={{ py: 1.5, px: 4 }}>
+                <Button
+                  onClick={() => {
+                    window.scrollTo({
+                      top: 0,
+                      behavior: 'smooth',
+                    });
+                    navigate(`/`);
+                  }}
+                  variant="contained"
+                  size="large"
+                  sx={{ py: 1.5, px: 4 }}
+                >
                   Khám phá ngay
                 </Button>
-                <Button variant="outlined" size="large" sx={{ py: 1.5, px: 4 }}>
+                <Button
+                  onClick={() => {
+                    window.scrollTo({
+                      top: 0,
+                      behavior: 'smooth',
+                    });
+                    navigate(`/products`);
+                  }}
+                  variant="outlined"
+                  size="large"
+                  sx={{ py: 1.5, px: 4 }}
+                >
                   Xem bộ sưu tập
                 </Button>
               </Stack>
@@ -176,18 +216,18 @@ function HoangHaiFashionApp() {
               <Grid container spacing={4} sx={{ textAlign: 'center' }}>
                 <Grid item xs={4}>
                   <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'black' }}>
-                    1000+
+                    500+
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Khách hàng
+                    Khách hàng hài lòng
                   </Typography>
                 </Grid>
                 <Grid item xs={4}>
                   <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'black' }}>
-                    200+
+                    100+
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Sản phẩm
+                    Sản phẩm đa dạng
                   </Typography>
                 </Grid>
                 <Grid item xs={4}>
@@ -195,7 +235,7 @@ function HoangHaiFashionApp() {
                     5⭐
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Đánh giá
+                    Xếp hạng trên Google
                   </Typography>
                 </Grid>
               </Grid>
@@ -258,7 +298,7 @@ function HoangHaiFashionApp() {
             Câu chuyện của Hoàng Hải Fashion
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-            Với hơn 10 năm kinh nghiệm trong ngành thời trang, chúng tôi cam kết mang đến những sản phẩm chất lượng cao
+            Với hơn 5 năm kinh nghiệm trong ngành thời trang, chúng tôi cam kết mang đến những sản phẩm chất lượng cao
             và phong cách độc đáo.
           </Typography>
         </Box>
@@ -286,7 +326,7 @@ function HoangHaiFashionApp() {
                   }}
                 >
                   <Typography variant="h3" sx={{ mb: 1 }}>
-                    10+
+                    5+
                   </Typography>
                   <Typography variant="body2">Năm kinh nghiệm</Typography>
                 </Paper>
@@ -303,9 +343,9 @@ function HoangHaiFashionApp() {
                   }}
                 >
                   <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    50+
+                    1000+
                   </Typography>
-                  <Typography variant="body2">Nhân viên</Typography>
+                  <Typography variant="body2">Sản phẩm đã bán</Typography>
                 </Paper>
               </Grid>
             </Grid>
@@ -378,77 +418,144 @@ function HoangHaiFashionApp() {
           </Box>
 
           <Grid container spacing={4}>
-            {products.map((product, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Card sx={{ height: '100%' }}>
-                  <Box sx={{ position: 'relative' }}>
-                    <CardMedia
-                      component="div"
-                      sx={{
-                        height: 200,
-                        bgcolor: 'grey.200',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderBottom: '1px solid #e5e7eb',
-                      }}
-                    >
-                      <Typography color="text.secondary">Hình sản phẩm {index + 1}</Typography>
-                    </CardMedia>
-                    <Chip
-                      label="-25%"
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        left: 8,
-                        bgcolor: 'error.main',
-                        color: 'white',
-                        fontWeight: 600,
-                      }}
-                    />
-                  </Box>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: 'black' }}>
-                      {product.title}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Rating
-                        value={product.rating}
-                        precision={0.1}
-                        size="small"
-                        readOnly
+            {data?.data?.products.map((product, index) => {
+              const image = product.productDetails
+                .flatMap((productDetail) => productDetail.image)
+                .find((image) => image.mainProduct === true);
+
+              const thumbnailUrl =
+                image?.imageUrl || imageMainProduct(product.productDetails)?.imageUrl || THUMBNAIL_PLACEHOLDER;
+
+              const sellingPrice = product.sellingPrice;
+
+              const { percentageValue, finalPrice } = calculateDiscount(product, product.productDiscountPeriods);
+              return (
+                <Grid item xs={12} sm={6} md={3} key={index}>
+                  <Card sx={{ height: '100%' }}>
+                    <Box sx={{ position: 'relative' }}>
+                      <CardMedia
+                        component="img"
+                        image={thumbnailUrl}
+                        alt={product.name}
                         sx={{
-                          '& .MuiRating-iconFilled': {
-                            color: '#000000',
-                          },
+                          width: '100%',
+                          aspectRatio: '1 / 1',
+                          objectFit: 'cover',
+                          position: 'relative',
                         }}
                       />
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        ({product.rating})
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black' }}>
-                          {product.price}
-                        </Typography>
-                        <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
-                          {product.originalPrice}
-                        </Typography>
-                      </Box>
-                      <Button variant="contained" size="small">
-                        Mua ngay
+                      {percentageValue && (
+                        <Chip
+                          label={`-${percentageValue}%`}
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            left: 8,
+                            bgcolor: 'error.main',
+                            color: 'white',
+                            fontWeight: 600,
+                          }}
+                        />
+                      )}
+                      <Button
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, 100%)',
+                          opacity: 0,
+                          backgroundColor: '#fff',
+                          color: 'black',
+                          transition: 'transform 0.3s ease, opacity 0.3s ease',
+                          textTransform: 'none',
+                          pointerEvents: 'none',
+                        }}
+                        className="slide-button"
+                      >
+                        Xem chi tiết
                       </Button>
                     </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                    <CardContent>
+                      <Typography variant="button" sx={{ fontWeight: 600, mb: 1, color: 'black' }}>
+                        {product.name}
+                      </Typography>
+                      {/* <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Rating
+                          value={product.rating}
+                          precision={0.1}
+                          size="small"
+                          readOnly
+                          sx={{
+                            '& .MuiRating-iconFilled': {
+                              color: '#000000',
+                            },
+                          }}
+                        />
+                        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                          ({product.rating})
+                        </Typography>
+                      </Box> */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          {percentageValue ? (
+                            <>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 400,
+                                  textDecoration: 'line-through',
+                                  color: 'gray',
+                                }}
+                              >
+                                {formatPrice(sellingPrice)}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 600,
+                                  color: 'red',
+                                }}
+                              >
+                                {formatPrice(finalPrice)}
+                              </Typography>
+                            </>
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 400,
+                              }}
+                            >
+                              {formatPrice(sellingPrice)}
+                            </Typography>
+                          )}
+                        </Box>
+                        <Button onClick={() => handleClick(product.id)} variant="contained" size="small">
+                          Mua ngay
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
 
           <Box sx={{ textAlign: 'center', mt: 6 }}>
-            <Button variant="outlined" size="large" sx={{ px: 4 }}>
+            <Button
+              onClick={() => {
+                window.scrollTo({
+                  top: 0,
+                  behavior: 'smooth',
+                });
+                navigate(`/products`);
+              }}
+              variant="outlined"
+              size="large"
+              sx={{ px: 4 }}
+            >
               Xem tất cả sản phẩm
             </Button>
           </Box>
@@ -530,19 +637,28 @@ function HoangHaiFashionApp() {
               </Typography>
 
               <Stack spacing={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ bgcolor: 'black', width: 56, height: 56 }}>
-                    <LocationOn sx={{ color: 'white' }} />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'black' }}>
-                      Địa chỉ
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      123 Đường ABC, Quận 1, TP.HCM
-                    </Typography>
+                <a
+                  href="https://www.google.com/maps/place/Shop+Ho%C3%A0ng+H%E1%BA%A3i/@20.9239125,105.7012006,17z/data=!3m1!4b1!4m6!3m5!1s0x31344d9c251a4597:0xbd9e54a0390bf57b!8m2!3d20.9239075!4d105.7037755!16s%2Fg%2F11hf7zyk_c?hl=vi&entry=ttu"
+                  target="_blank"
+                  rel="noopener"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: 'black', width: 56, height: 56 }}>
+                      <LocationOn sx={{ color: 'white' }} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'black' }}>
+                        Địa chỉ
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        26 Hòa Sơn, TT. Chúc Sơn, Chương Mỹ, Hà Nội
+                        <br />
+                        Việt Nam
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
+                </a>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar sx={{ bgcolor: 'white', border: '2px solid black', width: 56, height: 56 }}>
@@ -553,7 +669,7 @@ function HoangHaiFashionApp() {
                       Điện thoại
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      0123 456 789
+                      0977.477.636
                     </Typography>
                   </Box>
                 </Box>
@@ -567,7 +683,7 @@ function HoangHaiFashionApp() {
                       Email
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      info@hoanghaifashion.com
+                      hoanghaifashion@gmail.com
                     </Typography>
                   </Box>
                 </Box>

@@ -1,5 +1,15 @@
 import PropTypes from 'prop-types';
-import { Button, Card, CardActionArea, CardContent, CardMedia, Typography, Box } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  CardMedia,
+  Typography,
+  Box,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
 import { THUMBNAIL_PLACEHOLDER } from 'constants';
 import { useNavigate } from 'react-router-dom';
 import { calculateDiscount, formatPrice, imageMainProduct } from 'utils';
@@ -10,6 +20,8 @@ Product.propTypes = {
 };
 
 function Product({ product }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
 
   const image = product.productDetails
@@ -22,7 +34,17 @@ function Product({ product }) {
 
   const { percentageValue, finalPrice } = calculateDiscount(product, product.productDiscountPeriods);
 
+  const totalQuantity = product.productDetails
+    .flatMap((pd) => pd.productDetailSizes)
+    .reduce((sum, size) => sum + size.quantity, 0);
+
+  const isOutOfStock = totalQuantity === 0;
+
   const handleClick = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
     navigate(`/products/${product.id}`);
   };
 
@@ -36,9 +58,12 @@ function Product({ product }) {
         borderRadius: 2,
         overflow: 'hidden',
         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        opacity: isOutOfStock ? 0.5 : 1,
+        pointerEvents: isOutOfStock ? 'none' : 'auto',
+        position: 'relative',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+          transform: isOutOfStock ? 'none' : 'translateY(-4px)',
+          boxShadow: isOutOfStock ? 'none' : '0 8px 16px rgba(0, 0, 0, 0.1)',
         },
       }}
     >
@@ -46,6 +71,7 @@ function Product({ product }) {
         onClick={handleClick}
         sx={{
           position: 'relative',
+          pointerEvents: isOutOfStock ? 'none' : 'auto',
           '&:hover .slide-button': {
             transform: 'translate(-50%, -50%)',
             opacity: 1,
@@ -64,7 +90,6 @@ function Product({ product }) {
               width: '100%',
               aspectRatio: '1 / 1',
               objectFit: 'cover',
-              position: 'relative',
             }}
           />
           {/* Discount badge */}
@@ -86,28 +111,49 @@ function Product({ product }) {
               -{percentageValue}%
             </Box>
           )}
+          {/* Hết hàng overlay */}
+          {isOutOfStock && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                bgcolor: 'rgba(0,0,0,0.6)',
+                color: '#fff',
+                px: 2,
+                py: 1,
+                borderRadius: 1,
+                fontWeight: 'bold',
+                zIndex: 2,
+              }}
+            >
+              Hết hàng
+            </Box>
+          )}
 
           {/* Overlay Button */}
-          <Button
-            size="small"
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, 100%)',
-              opacity: 0,
-              backgroundColor: '#fff',
-              color: 'black',
-              transition: 'transform 0.3s ease, opacity 0.3s ease',
-              textTransform: 'none',
-              pointerEvents: 'none',
-            }}
-            className="slide-button"
-          >
-            Xem chi tiết
-          </Button>
+          {!isMobile && (
+            <Button
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, 100%)',
+                opacity: 0,
+                backgroundColor: '#fff',
+                color: 'black',
+                transition: 'transform 0.3s ease, opacity 0.3s ease',
+                textTransform: 'none',
+                pointerEvents: 'none',
+              }}
+              className="slide-button"
+            >
+              Xem chi tiết
+            </Button>
+          )}
         </Box>
-
         <CardContent
           sx={{
             padding: 2,

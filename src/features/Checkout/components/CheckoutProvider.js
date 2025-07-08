@@ -4,7 +4,7 @@ export const CheckoutContext = createContext();
 
 export const CheckoutProvider = ({ children }) => {
     const [shipDetail, setShipDetail] = useState({});
-    const [payMethod, setPayMethod] = useState('');
+    const [payMethod, setPayMethod] = useState();
     const [moneyToPay,setmoneyToPay] = useState(0);
     const [voucherProduct, setvoucherProduct] = useState(null);
       const [discountFreeShip, setDiscountFreeShip] = useState(null);
